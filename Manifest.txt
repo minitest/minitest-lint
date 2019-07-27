@@ -1,0 +1,8 @@
+.autotest
+History.rdoc
+Manifest.txt
+README.rdoc
+Rakefile
+bin/assert_scanner
+lib/assert_scanner.rb
+test/test_assert_scanner.rb
