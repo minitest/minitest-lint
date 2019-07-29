@@ -84,8 +84,6 @@ class AssertScanner < SexpProcessor
     files.each do |file|
       next unless file == '-' or File.readable? file
 
-      # warn "# #{file}"
-
       ruby = file == '-' ? $stdin.read : File.binread(file)
 
       ast = RubyParser.new.process(ruby, file) rescue nil
@@ -101,7 +99,12 @@ class AssertScanner < SexpProcessor
 
     case msg
     when /^(assert|refute|must|wont)/ then
-      return process_assert exp
+      io << "%s:%s:" % [exp.file, exp.line]
+      io << "  %s # %s" % [rr.process(exp), "original"]
+
+      exp = process_assert exp
+      output_all
+      return exp
     end
 
     process recv
@@ -114,9 +117,6 @@ class AssertScanner < SexpProcessor
   end
 
   def process_assert exp
-    warn "%s:%s:" % [exp.file, exp.line]
-    change exp, "original"
-
     _, _, msg, * = exp
 
     case msg
@@ -163,8 +163,6 @@ class AssertScanner < SexpProcessor
     when /^(assert|refute|must|wont)/ then
       # w "unknown %s: %p" % [$1, msg]
     end
-
-    output_all
 
     exp
   end
@@ -267,7 +265,7 @@ class AssertScanner < SexpProcessor
         lhs, rhs = rhs, lhs
         exp = s(t, r, m, lhs, rhs)
 
-        change exp, "assert_equal expect, actual"
+        change exp, "assert_equal exp, act"
       when RE_EQ_EMPTY then
         rhs = rhs[1] # recv to remove .count
         exp = s(t, r, :assert_empty, rhs)
@@ -337,24 +335,40 @@ class AssertScanner < SexpProcessor
   ############################################################$
   # Output:
 
-  def w str = ""
-    $stderr.puts str
-  end
-
-  def warn str = ""
-    io << str
-  end
-
   def change exp, msg
     self.count += 1 unless msg == "original"
-    warn "  %-40s # %s" % [rr.process(exp), msg]
+    io << [exp, msg] # TODO: switch back to hash and blow up if key exists (loop)?
+  end
+
+  def out
+    out = io.map { |(sexp, msg)|
+      case sexp
+      when Sexp then
+        ruby = rr.process(sexp)
+        [ruby.length, ruby, msg]
+      else
+        [0, sexp, nil]
+      end
+    }
+
+    max = out.map(&:first).max
+    fmt = "  %-#{max}s # %s"
+
+    out.map { |(_, ruby, msg)|
+      if msg then
+        fmt % [ruby, msg]
+      else
+        ruby
+      end
+    }
   end
 
   def output_all
     if io.size > 2 then
-      puts io
+      puts out
       puts
     end
+
     io.clear
   end
 end
