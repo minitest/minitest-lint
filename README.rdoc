@@ -1,23 +1,35 @@
 = assert_scanner
 
-home :: https://github.com/seattlerb/assert_scanner
+home :: https://github.com/zenspider/assert_scanner
 rdoc :: http://docs.seattlerb.org/assert_scanner
 
 == DESCRIPTION:
 
-FIX (describe your package)
+Lint your minitest assertions.
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+* Scans assertions for common patterns.
+* Provides multiple rewrites until it can't be improved anymore.
+* Uses pattern matching to be as flexible as possible.
+* TODO: still needs a lot more added to it. This is just the beginning.
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+  % assert_scanner my_stupid_test.rb
+
+  my_stupid_test.rb:3:
+    assert(([1, 2, 3].include?(b) == true), "is b in 1..3?") # original
+    assert_equal([1, 2, 3].include?(b), true) # assert_equal exp, act
+    assert_equal(true, [1, 2, 3].include?(b)) # assert_equal exp, act
+    assert_includes([1, 2, 3], :include?, b)  # assert_includes obj, val
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* ruby_parser
+* ruby2ruby
+* path_expander
+* sexp_processor
 
 == INSTALL:
 
