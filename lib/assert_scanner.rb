@@ -11,23 +11,23 @@ class AssertScanner < SexpProcessor
   ############################################################
   # Patterns:
 
-  def self.pat s
-    Sexp::Matcher.parse s
+  def self.pat *args
+    Sexp::Matcher.parse "(call nil #{args.join " "})"
   end
 
   def self.assert_pat test
-    pat "(call nil assert #{test})"
+    pat :assert, test
   end
 
   def self.refute_pat test
-    pat "(call nil refute #{test})"
+    pat :refute, test
   end
 
   def self.eq_pat lhs, rhs
-    pat "(call nil assert_equal #{lhs} #{rhs})"
+    pat :assert_equal, lhs, rhs
   end
 
-  RE_EQ_MSG     = pat "(call nil assert_equal _ _ _)"
+  RE_EQ_MSG     = pat :assert_equal, "_ _ _"
   RE_EQ_EMPTY   = eq_pat "(lit 0)", "(call _ [m length size count])"
   RE_EQ_INCL    = eq_pat "(true)",  "(call _ [m /include./] _)"
   RE_EQ_LHS_STR = eq_pat "(str _)", "_"
@@ -38,7 +38,7 @@ class AssertScanner < SexpProcessor
   RE_EQ_RHS_NTF = eq_pat "_",       "([atom])"
   RE_EQ_RHS_STR = eq_pat "_",       "(str _)"
 
-  RE_MSG        = pat "(call nil assert _ _)"
+  RE_MSG        = pat :assert, "_ _"
   RE_INCL       = assert_pat "(call _ [m /include./] _)"
   RE_NOT        = s{ s(:call, nil, :assert, s(:call, _, :"!")) }
   RE_OPER       = assert_pat "(call _ _ _)"
@@ -47,13 +47,13 @@ class AssertScanner < SexpProcessor
   RE_NEQUAL     = s{ s(:call, nil, :assert, s(:call, _, :!=, _), ___) }
   RE_PLAIN      = assert_pat "_"
 
-  RE_REF_MSG    = pat "(call nil refute _ _)"
+  RE_REF_MSG    = pat :refute, "_ _"
   RE_REF_INCL   = refute_pat "(call _ [m /include./] _)"
   RE_REF_NOT    = s{ s(:call, nil, :refute, s(:call, _, :"!")) }
   RE_REF_OPER   = refute_pat "(call _ _ _)"
   RE_REF_PRED   = refute_pat "(call _ _)"
 
-  RE_OP_INCL = pat "(call nil assert_operator _ (lit [m /include./]) _)"
+  RE_OP_INCL = pat :assert_operator, "_", "(lit [m /include./])", "_"
 
   # assert(obj.size > 0) => refute_empty
   # assert obj.is_a? klass
