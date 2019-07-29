@@ -73,7 +73,7 @@ class AssertScanner < SexpProcessor
   def initialize
     super
 
-    self.io            = []
+    self.io            = {}
     self.count         = 0
     self.require_empty = false
     self.rr            = Ruby2Ruby.new
@@ -99,8 +99,8 @@ class AssertScanner < SexpProcessor
 
     case msg
     when /^(assert|refute|must|wont)/ then
-      io << "%s:%s:" % [exp.file, exp.line]
-      io << "  %s # %s" % [rr.process(exp), "original"]
+      io["%s:%s:" % [exp.file, exp.line]] = nil
+      io["  %s # %s" % [rr.process(exp), "original"]] = nil
 
       exp = process_assert exp
       output_all
@@ -256,7 +256,7 @@ class AssertScanner < SexpProcessor
       when RE_EQ_LHS_STR then
         _, str = lhs
         if str.length > 20 then
-          lhs = s(:str, str[-20..-1])
+          lhs = s(:str, str[0, 20])
           exp = s(t, r, :assert_includes, lhs, rhs)
           change exp, "assert_includes substr, actual (or fixture)"
         end
@@ -336,8 +336,8 @@ class AssertScanner < SexpProcessor
   # Output:
 
   def change exp, msg
-    self.count += 1 unless msg == "original"
-    io << [exp, msg] # TODO: switch back to hash and blow up if key exists (loop)?
+    raise ArgumentError, "key already exists! %p in %p" % [exp, io] if io.key?(exp)
+    io[exp] = msg
   end
 
   def out

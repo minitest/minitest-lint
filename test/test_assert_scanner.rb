@@ -11,30 +11,26 @@ class TestAssertScanner < Minitest::Test
 
     scan.analyze_assert sexp
 
-    exp = [
-      [s(:call, nil, :assert,
-         s(:call,
-           s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
-             s(:call, nil, :b)),
-           :==,
-           s(:true))),
-       "redundant message?"],
-      [s(:call, nil, :assert_equal,
-         s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
-           s(:call, nil, :b)),
-         s(:true)),
-       "assert_equal exp, act"],
-      [s(:call, nil, :assert_equal,
-         s(:true),
-         s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
-           s(:call, nil, :b))),
-       "assert_equal exp, act"],
-      [s(:call, nil, :assert_includes,
-         s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)),
-         s(:lit, :include?),
-         s(:call, nil, :b)),
-      "assert_includes obj, val"],
-    ]
+    exp = {
+      s(:call, nil, :assert,
+        s(:call,
+          s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
+            s(:call, nil, :b)),
+          :==,
+          s(:true))) => "redundant message?",
+      s(:call, nil, :assert_equal,
+        s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
+          s(:call, nil, :b)),
+        s(:true)) => "assert_equal exp, act",
+      s(:call, nil, :assert_equal,
+        s(:true),
+        s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
+          s(:call, nil, :b))) => "assert_equal exp, act",
+      s(:call, nil, :assert_includes,
+        s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)),
+        s(:lit, :include?),
+        s(:call, nil, :b)) => "assert_includes obj, val",
+    }
 
     assert_equal exp, scan.io
 
