@@ -16,17 +16,18 @@ class AssertScanner < SexpProcessor
   end
 
   def self.assert_pat test
-    pat "(call nil assert #{test} ___)"
+    pat "(call nil assert #{test})"
   end
 
   def self.refute_pat test
-    pat "(call nil refute #{test} ___)"
+    pat "(call nil refute #{test})"
   end
 
   def self.eq_pat lhs, rhs
-    pat "(call nil assert_equal #{lhs} #{rhs} ___)"
+    pat "(call nil assert_equal #{lhs} #{rhs})"
   end
 
+  RE_EQ_MSG     = pat "(call nil assert_equal _ _ _)"
   RE_EQ_EMPTY   = eq_pat "(lit 0)", "(call _ [m length size count])"
   RE_EQ_INCL    = eq_pat "(true)",  "(call _ [m /include./] _)"
   RE_EQ_LHS_STR = eq_pat "(str _)", "_"
@@ -37,17 +38,22 @@ class AssertScanner < SexpProcessor
   RE_EQ_RHS_NTF = eq_pat "_",       "([atom])"
   RE_EQ_RHS_STR = eq_pat "_",       "(str _)"
 
+  RE_MSG        = pat "(call nil assert _ _)"
   RE_INCL       = assert_pat "(call _ [m /include./] _)"
   RE_NOT        = s{ s(:call, nil, :assert, s(:call, _, :"!")) }
   RE_OPER       = assert_pat "(call _ _ _)"
   RE_PRED       = assert_pat "(call _ _)"
   RE_EQUAL      = s{ s(:call, nil, :assert, s(:call, _, :==, _), ___) }
   RE_NEQUAL     = s{ s(:call, nil, :assert, s(:call, _, :!=, _), ___) }
+  RE_PLAIN      = assert_pat "_"
 
+  RE_REF_MSG    = pat "(call nil refute _ _)"
   RE_REF_INCL   = refute_pat "(call _ [m /include./] _)"
   RE_REF_NOT    = s{ s(:call, nil, :refute, s(:call, _, :"!")) }
   RE_REF_OPER   = refute_pat "(call _ _ _)"
   RE_REF_PRED   = refute_pat "(call _ _)"
+
+  RE_OP_INCL = pat "(call nil assert_operator _ (lit [m /include./]) _)"
 
   # assert(obj.size > 0) => refute_empty
   # assert obj.is_a? klass
@@ -66,6 +72,22 @@ class AssertScanner < SexpProcessor
     scanner.scan(*files)
 
     puts scanner.count
+  end
+
+  @assertions = {}
+
+  def self.assertions
+    @assertions
+  end
+
+  def self.reset_assertions
+    @assertions.clear
+  end
+
+  def self.register_assert *matchers, &handler
+    matchers.each do |matcher|
+      assertions[matcher] = handler
+    end
   end
 
   attr_accessor :io, :rr, :count
@@ -102,7 +124,7 @@ class AssertScanner < SexpProcessor
       io["%s:%s:" % [exp.file, exp.line]] = nil
       io["  %s # %s" % [rr.process(exp), "original"]] = nil
 
-      exp = process_assert exp
+      exp = analyze_assert exp
       output_all
       return exp
     end
@@ -114,210 +136,6 @@ class AssertScanner < SexpProcessor
     end
 
     exp
-  end
-
-  def process_assert exp
-    _, _, msg, * = exp
-
-    case msg
-    when :assert_equal then
-      analyze_assert_equal exp
-    when :assert then
-      analyze_assert exp
-    when :refute then
-      analyze_refute exp
-    # when :must_equal then
-    # when :must_include then
-    # when :assert_includes then
-    # when :assert_raises then
-    # when :must_be_nil then
-    # when :assert_kind_of then
-    # when :must_match then
-    # when :assert_nil then
-    # when :must_be_kind_of then
-    # when :must_raise then
-    # when :assert_empty then
-    # when :must_be_empty then
-    # when :wont_include then
-    # when :wont_be_nil then
-    # when :refute_includes then
-    # when :refute_nil then
-    # when :assert_match then
-    # when :must_be then
-    # when :assert_cmp then
-    # when :refute_cmp then
-    # when :wont_match then
-    # when :assert_respond_to then
-    # when :assert_operator then
-    # when :wont_equal then
-    # when :must_respond_to then
-    # when :must_output then
-    # when :wont_be then
-    # when :refute_empty then
-    # when :refute_operator then
-    # when :wont_be_empty then
-    # when :must_throw then
-    # when :refute_match then
-    # when :assert_same then
-
-    when /^(assert|refute|must|wont)/ then
-      # w "unknown %s: %p" % [$1, msg]
-    end
-
-    exp
-  end
-
-  ############################################################
-  # Analyzers
-
-  def analyze_assert exp
-    exp = handle_arity exp, 3
-
-    loop do
-      t, r, _, test, * = exp
-
-      case exp
-      when RE_NOT then
-        _, recv, _ = test
-
-        exp = s(t, r, :refute, recv)
-
-        change exp, "refute not_cond"
-        return analyze_refute exp
-      when RE_EQUAL then
-        _, lhs, _, rhs = test
-
-        exp = s(t, r, :assert_equal, lhs, rhs)
-
-        change exp, "assert_equal exp, act"
-        return analyze_assert_equal exp
-      when RE_NEQUAL then
-        _, lhs, _, rhs = test
-
-        exp = s(t, r, :refute_equal, lhs, rhs)
-
-        change exp, "refute_equal exp, act"
-        return analyze_refute_equal exp
-      when RE_INCL then
-        _, recv, msg, *rest = test
-        exp = s(t, r, :assert_includes, recv, *rest)
-
-        change exp, "assert_includes obj, val"
-        break
-      when RE_PRED then
-        _, recv, msg = test
-        exp = s(t, r, :assert_predicate, recv, s(:lit, msg))
-
-        change exp, "assert_predicate obj, msg"
-        break
-      when RE_OPER then
-        _, recv, msg, *rest = test
-        exp = s(t, r, :assert_operator, recv, s(:lit, msg), *rest)
-
-        change exp, "assert_operator obj, msg, arg"
-        break
-      else
-        warn "You should probably NEVER use plain assert: %p" % [exp]
-        break
-      end
-    end
-  end
-
-  def analyze_assert_equal exp
-    exp = handle_arity exp, 4
-
-    loop do
-      t, r, m, lhs, rhs, * = exp
-
-      case exp
-      when RE_EQ_NIL then
-        exp = s(t, r, :assert_nil, rhs)
-
-        change exp, "assert_nil"
-        break
-      when RE_EQ_INCL then
-        _, recv, msg, obj = rhs
-        exp = s(t, r, :assert_includes, recv, obj)
-
-        change exp, "assert_includes enum, val"
-        break
-      when RE_EQ_PRED then
-        _, recv, msg = rhs
-        exp = s(t, r, :assert_predicate, recv, s(:lit, msg))
-
-        change exp, "assert_predicate obj, msg"
-        break
-      when RE_EQ_OPER then
-        _, recv, msg, *rest = rhs
-        exp = s(t, r, :assert_operator, recv, s(:lit, msg), *rest)
-
-        change exp, "assert_operator obj, msg, arg"
-        break
-      when RE_EQ_LHS_STR then
-        _, str = lhs
-        if str.length > 20 then
-          lhs = s(:str, str[0, 20])
-          exp = s(t, r, :assert_includes, lhs, rhs)
-          change exp, "assert_includes substr, actual (or fixture)"
-        end
-        break
-      when RE_EQ_RHS_LIT, RE_EQ_RHS_STR, RE_EQ_RHS_NTF then
-        lhs, rhs = rhs, lhs
-        exp = s(t, r, m, lhs, rhs)
-
-        change exp, "assert_equal exp, act"
-      when RE_EQ_EMPTY then
-        rhs = rhs[1] # recv to remove .count
-        exp = s(t, r, :assert_empty, rhs)
-
-        change exp, "assert_empty"
-        break
-      else
-        break
-      end
-    end
-  end
-
-  ############################################################
-  # Negatives
-
-  def analyze_refute exp
-    exp = handle_arity exp, 3
-
-    loop do
-      t, r, _, test, * = exp
-
-      case exp
-      when RE_REF_NOT then
-        _, recv, _ = test
-
-        exp = s(t, r, :assert, recv)
-
-        change exp, "refute not_cond"
-        return process_assert exp
-      when RE_REF_INCL then
-        _, recv, msg, *rest = test
-        exp = s(t, r, :refute_includes, recv, *rest)
-
-        change exp, "refute_includes obj, val"
-        break
-      when RE_REF_PRED then
-        _, recv, msg = test
-        exp = s(t, r, :refute_predicate, recv, s(:lit, msg))
-
-        change exp, "refute_predicate obj, msg"
-        break
-      when RE_REF_OPER then
-        _, recv, msg, *rest = test
-        exp = s(t, r, :refute_operator, recv, s(:lit, msg), *rest)
-
-        change exp, "refute_operator obj, msg, arg"
-        break
-      else
-        warn "You should probably NEVER use plain refute: %p" % [exp]
-        break
-      end
-    end
   end
 
   ############################################################
@@ -338,6 +156,7 @@ class AssertScanner < SexpProcessor
   def change exp, msg
     raise ArgumentError, "key already exists! %p in %p" % [exp, io] if io.key?(exp)
     io[exp] = msg
+    exp
   end
 
   def out
@@ -370,5 +189,178 @@ class AssertScanner < SexpProcessor
     end
 
     io.clear
+  end
+
+  ############################################################
+  # Analyzer
+
+  def analyze_assert exp
+    begin
+      found = false
+
+      self.class.assertions.each do |pat, blk|
+        if pat === exp then
+          found = true
+          exp = self.instance_exec(exp, &blk)
+          break # TODO: infinite loop on non-changing blocks
+        end
+      end
+    end while found
+
+    exp
+  end
+
+  ############################################################
+  # Analyzer Blocks
+
+  register_assert RE_MSG do |exp|
+    handle_arity exp, 3
+  end
+
+  register_assert RE_NOT do |t, r, _, test|
+    _, recv, _ = test
+
+    exp = s(t, r, :refute, recv)
+
+    change exp, "refute not_cond"
+  end
+
+  register_assert RE_EQUAL do |t, r, _, test|
+    _, lhs, _, rhs = test
+
+    exp = s(t, r, :assert_equal, lhs, rhs)
+
+    change exp, "assert_equal exp, act"
+  end
+
+  register_assert RE_NEQUAL do |t, r, _, test|
+    _, lhs, _, rhs = test
+
+    exp = s(t, r, :refute_equal, lhs, rhs)
+
+    change exp, "refute_equal exp, act"
+  end
+
+  register_assert RE_INCL do |t, r, _, test|
+    _, recv, _, *rest = test
+    exp = s(t, r, :assert_includes, recv, *rest)
+
+    change exp, "assert_includes obj, val"
+  end
+
+  register_assert RE_PRED do |t, r, _, test|
+    _, recv, msg = test
+    exp = s(t, r, :assert_predicate, recv, s(:lit, msg))
+
+    change exp, "assert_predicate obj, msg"
+  end
+
+  register_assert RE_OPER do |t, r, _, test|
+    _, recv, msg, *rest = test
+    exp = s(t, r, :assert_operator, recv, s(:lit, msg), *rest)
+
+    change exp, "assert_operator obj, msg, arg"
+  end
+
+  register_assert RE_PLAIN do |exp|
+    warn "You should probably NEVER use plain assert: %p" % [exp]
+  end
+
+  register_assert RE_EQ_MSG do |exp|
+    handle_arity exp, 4
+  end
+
+  register_assert RE_EQ_NIL do |t, r, m, lhs, rhs|
+    exp = s(t, r, :assert_nil, rhs)
+
+    change exp, "assert_nil"
+  end
+
+  register_assert RE_EQ_INCL do |t, r, m, lhs, rhs|
+    _, recv, _, obj = rhs
+
+    exp = s(t, r, :assert_includes, recv, obj)
+
+    change exp, "assert_includes enum, val"
+  end
+
+  register_assert RE_EQ_PRED do |t, r, m, lhs, rhs|
+    _, recv, msg = rhs
+    exp = s(t, r, :assert_predicate, recv, s(:lit, msg))
+
+    change exp, "assert_predicate obj, msg"
+  end
+
+  register_assert RE_EQ_OPER do |t, r, m, lhs, rhs|
+    _, recv, msg, *rest = rhs
+    exp = s(t, r, :assert_operator, recv, s(:lit, msg), *rest)
+
+    change exp, "assert_operator obj, msg, arg"
+  end
+
+  register_assert RE_EQ_LHS_STR do |exp|
+    t, r, _, lhs, rhs, * = exp
+    _, str = lhs
+
+    if str.length > 20 then
+      lhs = s(:str, str[0, 20])
+      exp = s(t, r, :assert_includes, lhs, rhs)
+      change exp, "assert_includes substr, actual (or fixture)"
+    else
+      exp
+    end
+  end
+
+  register_assert RE_EQ_RHS_LIT, RE_EQ_RHS_STR, RE_EQ_RHS_NTF do |t, r, m, lhs, rhs|
+    lhs, rhs = rhs, lhs
+    exp = s(t, r, m, lhs, rhs)
+
+    change exp, "assert_equal exp, act"
+  end
+
+  register_assert RE_EQ_EMPTY do |t, r, m, lhs, rhs|
+    rhs = rhs[1] # recv to remove .count
+    exp = s(t, r, :assert_empty, rhs)
+
+    change exp, "assert_empty"
+  end
+
+  register_assert RE_REF_MSG do |exp|
+    handle_arity exp, 3
+  end
+
+  register_assert RE_REF_NOT do |t, r, _, test|
+    _, recv, _ = test
+
+    exp = s(t, r, :assert, recv)
+
+    change exp, "refute not_cond"
+  end
+
+  register_assert RE_REF_INCL do |t, r, _, test|
+    _, recv, _, *rest = test
+    exp = s(t, r, :refute_includes, recv, *rest)
+
+    change exp, "refute_includes obj, val"
+  end
+
+  register_assert RE_REF_PRED do |t, r, _, test|
+    _, recv, msg = test
+    exp = s(t, r, :refute_predicate, recv, s(:lit, msg))
+
+    change exp, "refute_predicate obj, msg"
+  end
+
+  register_assert RE_REF_OPER do |t, r, _, test|
+    _, recv, msg, *rest = test
+    exp = s(t, r, :refute_operator, recv, s(:lit, msg), *rest)
+
+    change exp, "refute_operator obj, msg, arg"
+  end
+
+  register_assert RE_OP_INCL do |t, r, _, obj, _, val|
+    exp = s(t, r, :assert_includes, obj, val)
+
+    change exp, "assert_includes enum, val"
   end
 end
