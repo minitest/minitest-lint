@@ -236,10 +236,10 @@ class AssertScanner < SexpProcessor
         change exp, "assert_nil"
         break
       when RE_EQ_INCL then
-        _, recv, msg, *rest = rhs
-        exp = s(t, r, :assert_includes, recv, s(:lit, msg), *rest)
+        _, recv, msg, obj = rhs
+        exp = s(t, r, :assert_includes, recv, obj)
 
-        change exp, "assert_includes obj, val"
+        change exp, "assert_includes enum, val"
         break
       when RE_EQ_PRED then
         _, recv, msg = rhs

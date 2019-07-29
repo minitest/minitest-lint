@@ -28,8 +28,7 @@ class TestAssertScanner < Minitest::Test
           s(:call, nil, :b))) => "assert_equal exp, act",
       s(:call, nil, :assert_includes,
         s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)),
-        s(:lit, :include?),
-        s(:call, nil, :b)) => "assert_includes obj, val",
+        s(:call, nil, :b)) => "assert_includes enum, val",
     }
 
     assert_equal exp, scan.io
@@ -38,7 +37,7 @@ class TestAssertScanner < Minitest::Test
       "  assert(([1, 2, 3].include?(b) == true))   # redundant message?",
       "  assert_equal([1, 2, 3].include?(b), true) # assert_equal exp, act",
       "  assert_equal(true, [1, 2, 3].include?(b)) # assert_equal exp, act",
-      "  assert_includes([1, 2, 3], :include?, b)  # assert_includes obj, val",
+      "  assert_includes([1, 2, 3], b)             # assert_includes enum, val",
     ]
 
     assert_equal exp, scan.out

@@ -22,7 +22,7 @@ Lint your minitest assertions.
     assert(([1, 2, 3].include?(b) == true), "is b in 1..3?") # original
     assert_equal([1, 2, 3].include?(b), true) # assert_equal exp, act
     assert_equal(true, [1, 2, 3].include?(b)) # assert_equal exp, act
-    assert_includes([1, 2, 3], :include?, b)  # assert_includes obj, val
+    assert_includes([1, 2, 3], b)             # assert_includes enum, val
 
 == REQUIREMENTS:
 
