@@ -3,6 +3,8 @@ require "sexp_processor"
 require "path_expander"
 require "ruby2ruby"
 
+$v ||= false
+
 class AssertScanner < SexpProcessor
   VERSION = "1.0.0"
 

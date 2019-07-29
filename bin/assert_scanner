@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby -ws
 
-$v ||= false
-
 require "assert_scanner"
 
 AssertScanner.run ARGV
