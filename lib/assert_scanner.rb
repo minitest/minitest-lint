@@ -40,16 +40,16 @@ class AssertScanner < SexpProcessor
 
   RE_MSG        = pat :assert, "_ _"
   RE_INCL       = assert_pat "(call _ [m /include./] _)"
-  RE_NOT        = s{ s(:call, nil, :assert, s(:call, _, :"!")) }
+  RE_NOT        = s{ q(:call, nil, :assert, q(:call, _, :"!")) }
   RE_OPER       = assert_pat "(call _ _ _)"
   RE_PRED       = assert_pat "(call _ _)"
-  RE_EQUAL      = s{ s(:call, nil, :assert, s(:call, _, :==, _), ___) }
-  RE_NEQUAL     = s{ s(:call, nil, :assert, s(:call, _, :!=, _), ___) }
+  RE_EQUAL      = s{ q(:call, nil, :assert, q(:call, _, :==, _), ___) }
+  RE_NEQUAL     = s{ q(:call, nil, :assert, q(:call, _, :!=, _), ___) }
   RE_PLAIN      = assert_pat "_"
 
   RE_REF_MSG    = pat :refute, "_ _"
   RE_REF_INCL   = refute_pat "(call _ [m /include./] _)"
-  RE_REF_NOT    = s{ s(:call, nil, :refute, s(:call, _, :"!")) }
+  RE_REF_NOT    = s{ q(:call, nil, :refute, q(:call, _, :"!")) }
   RE_REF_OPER   = refute_pat "(call _ _ _)"
   RE_REF_PRED   = refute_pat "(call _ _)"
 
