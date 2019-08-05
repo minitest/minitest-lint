@@ -206,9 +206,10 @@ class AssertScanner < SexpProcessor
 
       self.class.assertions.each do |pat, blk|
         if pat === exp then
-          found = true
-          exp = self.instance_exec(exp, &blk)
-          break # TODO: infinite loop on non-changing blocks
+          new_exp = self.instance_exec(exp, &blk)
+          found = !!new_exp
+          exp = new_exp if found
+          break
         end
       end
     end while found
