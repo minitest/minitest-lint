@@ -252,7 +252,7 @@ class AssertScanner < SexpProcessor
     handle_arity exp, 3
   end
 
-  RE_NOT = s{ q(:call, nil, :assert, q(:call, _, :"!")) }
+  RE_NOT = pat :assert, "(call _ !)"
   register_assert RE_NOT do |t, r, _, test|
     _, recv, _ = test
 
@@ -261,7 +261,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute not_cond"
   end
 
-  RE_EQUAL = s{ q(:call, nil, :assert, q(:call, _, :==, _), ___) }
+  RE_EQUAL = pat :assert, "(call _ == _)", "___"
   register_assert RE_EQUAL do |t, r, _, test|
     _, lhs, _, rhs = test
 
@@ -270,7 +270,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_equal exp, act"
   end
 
-  RE_NEQUAL = s{ q(:call, nil, :assert, q(:call, _, :!=, _), ___) }
+  RE_NEQUAL = pat :assert, "(call _ != _)", "___"
   register_assert RE_NEQUAL do |t, r, _, test|
     _, lhs, _, rhs = test
 
@@ -279,7 +279,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_equal exp, act"
   end
 
-  RE_INCL = assert_pat "(call _ [m /include./] _)"
+  RE_INCL = assert_pat "(call _ include? _)"
   register_assert RE_INCL do |t, r, _, test|
     _, recv, _, *rest = test
     exp = s(t, r, :assert_includes, recv, *rest)
@@ -366,7 +366,7 @@ class AssertScanner < SexpProcessor
     handle_arity exp, 3
   end
 
-  RE_REF_NOT = s{ q(:call, nil, :refute, q(:call, _, :"!")) }
+  RE_REF_NOT = pat :refute, "(call _ !)"
   register_assert RE_REF_NOT do |t, r, _, test|
     _, recv, _ = test
 
@@ -375,7 +375,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute not_cond"
   end
 
-  RE_REF_INCL = refute_pat "(call _ [m /include./] _)"
+  RE_REF_INCL = refute_pat "(call _ include? _)"
   register_assert RE_REF_INCL do |t, r, _, test|
     _, recv, _, *rest = test
     exp = s(t, r, :refute_includes, recv, *rest)
@@ -399,7 +399,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_operator obj, msg, arg"
   end
 
-  RE_OP_INCL = pat :assert_operator, "_", "(lit [m /include./])", "_"
+  RE_OP_INCL = pat :assert_operator, "_", "(lit include?)", "_"
   register_assert RE_OP_INCL do |t, r, _, obj, _, val|
     exp = s(t, r, :assert_includes, obj, val)
 
