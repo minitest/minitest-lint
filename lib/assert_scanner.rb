@@ -108,6 +108,7 @@ class AssertScanner < SexpProcessor
   def change exp, msg
     raise ArgumentError, "key already exists! %p in %p" % [exp, io] if io.key?(exp)
     io[exp] = msg
+    self.count += 1
     exp
   end
 
