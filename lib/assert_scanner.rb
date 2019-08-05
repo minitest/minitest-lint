@@ -29,7 +29,6 @@ class AssertScanner < SexpProcessor
 
   RE_EQ_MSG     = pat :assert_equal, "_ _ _"
   RE_EQ_EMPTY   = eq_pat "(lit 0)", "(call _ [m length size count])"
-  RE_EQ_INCL    = eq_pat "(true)",  "(call _ [m /include./] _)"
   RE_EQ_LHS_STR = eq_pat "(str _)", "_"
   RE_EQ_NIL     = eq_pat "nil",     "_"
   RE_EQ_OPER    = eq_pat "(true)",  "(call _ _ _)"
@@ -277,14 +276,6 @@ class AssertScanner < SexpProcessor
     exp = s(t, r, :assert_nil, rhs)
 
     change exp, "assert_nil"
-  end
-
-  register_assert RE_EQ_INCL do |t, r, m, lhs, rhs|
-    _, recv, _, obj = rhs
-
-    exp = s(t, r, :assert_includes, recv, obj)
-
-    change exp, "assert_includes enum, val"
   end
 
   register_assert RE_EQ_PRED do |t, r, m, lhs, rhs|
