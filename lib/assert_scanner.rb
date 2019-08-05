@@ -336,8 +336,6 @@ class AssertScanner < SexpProcessor
       lhs = s(:str, str[0, 20])
       exp = s(t, r, :assert_includes, lhs, rhs)
       change exp, "assert_includes substr, actual (or fixture)"
-    else
-      exp
     end
   end
 
