@@ -86,6 +86,12 @@ class AssertScanner < SexpProcessor
 
   def self.register_assert *matchers, &handler
     matchers.each do |matcher|
+      if assertions.key? matcher then
+        warn "WARNING! Reassigning matcher! %p" % [matcher]
+        warn "old: %s" % [assertions[matcher].source_location]
+        warn "new: %s" % [handler.source_location]
+      end
+
       assertions[matcher] = handler
     end
   end
