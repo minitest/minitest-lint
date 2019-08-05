@@ -182,8 +182,12 @@ class AssertScanner < SexpProcessor
   ############################################################
   # Patterns:
 
+  def self.parse str
+    Sexp::Matcher.parse str
+  end
+
   def self.pat *args
-    Sexp::Matcher.parse "(call nil #{args.join " "})"
+    parse "(call nil #{args.join " "})"
   end
 
   def self.assert_pat test
