@@ -4,6 +4,7 @@ require "path_expander"
 require "ruby2ruby"
 
 $v ||= false
+$d ||= false
 
 class AssertScanner < SexpProcessor
   VERSION = "1.0.0"
@@ -55,6 +56,7 @@ class AssertScanner < SexpProcessor
   def scan(*files)
     files.each do |file|
       next unless file == '-' or File.readable? file
+      warn "# #{file}" if $v
 
       ruby = file == '-' ? $stdin.read : File.binread(file)
 
@@ -141,6 +143,15 @@ class AssertScanner < SexpProcessor
     io.clear
   end
 
+  def d o=nil
+    return unless $d
+    if o then
+      p o
+    else
+      puts
+    end
+  end
+
   ############################################################
   # Analyzer
 
@@ -148,11 +159,17 @@ class AssertScanner < SexpProcessor
     begin
       found = false
 
+      d
+      d :EXP => rr.process(exp)
+
       self.class.assertions.each do |pat, blk|
+        d :PAT => pat if $v
+
         if pat === exp then
           new_exp = self.instance_exec(exp, &blk)
           found = !!new_exp
           exp = new_exp if found
+          d :NEW => rr.process(exp) if found
           break
         end
       end
