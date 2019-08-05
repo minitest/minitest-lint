@@ -269,10 +269,6 @@ class AssertScanner < SexpProcessor
     change exp, "assert_operator obj, msg, arg"
   end
 
-  register_assert RE_PLAIN do |exp|
-    warn "You should probably NEVER use plain assert: %p" % [exp]
-  end
-
   register_assert RE_EQ_MSG do |exp|
     handle_arity exp, 4
   end
@@ -369,5 +365,10 @@ class AssertScanner < SexpProcessor
     exp = s(t, r, :assert_includes, obj, val)
 
     change exp, "assert_includes enum, val"
+  end
+
+  register_assert RE_PLAIN do |exp|
+    io[exp] = "Try to not use plain assert"
+    nil
   end
 end
