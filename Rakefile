@@ -20,4 +20,8 @@ Hoe.spec "assert_scanner" do
   license "MIT"
 end
 
+task :autotest => :isolate do
+  sh "autotest"
+end
+
 # vim: syntax=ruby
