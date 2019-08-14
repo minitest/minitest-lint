@@ -434,7 +434,11 @@ class AssertScanner < SexpProcessor
   ############################################################
   # Expectations
 
-  RE_MUST_GOOD = parse "(call (call nil :_ _) [m /^must/] _)"
+  def self.must_pat lhs, msg, rhs
+    parse "(call (call nil :_ %s) %s %s)" % [lhs, msg, rhs]
+  end
+
+  RE_MUST_GOOD = must_pat "_", "[m /^must/]", "_"
   register_assert RE_MUST_GOOD do |t, (_, _, _, lhs), msg, rhs|
     # STOP
   end
