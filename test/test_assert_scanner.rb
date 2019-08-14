@@ -81,7 +81,7 @@ class TestAssertScanner < Minitest::Test
   def r(*args);  am(:refute, *args);             end
   def ae(*args); am(:assert_equal, *args);       end
   def ai(*args); am(:assert_includes, *args);    end
-  def e_(l,m,r); s(:call, am(:_, l), m, r);      end
+  def e_(l,m,*r); s(:call, am(:_, l), m, *r);    end
   def eq(l,r);   e_(l, :must_equal,    r);       end
   def ee(l,r);   e_(l, :must_be_empty, r);       end
   def ep(*args); e_(l, :must_be,       r);       end
@@ -302,6 +302,16 @@ class TestAssertScanner < Minitest::Test
               # =>
               eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
                  s(:call, nil, :d)))
+  end
+
+  def test_must_equal_nil
+    assert_re(:RE_MUST_EQ_NIL,
+              "_(act).must_be_nil",
+              eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
+                 s(:nil)),
+              # =>
+              e_(s(:call, s(:call, s(:call, nil, :a), :b), :c),
+                 :must_be_nil))
   end
 
   def test_re_plain

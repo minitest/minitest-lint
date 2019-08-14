@@ -438,21 +438,44 @@ class AssertScanner < SexpProcessor
     parse "(call (call nil :_ %s) %s %s)" % [lhs, msg, rhs]
   end
 
+  def match exp
+    _, (_, _, _, lhs), msg, *rhs = exp
+    return lhs, msg, *rhs
+  end
+
+  def must lhs, msg, *rhs
+    s(:call, s(:call, nil, :_, lhs), msg, *rhs)
+  end
+
+  RE_MUST_EQ_NIL = must_pat "_", :must_equal, "(:nil)"
+  register_assert RE_MUST_EQ_NIL do |sexp|
+    lhs, _, _ = match sexp
+
+    exp = must lhs, :must_be_nil
+
+    change exp, "_(act).must_be_nil"
+  end
+
+  ############################################################
+  # Structural transformations (or stopping points)
+
   RE_MUST_GOOD = must_pat "_", "[m /^must/]", "_"
-  register_assert RE_MUST_GOOD do |t, (_, _, _, lhs), msg, rhs|
+  register_assert RE_MUST_GOOD do |sexp|
     # STOP
   end
 
   RE_MUST_OTHER = parse "(call (call nil [m expect value] _) [m /^must/] _)"
-  register_assert RE_MUST_OTHER do |t, (_, _, _, lhs), msg, rhs|
-    exp = s(t, s(:call, nil, :_, lhs), msg, rhs)
+  register_assert RE_MUST_OTHER do |sexp|
+    lhs, msg, rhs = match sexp
+
+    exp = must lhs, msg, rhs
 
     change exp, "_(act).#{msg} exp"
   end
 
   RE_MUST_PLAIN = parse "(call _ [m /^must/] _)"
   register_assert RE_MUST_PLAIN do |t, lhs, msg, rhs|
-    exp = s(t, s(:call, nil, :_, lhs), msg, rhs)
+    exp = must lhs, msg, rhs
 
     change exp, "_(act).#{msg} exp" # TODO: if $v?
   end
