@@ -144,8 +144,9 @@ class AssertScanner < SexpProcessor
     io.clear
   end
 
-  def d o=nil
+  def d
     return unless $d
+    o = yield if block_given?
     if o then
       p o
     else
@@ -161,17 +162,19 @@ class AssertScanner < SexpProcessor
       found = false
 
       d
-      d :EXP => exp
-      d :EXP => rr.process(exp)
+      d { { :EXP => exp } }
+      d { { :EXP => rr.process(exp) } }
 
       self.class.assertions.each do |pat, blk|
-        d :PAT => pat if $v
+        d { { :PAT => pat } } if $v
 
         if pat === exp then
           new_exp = self.instance_exec(exp, &blk)
           found = !!new_exp
-          exp = new_exp if found
-          d :NEW => rr.process(exp) if found
+          if found then
+            exp = new_exp
+            d { { :NEW => rr.process(exp) } }
+          end
           break
         end
       end
