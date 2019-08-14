@@ -428,6 +428,28 @@ class AssertScanner < SexpProcessor
     change exp, "assert_includes enum, val"
   end
 
+  ############################################################
+  # Expectations
+
+  RE_MUST_GOOD = parse "(call (call nil :_ _) [m /^must/] _)"
+  register_assert RE_MUST_GOOD do |t, (_, _, _, lhs), msg, rhs|
+    # STOP
+  end
+
+  RE_MUST_OTHER = parse "(call (call nil [m expect value] _) [m /^must/] _)"
+  register_assert RE_MUST_OTHER do |t, (_, _, _, lhs), msg, rhs|
+    exp = s(t, s(:call, nil, :_, lhs), msg, rhs)
+
+    change exp, "_(act).#{msg} exp"
+  end
+
+  RE_MUST_PLAIN = parse "(call _ [m /^must/] _)"
+  register_assert RE_MUST_PLAIN do |t, lhs, msg, rhs|
+    exp = s(t, s(:call, nil, :_, lhs), msg, rhs)
+
+    change exp, "_(act).#{msg} exp" # TODO: if $v?
+  end
+
   RE_PLAIN = assert_pat "_"
   register_assert RE_PLAIN do |exp|
     io[exp] = "Try to not use plain assert"

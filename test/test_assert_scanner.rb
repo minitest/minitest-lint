@@ -63,11 +63,28 @@ class TestAssertScanner < Minitest::Test
     assert_equal exp, scan.io
   end
 
-  def am(msg, *args); s(:call, nil, msg, *args);   end
-  def a(*args);       am(:assert, *args);          end
-  def r(*args);       am(:refute, *args);          end
-  def ae(*args);      am(:assert_equal, *args);    end
-  def ai(*args);      am(:assert_includes, *args); end
+  def assert_re_done scanner, from
+    pattern = AssertScanner.const_get scanner
+    scan = AssertScanner.new
+    proc = AssertScanner.assertions[pattern]
+
+    scan.instance_exec from, &proc
+
+    assert_operator pattern, :===, from
+    assert_match pattern, from
+
+    assert_empty scan.io
+  end
+
+  def am(msg, *args); s(:call, nil, msg, *args); end
+  def a(*args);  am(:assert, *args);             end
+  def r(*args);  am(:refute, *args);             end
+  def ae(*args); am(:assert_equal, *args);       end
+  def ai(*args); am(:assert_includes, *args);    end
+  def e_(l,m,r); s(:call, am(:_, l), m, r);      end
+  def eq(l,r);   e_(l, :must_equal,    r);       end
+  def ee(l,r);   e_(l, :must_be_empty, r);       end
+  def ep(*args); e_(l, :must_be,       r);       end
 
   def test_re_msg
     assert_re(:RE_MSG,
@@ -238,6 +255,53 @@ class TestAssertScanner < Minitest::Test
               "assert_includes enum, val",
               am(:assert_operator, :lhs, s(:lit, :include?), :rhs),
               ai(:lhs, :rhs))
+  end
+
+  def test_must_plain
+    assert_re(:RE_MUST_PLAIN,
+              "_(act).must_equal exp",
+              s(:call,
+                s(:call, s(:call, s(:call, nil, :a), :b), :c),
+                :must_equal,
+                s(:call, nil, :d)),
+              # =>
+              s(:call,
+                s(:call, nil, :_,
+                  s(:call, s(:call, s(:call, nil, :a), :b), :c)),
+                :must_equal,
+                s(:call, nil, :d)))
+  end
+
+  def test_must_plain_good
+    assert_re_done(:RE_MUST_GOOD,
+                   eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
+                      s(:call, nil, :d)))
+  end
+
+  def test_must_plain_expect
+    assert_re(:RE_MUST_OTHER,
+              "_(act).must_equal exp",
+              s(:call,
+                s(:call, nil, :expect,
+                  s(:call, s(:call, s(:call, nil, :a), :b), :c)),
+                :must_equal,
+                s(:call, nil, :d)),
+              # =>
+              eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
+                 s(:call, nil, :d)))
+  end
+
+  def test_must_plain_value
+    assert_re(:RE_MUST_OTHER,
+              "_(act).must_equal exp",
+              s(:call,
+                s(:call, nil, :value,
+                  s(:call, s(:call, s(:call, nil, :a), :b), :c)),
+                :must_equal,
+                s(:call, nil, :d)),
+              # =>
+              eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
+                 s(:call, nil, :d)))
   end
 
   def test_re_plain
