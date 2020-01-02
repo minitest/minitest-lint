@@ -10,6 +10,17 @@ class TestAssertScanner < Minitest::Test
     end
   end
 
+  def c(msg, *args); s(:call, nil, msg, *args);  end
+  def a(*args);      c(:assert, *args);          end
+  def r(*args);      c(:refute, *args);          end
+  def e(l,m,*r);     s(:call, c(:_, l), m, *r);  end
+  def aeq(*args);    c(:assert_equal, *args);    end
+  def ain(*args);    c(:assert_includes, *args); end
+  def blk(*a);       s(:iter, c(:_), 0, *a);     end
+  def bm(*a, m, r);  s(:call, blk(*a), m, r);    end
+  def meq(l,r);      e(l, :must_equal,    r);    end
+  def lit(x);        s(:lit, x);                 end
+
   def test_sanity
     ruby = %(assert [1, 2, 3].include?(b) == true, "is b in 1..3?")
     sexp = RubyParser.new.process ruby
@@ -17,28 +28,16 @@ class TestAssertScanner < Minitest::Test
 
     scan.analyze_assert sexp
 
+    lhs = s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3))
+    rhs = c(:b)
+    inc = s(:call, lhs, :include?, rhs)
+
     exp = {
-      s(:call, nil, :assert,
-        s(:call,
-          s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
-            s(:call, nil, :b)),
-          :==,
-          s(:true))) => "redundant message?",
-      s(:call, nil, :assert_equal,
-        s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
-          s(:call, nil, :b)),
-        s(:true)) => "assert_equal exp, act",
-      s(:call, nil, :assert_equal,
-        s(:true),
-        s(:call, s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)), :include?,
-          s(:call, nil, :b))) => "assert_equal exp, act",
-      s(:call, nil, :assert_operator,
-        s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)),
-        s(:lit, :include?),
-        s(:call, nil, :b)) => "assert_operator obj, msg, arg",
-      s(:call, nil, :assert_includes,
-        s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3)),
-        s(:call, nil, :b)) => "assert_includes enum, val",
+      c(:assert, s(:call, inc, :==, s(:true)))          => "redundant message?",
+      c(:assert_equal, inc, s(:true))                   => "assert_equal exp, act",
+      c(:assert_equal, s(:true), inc)                   => "assert_equal exp, act",
+      c(:assert_operator, lhs, s(:lit, :include?), rhs) => "assert_operator obj, msg, arg",
+      c(:assert_includes, lhs, rhs)                     => "assert_includes enum, val",
     }
 
     assert_equal exp, scan.io
@@ -55,7 +54,7 @@ class TestAssertScanner < Minitest::Test
     assert_equal exp, scan.out
   end
 
-  def assert_re scanner, msg, from, to
+  def assert_pattern scanner, from, msg = nil, to = nil
     pattern = AssertScanner.const_get scanner
     scan = AssertScanner.new
     proc = AssertScanner.assertions[pattern]
@@ -65,59 +64,51 @@ class TestAssertScanner < Minitest::Test
     assert_operator pattern, :===, from
     assert_match pattern, from
 
-    exp = {to => msg}
+    if msg && to
+      exp = {to => msg}
 
-    assert_equal exp, scan.io
+      assert_equal exp, scan.io
+    else
+      assert_empty scan.io
+    end
+  end
+
+  def assert_re scanner, msg, from, to
+    assert_pattern scanner, from, msg, to
   end
 
   def assert_re_done scanner, from
-    pattern = AssertScanner.const_get scanner
-    scan = AssertScanner.new
-    proc = AssertScanner.assertions[pattern]
-
-    scan.instance_exec from, &proc
-
-    assert_operator pattern, :===, from
-    assert_match pattern, from
-
-    assert_empty scan.io
+    assert_pattern scanner, from
   end
-
-  def c(msg, *args); s(:call, nil, msg, *args); end
-  def a(*args);  c(:assert, *args);             end
-  def r(*args);  c(:refute, *args);             end
-  def ae(*args); c(:assert_equal, *args);       end
-  def ai(*args); c(:assert_includes, *args);    end
-  def e_(l,m,*r); s(:call, c(:_, l), m, *r);    end
-  def eq(l,r);   e_(l, :must_equal,    r);      end
-  def ee(l,r);   e_(l, :must_be_empty, r);      end
-  def ep(*args); e_(l, :must_be,       r);      end
 
   def test_re_msg
     assert_re(:RE_MSG,
               "redundant message?",
-              a(s(:lit, 42), s(:str, "message")),
-              a(s(:lit, 42)))
+              a(:lhs, s(:str, "message")),
+              a(:lhs))
   end
 
   def test_re_not
     assert_re(:RE_NOT,
               "refute not_cond",
-              a(s(:call, s(:lit, 42), :!)),
-              r(s(:lit, 42)))
+              a(s(:call, :lhs, :!)),
+              # =>
+              r(:lhs))
   end
 
   def test_re_equal
     assert_re(:RE_EQUAL,
               "assert_equal exp, act",
               a(s(:call, :lhs, :==, :rhs)),
-              ae(:lhs, :rhs))
+              # =>
+              aeq(:lhs, :rhs))
   end
 
   def test_re_nequal
     assert_re(:RE_NEQUAL,
               "refute_equal exp, act",
               a(s(:call, :lhs, :!=, :rhs)),
+              # =>
               c(:refute_equal, :lhs, :rhs))
   end
 
@@ -125,49 +116,56 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_INCL,
               "assert_includes obj, val",
               a(s(:call, :lhs, :include?, :rhs)),
-              ai(:lhs, :rhs))
+              # =>
+              ain(:lhs, :rhs))
   end
 
   def test_re_pred
     assert_re(:RE_PRED,
               "assert_predicate obj, msg",
               a(s(:call, :lhs, :pred?)),
-              c(:assert_predicate, :lhs, s(:lit, :pred?)))
+              # =>
+              c(:assert_predicate, :lhs, lit(:pred?)))
   end
 
   def test_re_oper
     assert_re(:RE_OPER,
               "assert_operator obj, msg, arg",
-              a(s(:call, :lhs, :op, :rhs)),
-              c(:assert_operator, :lhs, s(:lit, :op), :rhs))
+              a(s(:call, :lhs, :msg, :rhs)),
+              # =>
+              c(:assert_operator, :lhs, lit(:msg), :rhs))
   end
 
   def test_re_eq_msg
     assert_re(:RE_EQ_MSG,
               "redundant message?",
-              ae(:lhs, :rhs, :msg),
-              ae(:lhs, :rhs))
+              aeq(:lhs, :rhs, :msg),
+              # =>
+              aeq(:lhs, :rhs))
   end
 
   def test_re_eq_nil
     assert_re(:RE_EQ_NIL,
               "assert_nil obj",
-              ae(s(:nil), :whatever),
+              aeq(s(:nil), :whatever),
+              # =>
               c(:assert_nil, :whatever))
   end
 
   def test_re_eq_pred
     assert_re(:RE_EQ_PRED,
               "assert_predicate obj, msg",
-              ae(s(:true), s(:call, :obj, :msg)),
-              c(:assert_predicate, :obj, s(:lit, :msg)))
+              aeq(s(:true), s(:call, :obj, :msg)),
+              # =>
+              c(:assert_predicate, :obj, lit(:msg)))
   end
 
   def test_re_eq_oper
     assert_re(:RE_EQ_OPER,
               "assert_operator obj, msg, arg",
-              ae(s(:true), s(:call, :obj, :msg, :rhs)),
-              c(:assert_operator, :obj, s(:lit, :msg), :rhs))
+              aeq(s(:true), s(:call, :obj, :msg, :rhs)),
+              # =>
+              c(:assert_operator, :obj, lit(:msg), :rhs))
   end
 
   def test_re_eq_lhs_str
@@ -176,49 +174,56 @@ class TestAssertScanner < Minitest::Test
 
     assert_re(:RE_EQ_LHS_STR,
               "assert_includes actual, substr",
-              ae(s(:str, long), :rhs),
-              ai(:rhs, s(:str, short)))
+              aeq(s(:str, long), :rhs),
+              # =>
+              ain(:rhs, s(:str, short)))
   end
 
   def test_re_eq_rhs_lit
     assert_re(:RE_EQ_RHS_LIT,
               "assert_equal exp, act",
-              ae(:lhs, s(:lit, :rhs)),
-              ae(s(:lit, :rhs), :lhs))
+              aeq(:act, lit(:val)),
+              # =>
+              aeq(lit(:val), :act))
   end
 
   def test_re_eq_rhs_str
     assert_re(:RE_EQ_RHS_STR,
               "assert_equal exp, act",
-              ae(:lhs, s(:str, "str")),
-              ae(s(:str, "str"), :lhs))
+              aeq(:act, s(:str, "str")),
+              # =>
+              aeq(s(:str, "str"), :act))
   end
 
   def test_re_eq_rhs_ntf__nil
     assert_re(:RE_EQ_RHS_NTF,
               "assert_equal exp, act",
-              ae(:lhs, s(:nil)),
-              ae(s(:nil), :lhs))
+              aeq(:act, s(:nil)),
+              # =>
+              aeq(s(:nil), :act))
   end
 
   def test_re_eq_rhs_ntf__true
     assert_re(:RE_EQ_RHS_NTF,
               "assert_equal exp, act",
-              ae(:lhs, s(:true)),
-              ae(s(:true), :lhs))
+              aeq(:act, s(:true)),
+              # =>
+              aeq(s(:true), :act))
   end
 
   def test_re_eq_rhs_ntf__false
     assert_re(:RE_EQ_RHS_NTF,
               "assert_equal exp, act",
-              ae(:lhs, s(:false)),
-              ae(s(:false), :lhs))
+              aeq(:act, s(:false)),
+              # =>
+              aeq(s(:false), :act))
   end
 
   def test_re_eq_empty
     assert_re(:RE_EQ_EMPTY,
               "assert_empty",
-              ae(s(:lit, 0), s(:call, :whatever, :length)),
+              aeq(lit(0), s(:call, :whatever, :length)),
+              # =>
               c(:assert_empty, :whatever))
   end
 
@@ -226,113 +231,97 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_REF_MSG,
               "redundant message?",
               r(:test, s(:str, "msg")),
+              # =>
               r(:test))
   end
 
   def test_re_ref_not
     assert_re(:RE_REF_NOT,
               "assert cond",
-              r(s(:call, s(:lit, 42), :!)),
-              a(s(:lit, 42)))
+              r(s(:call, :lhs, :!)),
+              # =>
+              a(:lhs))
   end
 
   def test_re_ref_incl
     assert_re(:RE_REF_INCL,
               "refute_includes obj, val",
               r(s(:call, :lhs, :include?, :rhs)),
+              # =>
               c(:refute_includes, :lhs, :rhs))
   end
 
   def test_re_ref_pred
     assert_re(:RE_REF_PRED,
               "refute_predicate obj, msg",
-              r(s(:call, :lhs, :pred?)),
-              c(:refute_predicate, :lhs, s(:lit, :pred?)))
+              r(s(:call, :lhs, :msg)),
+              # =>
+              c(:refute_predicate, :lhs, lit(:msg)))
   end
 
   def test_re_ref_oper
     assert_re(:RE_REF_OPER,
               "refute_operator obj, msg, arg",
-              r(s(:call, :lhs, :op, :rhs)),
-              c(:refute_operator, :lhs, s(:lit, :op), :rhs))
+              r(s(:call, :lhs, :msg, :rhs)),
+              # =>
+              c(:refute_operator, :lhs, lit(:msg), :rhs))
   end
 
   def test_re_op_incl
     assert_re(:RE_OP_INCL,
               "assert_includes enum, val",
-              c(:assert_operator, :lhs, s(:lit, :include?), :rhs),
-              ai(:lhs, :rhs))
+              c(:assert_operator, :lhs, lit(:include?), :rhs),
+              # =>
+              ain(:lhs, :rhs))
   end
 
   def test_must_plain
     assert_re(:RE_MUST_PLAIN,
               "_(act).must_equal exp",
-              s(:call,
-                s(:call, s(:call, s(:call, nil, :a), :b), :c),
-                :must_equal,
-                s(:call, nil, :d)),
+              s(:call, :lhs, :must_equal, :rhs),
               # =>
-              s(:call,
-                s(:call, nil, :_,
-                  s(:call, s(:call, s(:call, nil, :a), :b), :c)),
-                :must_equal,
-                s(:call, nil, :d)))
+              meq(:lhs, :rhs))
   end
 
   def test_must_plain_good
     assert_re_done(:RE_MUST_GOOD,
-                   eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
-                      s(:call, nil, :d)))
+                   e(:lhs, :must_xxx, :rhs))
   end
 
   def test_must_block_good
     assert_re_done(:RE_MUST_BLOCK_GOOD,
-                   s(:call,
-                     s(:iter, s(:call, nil, :_), 0, s(:call, nil, :body)),
-                     :must_output,
-                     s(:lvar, :str)))
+                   bm(:lhs, :must_xxx, :rhs))
   end
 
   def test_must_plain_expect
     assert_re(:RE_MUST_OTHER,
               "_(act).must_equal exp",
-              s(:call,
-                s(:call, nil, :expect,
-                  s(:call, s(:call, s(:call, nil, :a), :b), :c)),
-                :must_equal,
-                s(:call, nil, :d)),
+              s(:call, c(:expect, :act), :must_equal, :exp),
               # =>
-              eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
-                 s(:call, nil, :d)))
+              meq(:act, :exp))
   end
 
   def test_must_plain_value
     assert_re(:RE_MUST_OTHER,
               "_(act).must_equal exp",
-              s(:call,
-                s(:call, nil, :value,
-                  s(:call, s(:call, s(:call, nil, :a), :b), :c)),
-                :must_equal,
-                s(:call, nil, :d)),
+              s(:call, c(:value, :act), :must_equal, :exp),
               # =>
-              eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
-                 s(:call, nil, :d)))
+              meq(:act, :exp))
   end
 
   def test_must_equal_nil
     assert_re(:RE_MUST_EQ_NIL,
               "_(act).must_be_nil",
-              eq(s(:call, s(:call, s(:call, nil, :a), :b), :c),
-                 s(:nil)),
+              meq(:lhs, s(:nil)),
               # =>
-              e_(s(:call, s(:call, s(:call, nil, :a), :b), :c),
-                 :must_be_nil))
+              e(:lhs, :must_be_nil))
   end
 
   def test_re_plain
     assert_re(:RE_PLAIN,
               "Try to not use plain assert",
               a(:whatever),
+              # =>
               a(:whatever))
   end
 
