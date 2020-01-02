@@ -460,6 +460,42 @@ class AssertScanner < SexpProcessor
     change exp, "_(act).must_be_nil"
   end
 
+  # DOCO: _(a.include?(b)).must_equal true -> _(a).must_include b
+  RE_MUST_INCLUDE = must_pat "(call _ include? _)", :must_equal, "(:true)"
+  register_assert RE_MUST_INCLUDE do |sexp|
+    lhs, _, _ = match sexp
+    _, l, _m, r = lhs
+
+    exp = must(l, :must_include, r)
+
+    change exp, "_(obj).must_include val"
+  end
+
+
+  # DOCO: _(a.pred?).must_equal true -> _(a).must_be :pred?
+  RE_MUST_BE_PRED = must_pat "(call _ _)", :must_equal, "(:true)"
+  register_assert RE_MUST_BE_PRED do |sexp|
+    lhs, _, _ = match sexp
+    _, l, m = lhs
+
+    exp = must(l, :must_be, s(:lit, m))
+
+    change exp, "_(obj).must_be msg"
+  end
+
+  # DOCO: _(a.op(b)).must_equal true -> _(a).must_be :op, b
+  RE_MUST_BE_OPER = must_pat "(call _ _ _)", :must_equal, "(:true)"
+  register_assert RE_MUST_BE_OPER do |sexp|
+    lhs, _, _ = match sexp
+    _, l, m, r = lhs
+
+    next if m == :[]
+
+    exp = must(l, :must_be, s(:lit, m), r)
+
+    change exp, "_(obj).must_be msg, arg"
+  end
+
   ############################################################
   # Structural transformations (or stopping points)
 

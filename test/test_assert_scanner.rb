@@ -4,6 +4,8 @@ require "assert_scanner"
 $v = true # enables "redundant message" phase
 
 class TestAssertScanner < Minitest::Test
+  make_my_diffs_pretty!
+
   def self.todo msg
     define_method "test_#{msg}" do
       skip "not yet"
@@ -309,12 +311,36 @@ class TestAssertScanner < Minitest::Test
               meq(:act, :exp))
   end
 
-  def test_must_equal_nil
+  def test_must_equal_rhs_ntf__nil
     assert_re(:RE_MUST_EQ_NIL,
               "_(act).must_be_nil",
               meq(:lhs, s(:nil)),
               # =>
               e(:lhs, :must_be_nil))
+  end
+
+  def test_must_include
+    assert_re(:RE_MUST_INCLUDE,
+              "_(obj).must_include val",
+              meq(s(:call, :lhs, :include?, :rhs), s(:true)),
+              # =>
+              e(:lhs, :must_include, :rhs))
+  end
+
+  def test_must_be__pred
+    assert_re(:RE_MUST_BE_PRED,
+              "_(obj).must_be msg",
+              meq(s(:call, :lhs, :msg?), s(:true)),
+              # =>
+              e(:lhs, :must_be, lit(:msg?)))
+  end
+
+  def test_must_be__op
+    assert_re(:RE_MUST_BE_OPER,
+              "_(obj).must_be msg, arg",
+              meq(s(:call, :lhs, :msg, :rhs), s(:true)),
+              # =>
+              e(:lhs, :must_be, lit(:msg), :rhs))
   end
 
   def test_re_plain
@@ -380,7 +406,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal_lhs_str
   todo :must_equal_rhs_lit
   todo :must_equal_rhs_str
-  todo :must_equal_rhs_ntf__nil
   todo :must_equal_rhs_ntf__true
   todo :must_equal_rhs_ntf__false
   todo :must_equal_empty
@@ -388,11 +413,9 @@ class TestAssertScanner < Minitest::Test
   todo :must_be_empty
   todo :must_be_close_to
   todo :must_be_within_epsilon
-  todo :must_include
   todo :must_be_instance_of
   todo :must_be_kind_of
   todo :must_match
-  todo :must_be
   todo :must_output
   todo :must_raise
   todo :must_respond_to
