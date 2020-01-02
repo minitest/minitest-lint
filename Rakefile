@@ -3,8 +3,8 @@
 require "rubygems"
 require "hoe"
 
-Hoe.plugin :isolate
 Hoe.plugin :seattlerb
+Hoe.plugin :isolate
 Hoe.plugin :rdoc
 
 Hoe.spec "assert_scanner" do
@@ -22,6 +22,29 @@ end
 
 task :autotest => :isolate do
   sh "autotest"
+end
+
+task :parse => :isolate do
+  require "ruby_parser"
+  require "pp"
+
+  rp  = RubyParser.new
+  src = ENV["R"]
+
+  pp rp.parse src
+end
+
+task :debug => :isolate do
+  $: << "lib"
+  require "assert_scanner"
+
+  path = ENV["F"] || "stdin"
+  ruby = ENV["R"] || File.read(ENV["F"])
+
+  scanner = AssertScanner.new
+  scanner.process RubyParser.new.process(ruby, path)
+
+  puts scanner.count
 end
 
 # vim: syntax=ruby
