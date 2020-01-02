@@ -83,15 +83,15 @@ class TestAssertScanner < Minitest::Test
     assert_empty scan.io
   end
 
-  def am(msg, *args); s(:call, nil, msg, *args); end
-  def a(*args);  am(:assert, *args);             end
-  def r(*args);  am(:refute, *args);             end
-  def ae(*args); am(:assert_equal, *args);       end
-  def ai(*args); am(:assert_includes, *args);    end
-  def e_(l,m,*r); s(:call, am(:_, l), m, *r);    end
-  def eq(l,r);   e_(l, :must_equal,    r);       end
-  def ee(l,r);   e_(l, :must_be_empty, r);       end
-  def ep(*args); e_(l, :must_be,       r);       end
+  def c(msg, *args); s(:call, nil, msg, *args); end
+  def a(*args);  c(:assert, *args);             end
+  def r(*args);  c(:refute, *args);             end
+  def ae(*args); c(:assert_equal, *args);       end
+  def ai(*args); c(:assert_includes, *args);    end
+  def e_(l,m,*r); s(:call, c(:_, l), m, *r);    end
+  def eq(l,r);   e_(l, :must_equal,    r);      end
+  def ee(l,r);   e_(l, :must_be_empty, r);      end
+  def ep(*args); e_(l, :must_be,       r);      end
 
   def test_re_msg
     assert_re(:RE_MSG,
@@ -118,7 +118,7 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_NEQUAL,
               "refute_equal exp, act",
               a(s(:call, :lhs, :!=, :rhs)),
-              am(:refute_equal, :lhs, :rhs))
+              c(:refute_equal, :lhs, :rhs))
   end
 
   def test_re_incl
@@ -132,14 +132,14 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_PRED,
               "assert_predicate obj, msg",
               a(s(:call, :lhs, :pred?)),
-              am(:assert_predicate, :lhs, s(:lit, :pred?)))
+              c(:assert_predicate, :lhs, s(:lit, :pred?)))
   end
 
   def test_re_oper
     assert_re(:RE_OPER,
               "assert_operator obj, msg, arg",
               a(s(:call, :lhs, :op, :rhs)),
-              am(:assert_operator, :lhs, s(:lit, :op), :rhs))
+              c(:assert_operator, :lhs, s(:lit, :op), :rhs))
   end
 
   def test_re_eq_msg
@@ -153,21 +153,21 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_EQ_NIL,
               "assert_nil obj",
               ae(s(:nil), :whatever),
-              am(:assert_nil, :whatever))
+              c(:assert_nil, :whatever))
   end
 
   def test_re_eq_pred
     assert_re(:RE_EQ_PRED,
               "assert_predicate obj, msg",
               ae(s(:true), s(:call, :obj, :msg)),
-              am(:assert_predicate, :obj, s(:lit, :msg)))
+              c(:assert_predicate, :obj, s(:lit, :msg)))
   end
 
   def test_re_eq_oper
     assert_re(:RE_EQ_OPER,
               "assert_operator obj, msg, arg",
               ae(s(:true), s(:call, :obj, :msg, :rhs)),
-              am(:assert_operator, :obj, s(:lit, :msg), :rhs))
+              c(:assert_operator, :obj, s(:lit, :msg), :rhs))
   end
 
   def test_re_eq_lhs_str
@@ -219,7 +219,7 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_EQ_EMPTY,
               "assert_empty",
               ae(s(:lit, 0), s(:call, :whatever, :length)),
-              am(:assert_empty, :whatever))
+              c(:assert_empty, :whatever))
   end
 
   def test_re_ref_msg
@@ -240,27 +240,27 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_REF_INCL,
               "refute_includes obj, val",
               r(s(:call, :lhs, :include?, :rhs)),
-              am(:refute_includes, :lhs, :rhs))
+              c(:refute_includes, :lhs, :rhs))
   end
 
   def test_re_ref_pred
     assert_re(:RE_REF_PRED,
               "refute_predicate obj, msg",
               r(s(:call, :lhs, :pred?)),
-              am(:refute_predicate, :lhs, s(:lit, :pred?)))
+              c(:refute_predicate, :lhs, s(:lit, :pred?)))
   end
 
   def test_re_ref_oper
     assert_re(:RE_REF_OPER,
               "refute_operator obj, msg, arg",
               r(s(:call, :lhs, :op, :rhs)),
-              am(:refute_operator, :lhs, s(:lit, :op), :rhs))
+              c(:refute_operator, :lhs, s(:lit, :op), :rhs))
   end
 
   def test_re_op_incl
     assert_re(:RE_OP_INCL,
               "assert_includes enum, val",
-              am(:assert_operator, :lhs, s(:lit, :include?), :rhs),
+              c(:assert_operator, :lhs, s(:lit, :include?), :rhs),
               ai(:lhs, :rhs))
   end
 
