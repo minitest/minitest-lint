@@ -4,6 +4,12 @@ require "assert_scanner"
 $v = true # enables "redundant message" phase
 
 class TestAssertScanner < Minitest::Test
+  def self.todo msg
+    define_method "test_#{msg}" do
+      skip "not yet"
+    end
+  end
+
   def test_sanity
     ruby = %(assert [1, 2, 3].include?(b) == true, "is b in 1..3?")
     sexp = RubyParser.new.process ruby
@@ -38,6 +44,7 @@ class TestAssertScanner < Minitest::Test
     assert_equal exp, scan.io
 
     exp = [
+      #  assert([1, 2, 3].include?(b) == true, "is b in 1..3?") # original
       "  assert(([1, 2, 3].include?(b) == true))   # redundant message?",
       "  assert_equal([1, 2, 3].include?(b), true) # assert_equal exp, act",
       "  assert_equal(true, [1, 2, 3].include?(b)) # assert_equal exp, act",
@@ -320,4 +327,92 @@ class TestAssertScanner < Minitest::Test
               a(:whatever),
               a(:whatever))
   end
+
+  todo :assert
+  todo :assert_empty
+  # todo :assert_equal
+  # todo :assert_equal_nil
+  # todo :assert_equal_pred
+  # todo :assert_equal_oper
+  # todo :assert_equal_lhs_str
+  # todo :assert_equal_rhs_lit
+  # todo :assert_equal_rhs_str
+  # todo :assert_equal_rhs_ntf__nil
+  # todo :assert_equal_rhs_ntf__true
+  # todo :assert_equal_rhs_ntf__false
+  # todo :assert_equal_empty
+  todo :assert_in_delta
+  todo :assert_in_epsilon
+  todo :assert_includes
+  todo :assert_instance_of
+  todo :assert_kind_of
+  todo :assert_match
+  todo :assert_nil
+  todo :assert_operator
+  todo :assert_output
+  todo :assert_predicate
+  todo :assert_raises
+  todo :assert_respond_to
+  todo :assert_same
+  todo :assert_send
+  todo :assert_silent
+  todo :assert_throws
+  todo :refute
+  todo :refute_empty
+  todo :refute_equal
+  todo :refute_in_delta
+  todo :refute_in_epsilon
+  todo :refute_includes
+  todo :refute_instance_of
+  todo :refute_kind_of
+  todo :refute_match
+  todo :refute_nil
+  todo :refute_operator
+  todo :refute_predicate
+  todo :refute_respond_to
+  todo :refute_same
+
+  todo :must_equal
+  todo :must_equal_true
+  todo :must_equal_false
+  todo :must_equal_pred
+  todo :must_equal_oper
+
+  todo :must_equal_big_string
+  todo :must_equal_assert_equal?
+  todo :must_equal_lhs_str
+  todo :must_equal_rhs_lit
+  todo :must_equal_rhs_str
+  todo :must_equal_rhs_ntf__nil
+  todo :must_equal_rhs_ntf__true
+  todo :must_equal_rhs_ntf__false
+  todo :must_equal_empty
+
+  todo :must_be_empty
+  todo :must_be_close_to
+  todo :must_be_within_epsilon
+  todo :must_include
+  todo :must_be_instance_of
+  todo :must_be_kind_of
+  todo :must_match
+  todo :must_be
+  todo :must_output
+  todo :must_raise
+  todo :must_respond_to
+  todo :must_be_same_as
+  todo :must_be_silent
+  todo :must_throw
+
+  todo :wont_be_empty
+  todo :wont_equal
+  todo :wont_be_close_to
+  todo :wont_be_within_epsilon
+  todo :wont_include
+  todo :wont_be_instance_of
+  todo :wont_be_kind_of
+  todo :wont_match
+  todo :wont_be_nil
+  todo :wont_be
+  todo :wont_respond_to
+  todo :wont_be_same_as
 end
