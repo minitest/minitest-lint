@@ -438,6 +438,10 @@ class AssertScanner < SexpProcessor
     parse "(call (call nil :_ %s) %s %s)" % [lhs, msg, rhs]
   end
 
+  def self.must_block_pat body, msg, rhs
+    parse "(call (iter (call nil :_) 0 %s) %s %s)" % [body, msg, rhs]
+  end
+
   def match exp
     _, (_, _, _, lhs), msg, *rhs = exp
     return lhs, msg, *rhs
@@ -461,6 +465,11 @@ class AssertScanner < SexpProcessor
 
   RE_MUST_GOOD = must_pat "_", "[m /^must/]", "_"
   register_assert RE_MUST_GOOD do |sexp|
+    # STOP
+  end
+
+  RE_MUST_BLOCK_GOOD = must_block_pat "___", "[m /^must/]", "_"
+  register_assert RE_MUST_BLOCK_GOOD do |sexp|
     # STOP
   end
 

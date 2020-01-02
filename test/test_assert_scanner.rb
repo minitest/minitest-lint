@@ -285,6 +285,14 @@ class TestAssertScanner < Minitest::Test
                       s(:call, nil, :d)))
   end
 
+  def test_must_block_good
+    assert_re_done(:RE_MUST_BLOCK_GOOD,
+                   s(:call,
+                     s(:iter, s(:call, nil, :_), 0, s(:call, nil, :body)),
+                     :must_output,
+                     s(:lvar, :str)))
+  end
+
   def test_must_plain_expect
     assert_re(:RE_MUST_OTHER,
               "_(act).must_equal exp",
