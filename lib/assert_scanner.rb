@@ -471,6 +471,26 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_include val"
   end
 
+  # DOCO: _(a.length).must_equal 0 -> _(a).must_be_empty
+  RE_MUST_BE_EMPTY = must_pat "(call _ [m length size])", :must_equal, "(lit 0)"
+  register_assert RE_MUST_BE_EMPTY do |sexp|
+    lhs, _, _ = match sexp
+    _, l, _ = lhs
+
+    exp = must(l, :must_be_empty)
+
+    change exp, "_(obj).must_be_empty"
+  end
+
+  # DOCO: _(a).must_equal([]) -> _(a).must_be_empty
+  RE_MUST_BE_EMPTY_LIT = must_pat "_", :must_equal, "([m array hash])"
+  register_assert RE_MUST_BE_EMPTY_LIT do |sexp|
+    lhs, = match sexp
+
+    exp = must(lhs, :must_be_empty)
+
+    change exp, "_(obj).must_be_empty"
+  end
 
   # DOCO: _(a.pred?).must_equal true -> _(a).must_be :pred?
   RE_MUST_BE_PRED = must_pat "(call _ _)", :must_equal, "(:true)"
@@ -506,7 +526,6 @@ class AssertScanner < SexpProcessor
 
     change exp, "_(obj).wont_include val"
   end
-
 
   # DOCO: _(a.pred?).must_equal false -> _(a).wont_be :pred?
   RE_WONT_BE_PRED = must_pat "(call _ _)", :must_equal, "(:false)"
