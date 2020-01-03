@@ -496,6 +496,43 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_be msg, arg"
   end
 
+  # DOCO: _(a.include?(b)).must_equal false -> _(a).wont_include b
+  RE_WONT_INCLUDE = must_pat "(call _ include? _)", :must_equal, "(:false)"
+  register_assert RE_WONT_INCLUDE do |sexp|
+    lhs, _, _ = match sexp
+    _, l, _m, r = lhs
+
+    exp = must(l, :wont_include, r)
+
+    change exp, "_(obj).wont_include val"
+  end
+
+
+  # DOCO: _(a.pred?).must_equal false -> _(a).wont_be :pred?
+  RE_WONT_BE_PRED = must_pat "(call _ _)", :must_equal, "(:false)"
+  register_assert RE_WONT_BE_PRED do |sexp|
+    lhs, _, _ = match sexp
+    _, l, m = lhs
+
+    exp = must(l, :wont_be, s(:lit, m))
+
+    change exp, "_(obj).wont_be msg"
+  end
+
+  # DOCO: _(a.op(b)).must_equal false -> _(a).wont_be :op, b
+  RE_WONT_BE_OPER = must_pat "(call _ _ _)", :must_equal, "(:false)"
+  register_assert RE_WONT_BE_OPER do |sexp|
+    lhs, _, _ = match sexp
+    _, l, m, r = lhs
+
+    next if m == :[]
+
+    exp = must(l, :wont_be, s(:lit, m), r)
+
+    change exp, "_(obj).wont_be msg, arg"
+  end
+
+
   ############################################################
   # Structural transformations (or stopping points)
 

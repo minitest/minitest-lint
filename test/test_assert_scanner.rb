@@ -343,6 +343,30 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be, lit(:msg), :rhs))
   end
 
+  def test_wont_include
+    assert_re(:RE_WONT_INCLUDE,
+              "_(obj).wont_include val",
+              meq(s(:call, :lhs, :include?, :rhs), s(:false)),
+              # =>
+              e(:lhs, :wont_include, :rhs))
+  end
+
+  def test_wont_be__pred
+    assert_re(:RE_WONT_BE_PRED,
+              "_(obj).wont_be msg",
+              meq(s(:call, :lhs, :msg?), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:msg?)))
+  end
+
+  def test_wont_be__op
+    assert_re(:RE_WONT_BE_OPER,
+              "_(obj).wont_be msg, arg",
+              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:msg), :rhs))
+  end
+
   def test_re_plain
     assert_re(:RE_PLAIN,
               "Try to not use plain assert",
@@ -427,12 +451,10 @@ class TestAssertScanner < Minitest::Test
   todo :wont_equal
   todo :wont_be_close_to
   todo :wont_be_within_epsilon
-  todo :wont_include
   todo :wont_be_instance_of
   todo :wont_be_kind_of
   todo :wont_match
   todo :wont_be_nil
-  todo :wont_be
   todo :wont_respond_to
   todo :wont_be_same_as
 end
