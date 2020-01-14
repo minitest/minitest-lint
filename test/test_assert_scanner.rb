@@ -314,12 +314,8 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Assertions
 
-  todo :refute
-  todo :refute_empty
-  todo :refute_equal
   todo :refute_in_delta
   todo :refute_in_epsilon
-  todo :refute_includes
   todo :refute_match
   todo :refute_nil
   todo :refute_operator
@@ -352,7 +348,31 @@ class TestAssertScanner < Minitest::Test
               a(:lhs))
   end
 
-  def test_refute_incl
+  def test_refute_empty
+    assert_re(:RE_REF_EMPTY,
+              "refute_empty val",
+              r(s(:call, :lhs, :empty?)),
+              # =>
+              c(:refute_empty, :lhs))
+  end
+
+  def test_refute_equal
+    assert_re(:RE_REF_EQUAL,
+              "refute_equal exp, act",
+              r(s(:call, :lhs, :==, :rhs)),
+              # =>
+              c(:refute_equal, :lhs, :rhs))
+  end
+
+  def test_refute_nequal
+    assert_re(:RE_REF_NEQUAL,
+              "assert_equal exp, act",
+              r(s(:call, :lhs, :!=, :rhs)),
+              # =>
+              c(:assert_equal, :lhs, :rhs))
+  end
+
+  def test_refute_includes
     assert_re(:RE_REF_INCL,
               "refute_includes obj, val",
               r(s(:call, :lhs, :include?, :rhs)),

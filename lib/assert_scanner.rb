@@ -389,19 +389,29 @@ class AssertScanner < SexpProcessor
   # lhs == binary call => refute_operator && rhs == false
 
   # DOCO: refute test, msg -> refute test
-  RE_REF_MSG = pat :refute, "_ _"
+  RE_REF_MSG = refute_pat "_ _"
   register_assert RE_REF_MSG do |exp|
     handle_arity exp, 3
   end
 
   # DOCO: refute ! test -> assert test
-  RE_REF_NOT = pat :refute, "(call _ !)"
+  RE_REF_NOT = refute_pat "(call _ !)"
   register_assert RE_REF_NOT do |t, r, _, test|
     _, recv, _ = test
 
     exp = s(t, r, :assert, recv)
 
     change exp, "assert cond"
+  end
+
+  # DOCO: refute a.empty? -> refute_empty a
+  RE_REF_EMPTY = refute_pat "(call _ empty?)"
+  register_assert RE_REF_EMPTY do |t, r, _, test|
+    _, lhs, _ = test
+
+    exp = s(t, r, :refute_empty, lhs)
+
+    change exp, "refute_empty val"
   end
 
   # DOCO: assert a != b -> refute_equal a, b
@@ -412,6 +422,26 @@ class AssertScanner < SexpProcessor
     exp = s(t, r, :refute_equal, lhs, rhs)
 
     change exp, "refute_equal exp, act"
+  end
+
+  # DOCO: refute a == b -> refute_equal a, b
+  RE_REF_EQUAL = refute_pat "(call _ == _)"
+  register_assert RE_REF_EQUAL do |t, r, _, test|
+    _, lhs, _, rhs = test
+
+    exp = s(t, r, :refute_equal, lhs, rhs)
+
+    change exp, "refute_equal exp, act"
+  end
+
+  # DOCO: refute a != b -> assert_equal a, b
+  RE_REF_NEQUAL = refute_pat "(call _ != _)"
+  register_assert RE_REF_NEQUAL do |t, r, _, test|
+    _, lhs, _, rhs = test
+
+    exp = s(t, r, :assert_equal, lhs, rhs)
+
+    change exp, "assert_equal exp, act"
   end
 
   # DOCO: refute obj.instance_of? cls -> refute_instance_of cls, obj
