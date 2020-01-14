@@ -643,6 +643,12 @@ class AssertScanner < SexpProcessor
     change exp, "_(act).#{msg} exp" # TODO: if $v?
   end
 
+  RE_REF_PLAIN = refute_pat "_"
+  register_assert RE_REF_PLAIN do |exp|
+    io[exp] = "Try to not use plain refute"
+    nil
+  end
+
   RE_PLAIN = assert_pat "_"
   register_assert RE_PLAIN do |exp|
     io[exp] = "Try to not use plain assert"

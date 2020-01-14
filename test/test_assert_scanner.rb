@@ -92,13 +92,11 @@ class TestAssertScanner < Minitest::Test
   todo :assert_in_delta
   todo :assert_in_epsilon
   todo :assert_match
-  todo :assert_nil
   todo :assert_output
   todo :assert_path_exists
   todo :assert_raises
   todo :assert_respond_to
   todo :assert_same
-  todo :assert_send
   todo :assert_silent
   todo :assert_throws
 
@@ -329,6 +327,14 @@ class TestAssertScanner < Minitest::Test
   todo :refute_predicate
   todo :refute_respond_to
   todo :refute_same
+
+  def test_refute
+    assert_re(:RE_REF_PLAIN,
+              "Try to not use plain refute",
+              r(:whatever),
+              # =>
+              r(:whatever))
+  end
 
   def test_refute__msg
     assert_re(:RE_REF_MSG,
