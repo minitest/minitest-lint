@@ -237,6 +237,16 @@ class AssertScanner < SexpProcessor
     change exp, "refute not_cond"
   end
 
+  # DOCO: assert a.empty? -> assert_empty a
+  RE_EMPTY = assert_pat "(call _ empty?)"
+  register_assert RE_EMPTY do |t, r, _, test|
+    _, lhs, _ = test
+
+    exp = s(t, r, :assert_empty, lhs)
+
+    change exp, "assert_empty val"
+  end
+
   # DOCO: assert a == b -> assert_equal a, b
   RE_EQUAL = assert_pat "(call _ == _)"
   register_assert RE_EQUAL do |t, r, _, test|

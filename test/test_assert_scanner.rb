@@ -89,7 +89,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_empty
   todo :assert_equal_empty # assert_equal([], x) -> assert_empty x
   todo :assert_in_delta
   todo :assert_in_epsilon
@@ -126,6 +125,14 @@ class TestAssertScanner < Minitest::Test
               a(s(:call, :lhs, :!)),
               # =>
               r(:lhs))
+  end
+
+  def test_assert_empty
+    assert_re(:RE_EMPTY,
+              "assert_empty val",
+              a(s(:call, :lhs, :empty?)),
+              # =>
+              c(:assert_empty, :lhs))
   end
 
   def test_assert_equal
