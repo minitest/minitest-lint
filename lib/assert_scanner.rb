@@ -287,6 +287,25 @@ class AssertScanner < SexpProcessor
     change exp, "refute_equal exp, act"
   end
 
+  # DOCO: assert obj.instance_of? cls -> assert_instance_of cls, obj
+  RE_INSTANCE_OF = assert_pat "(call _ instance_of? _)"
+  register_assert RE_INSTANCE_OF do |t, r, _, test|
+    _, lhs, _, rhs = test
+    exp = s(t, r, :assert_instance_of, rhs, lhs)
+
+    change exp, "assert_instance_of cls, obj"
+  end
+
+  # DOCO: assert obj.kind_of? mod -> assert_kind_of mod, obj
+  RE_KIND_OF = assert_pat "(call _ kind_of? _)"
+  RE_IS_A = assert_pat "(call _ is_a? _)"
+  register_assert RE_KIND_OF, RE_IS_A do |t, r, _, test|
+    _, lhs, _, rhs = test
+    exp = s(t, r, :assert_kind_of, rhs, lhs)
+
+    change exp, "assert_kind_of mod, obj"
+  end
+
   # DOCO: assert a.include? b -> assert_include a, b
   RE_INCL = assert_pat "(call _ include? _)"
   register_assert RE_INCL do |t, r, _, test|
@@ -393,6 +412,25 @@ class AssertScanner < SexpProcessor
     exp = s(t, r, :assert, recv)
 
     change exp, "assert cond"
+  end
+
+  # DOCO: refute obj.instance_of? cls -> refute_instance_of cls, obj
+  RE_REF_INSTANCE_OF = refute_pat "(call _ instance_of? _)"
+  register_assert RE_REF_INSTANCE_OF do |t, r, _, test|
+    _, lhs, _, rhs = test
+    exp = s(t, r, :refute_instance_of, rhs, lhs)
+
+    change exp, "refute_instance_of cls, obj"
+  end
+
+  # DOCO: refute obj.kind_of? mod -> refute_kind_of mod, obj
+  RE_REF_KIND_OF = refute_pat "(call _ kind_of? _)"
+  RE_REF_IS_A = refute_pat "(call _ is_a? _)"
+  register_assert RE_REF_KIND_OF, RE_REF_IS_A do |t, r, _, test|
+    _, lhs, _, rhs = test
+    exp = s(t, r, :refute_kind_of, rhs, lhs)
+
+    change exp, "refute_kind_of mod, obj"
   end
 
   # FIX: backwards?

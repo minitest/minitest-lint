@@ -122,6 +122,30 @@ class TestAssertScanner < Minitest::Test
               ain(:lhs, :rhs))
   end
 
+  def test_re_instance_of
+    assert_re(:RE_INSTANCE_OF,
+              "assert_instance_of cls, obj",
+              a(s(:call, :obj, :instance_of?, :cls)),
+              # =>
+              c(:assert_instance_of, :cls, :obj))
+  end
+
+  def test_re_kind_of
+    assert_re(:RE_KIND_OF,
+              "assert_kind_of mod, obj",
+              a(s(:call, :obj, :kind_of?, :mod)),
+              # =>
+              c(:assert_kind_of, :mod, :obj))
+  end
+
+  def test_re_is_a
+    assert_re(:RE_IS_A,
+              "assert_kind_of mod, obj",
+              a(s(:call, :obj, :is_a?, :mod)),
+              # =>
+              c(:assert_kind_of, :mod, :obj))
+  end
+
   def test_re_pred
     assert_re(:RE_PRED,
               "assert_predicate obj, msg",
@@ -243,6 +267,30 @@ class TestAssertScanner < Minitest::Test
               r(s(:call, :lhs, :!)),
               # =>
               a(:lhs))
+  end
+
+  def test_re_ref_instance_of
+    assert_re(:RE_REF_INSTANCE_OF,
+              "refute_instance_of cls, obj",
+              r(s(:call, :obj, :instance_of?, :cls)),
+              # =>
+              c(:refute_instance_of, :cls, :obj))
+  end
+
+  def test_re_ref_kind_of
+    assert_re(:RE_REF_KIND_OF,
+              "refute_kind_of mod, obj",
+              r(s(:call, :obj, :kind_of?, :mod)),
+              # =>
+              c(:refute_kind_of, :mod, :obj))
+  end
+
+  def test_re_ref_is_a
+    assert_re(:RE_REF_IS_A,
+              "refute_kind_of mod, obj",
+              r(s(:call, :obj, :is_a?, :mod)),
+              # =>
+              c(:refute_kind_of, :mod, :obj))
   end
 
   def test_re_ref_incl
@@ -423,8 +471,6 @@ class TestAssertScanner < Minitest::Test
   todo :assert_in_delta
   todo :assert_in_epsilon
   todo :assert_includes
-  todo :assert_instance_of
-  todo :assert_kind_of
   todo :assert_match
   todo :assert_nil
   todo :assert_operator
@@ -436,14 +482,13 @@ class TestAssertScanner < Minitest::Test
   todo :assert_send
   todo :assert_silent
   todo :assert_throws
+
   todo :refute
   todo :refute_empty
   todo :refute_equal
   todo :refute_in_delta
   todo :refute_in_epsilon
   todo :refute_includes
-  todo :refute_instance_of
-  todo :refute_kind_of
   todo :refute_match
   todo :refute_nil
   todo :refute_operator
