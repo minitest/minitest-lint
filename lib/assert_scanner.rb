@@ -365,8 +365,17 @@ class AssertScanner < SexpProcessor
     rhs = rhs[1] # recv to remove .count
     exp = s(t, r, :assert_empty, rhs)
 
-    change exp, "assert_empty"
+    change exp, "assert_empty obj"
   end
+
+  # DOCO: assert_equal [], a -> assert_empty a
+  RE_EQ_EMPTY_LIT = eq_pat "([m array hash])", "_"
+  register_assert RE_EQ_EMPTY_LIT do |t, r, m, lhs, rhs|
+    exp = s(t, r, :assert_empty, rhs)
+
+    change exp, "assert_empty obj"
+  end
+
 
   ############################################################
   # Negative Assertions
