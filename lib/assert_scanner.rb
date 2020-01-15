@@ -30,6 +30,8 @@ class AssertScanner < SexpProcessor
   end
 
   def self.register_assert *matchers, &handler
+    raise "NO! %p" % [matchers] unless latest
+
     matchers.each do |matcher|
       if assertions.key? matcher then
         warn "WARNING! Reassigning matcher! %p" % [matcher]
@@ -39,6 +41,8 @@ class AssertScanner < SexpProcessor
 
       assertions[matcher] = handler
     end
+
+    self.latest = nil
   end
 
   mc = (class << self; self; end)
@@ -248,14 +252,14 @@ class AssertScanner < SexpProcessor
   # assert_same
 
   # This must be first, to remove the redundancies right off
-  # DOCO: assert test msg -> assert test
-  RE_MSG = assert_pat "_ _"
+  doco "assert test msg" => "assert test"
+  pattern :RE_MSG, assert_pat("_ _")
   register_assert RE_MSG do |exp|
     handle_arity exp, 3
   end
 
   # This must be second, to flip to refute as soon as possible
-  # DOCO: assert ! test -> refute test
+  doco "assert ! test" => "refute test"
   RE_NOT = assert_pat "(call _ !)"
   register_assert RE_NOT do |t, r, _, test|
     _, recv, _ = test
@@ -265,7 +269,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute not_cond"
   end
 
-  # DOCO: assert a.empty? -> assert_empty a
+  doco "assert a.empty?" => "assert_empty a"
   RE_EMPTY = assert_pat "(call _ empty?)"
   register_assert RE_EMPTY do |t, r, _, test|
     _, lhs, _ = test
@@ -275,7 +279,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_empty val"
   end
 
-  # DOCO: assert a == b -> assert_equal a, b
+  doco "assert a == b" => "assert_equal a, b"
   RE_EQUAL = assert_pat "(call _ == _)"
   register_assert RE_EQUAL do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -290,7 +294,7 @@ class AssertScanner < SexpProcessor
               RE_IN_EPSILON: pat(:assert_equal,    "(lit, [k Float])", "_"),
               RE_IN_DELTA:   pat(:assert_in_delta, "_",                "_"))
 
-  # DOCO: assert obj.instance_of? cls -> assert_instance_of cls, obj
+  doco "assert obj.instance_of? cls" => "assert_instance_of cls, obj"
   RE_INSTANCE_OF = assert_pat "(call _ instance_of? _)"
   register_assert RE_INSTANCE_OF do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -299,7 +303,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_instance_of cls, obj"
   end
 
-  # DOCO: assert obj.kind_of? mod -> assert_kind_of mod, obj
+  doco "assert obj.kind_of? mod" => "assert_kind_of mod, obj"
   RE_KIND_OF = assert_pat "(call _ kind_of? _)"
   RE_IS_A = assert_pat "(call _ is_a? _)"
   register_assert RE_KIND_OF, RE_IS_A do |t, r, _, test|
@@ -309,7 +313,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_kind_of mod, obj"
   end
 
-  # DOCO: assert a.include? b -> assert_include a, b
+  doco "assert a.include? b" => "assert_include a, b"
   RE_INCL = assert_pat "(call _ include? _)"
   register_assert RE_INCL do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -318,7 +322,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_includes obj, val"
   end
 
-  # DOCO: assert a.pred? -> assert_predicate a, :pred?
+  doco "assert a.pred?" => "assert_predicate a, :pred?"
   RE_PRED = assert_pat "(call _ _)"
   register_assert RE_PRED do |t, r, _, test|
     _, recv, msg = test
@@ -327,7 +331,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_predicate obj, msg"
   end
 
-  # DOCO: assert a.op(b) -> assert_operator, a, :op, b
+  doco "assert a.op(b)" => "assert_operator, a, :op, b"
   RE_OPER = assert_pat "(call _ _ _)"
   register_assert RE_OPER do |t, r, _, test|
     _, recv, msg, *rest = test
@@ -336,13 +340,13 @@ class AssertScanner < SexpProcessor
     change exp, "assert_operator obj, msg, arg"
   end
 
-  # DOCO: assert_equal a, b -> STOP
+  doco "assert_equal a, b" => "STOP"
   RE_EQ_MSG = pat :assert_equal, "_ _ _"
   register_assert RE_EQ_MSG do |exp|
     handle_arity exp, 4
   end
 
-  # DOCO: assert_equal nil, a -> assert_nil a
+  doco "assert_equal nil, a" => "assert_nil a"
   RE_EQ_NIL = eq_pat "(:nil)",     "_"
   register_assert RE_EQ_NIL do |t, r, m, lhs, rhs|
     exp = s(t, r, :assert_nil, rhs)
@@ -350,7 +354,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_nil obj"
   end
 
-  # DOCO: assert_equal true, a.pred? -> assert_predicate a, :pred?
+  doco "assert_equal true, a.pred?" => "assert_predicate a, :pred?"
   RE_EQ_PRED = eq_pat "(true)",  "(call _ _)"
   register_assert RE_EQ_PRED do |t, r, m, lhs, rhs|
     _, recv, msg = rhs
@@ -359,7 +363,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_predicate obj, msg"
   end
 
-  # DOCO: assert_equal true, a.op(b) -> assert_operator a, :op, b
+  doco "assert_equal true, a.op(b)" => "assert_operator a, :op, b"
   RE_EQ_OPER = eq_pat "(true)",  "(call _ _ _)"
   register_assert RE_EQ_OPER do |t, r, m, lhs, rhs|
     _, recv, msg, *rest = rhs
@@ -368,7 +372,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_operator obj, msg, arg"
   end
 
-  # DOCO: assert_equal "long str", a -> assert_includes a, "substr"
+  doco "assert_equal 'long str', a" => "assert_includes a, 'substr'"
   RE_EQ_LHS_STR = eq_pat "(str _)", "_"
   register_assert RE_EQ_LHS_STR do |exp|
     t, r, _, lhs, rhs, * = exp
@@ -381,7 +385,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_includes actual, substr"
   end
 
-  # DOCO: assert_equal act, lit -> assert_equal lit, act
+  doco "assert_equal act, lit" => "assert_equal lit, act"
   RE_EQ_RHS_LIT = eq_pat "_",       "(lit _)"
   RE_EQ_RHS_STR = eq_pat "_",       "(str _)"
   RE_EQ_RHS_NTF = eq_pat "_",       "([atom])"
@@ -392,7 +396,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_equal exp, act"
   end
 
-  # DOCO: assert_equal 0, a.length -> assert_empty a
+  doco "assert_equal 0, a.length" => "assert_empty a"
   RE_EQ_EMPTY = eq_pat "(lit 0)", "(call _ [m length size count])"
   register_assert RE_EQ_EMPTY do |t, r, m, lhs, rhs|
     rhs = rhs[1] # recv to remove .count
@@ -401,7 +405,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_empty obj"
   end
 
-  # DOCO: assert_equal [], a -> assert_empty a
+  doco "assert_equal [], a" => "assert_empty a"
   RE_EQ_EMPTY_LIT = eq_pat "([m array hash])", "_"
   register_assert RE_EQ_EMPTY_LIT do |t, r, m, lhs, rhs|
     exp = s(t, r, :assert_empty, rhs)
@@ -421,13 +425,13 @@ class AssertScanner < SexpProcessor
   # lhs msg is count/length/size && rhs != 0 => refute_empty
   # lhs == binary call => refute_operator && rhs == false
 
-  # DOCO: refute test, msg -> refute test
+  doco "refute test, msg" => "refute test"
   RE_REF_MSG = refute_pat "_ _"
   register_assert RE_REF_MSG do |exp|
     handle_arity exp, 3
   end
 
-  # DOCO: refute ! test -> assert test
+  doco "refute ! test" => "assert test"
   RE_REF_NOT = refute_pat "(call _ !)"
   register_assert RE_REF_NOT do |t, r, _, test|
     _, recv, _ = test
@@ -437,7 +441,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert cond"
   end
 
-  # DOCO: refute a.empty? -> refute_empty a
+  doco "refute a.empty?" => "refute_empty a"
   RE_REF_EMPTY = refute_pat "(call _ empty?)"
   register_assert RE_REF_EMPTY do |t, r, _, test|
     _, lhs, _ = test
@@ -447,7 +451,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_empty val"
   end
 
-  # DOCO: assert a != b -> refute_equal a, b
+  doco "assert a != b" => "refute_equal a, b"
   RE_NEQUAL = assert_pat "(call _ != _)"
   register_assert RE_NEQUAL do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -457,7 +461,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_equal exp, act"
   end
 
-  # DOCO: refute a == b -> refute_equal a, b
+  doco "refute a == b" => "refute_equal a, b"
   RE_REF_EQUAL = refute_pat "(call _ == _)"
   register_assert RE_REF_EQUAL do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -467,7 +471,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_equal exp, act"
   end
 
-  # DOCO: refute a != b -> assert_equal a, b
+  doco "refute a != b" => "assert_equal a, b"
   RE_REF_NEQUAL = refute_pat "(call _ != _)"
   register_assert RE_REF_NEQUAL do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -477,7 +481,7 @@ class AssertScanner < SexpProcessor
     change exp, "assert_equal exp, act"
   end
 
-  # DOCO: refute obj.instance_of? cls -> refute_instance_of cls, obj
+  doco "refute obj.instance_of? cls" => "refute_instance_of cls, obj"
   RE_REF_INSTANCE_OF = refute_pat "(call _ instance_of? _)"
   register_assert RE_REF_INSTANCE_OF do |t, r, _, test|
     _, lhs, _, rhs = test
@@ -486,7 +490,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_instance_of cls, obj"
   end
 
-  # DOCO: refute obj.kind_of? mod -> refute_kind_of mod, obj
+  doco "refute obj.kind_of? mod" => "refute_kind_of mod, obj"
   RE_REF_KIND_OF = refute_pat "(call _ kind_of? _)"
   RE_REF_IS_A = refute_pat "(call _ is_a? _)"
   register_assert RE_REF_KIND_OF, RE_REF_IS_A do |t, r, _, test|
@@ -497,7 +501,7 @@ class AssertScanner < SexpProcessor
   end
 
   # FIX: backwards?
-  # DOCO: refute a.include? b -> refute_includes b, a
+  doco "refute a.include? b" => "refute_includes b, a"
   RE_REF_INCL = refute_pat "(call _ include? _)"
   register_assert RE_REF_INCL do |t, r, _, test|
     _, recv, _, rest = test
@@ -506,7 +510,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_includes obj, val"
   end
 
-  # DOCO: refute a.pred? -> refute_predicate a, :pred?
+  doco "refute a.pred?" => "refute_predicate a, :pred?"
   RE_REF_PRED = refute_pat "(call _ _)"
   register_assert RE_REF_PRED do |t, r, _, test|
     _, recv, msg = test
@@ -515,7 +519,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_predicate obj, msg"
   end
 
-  # DOCO: refute a,op(b) -> refute_operator a, :op, b
+  doco "refute a,op(b)" => "refute_operator a, :op, b"
   RE_REF_OPER = refute_pat "(call _ _ _)"
   register_assert RE_REF_OPER do |t, r, _, test|
     _, recv, msg, *rest = test
@@ -524,7 +528,7 @@ class AssertScanner < SexpProcessor
     change exp, "refute_operator obj, msg, arg"
   end
 
-  # DOCO: assert_oporator a, :include?, b -> assert_includes a, b
+  doco "assert_oporator a, :include?, b" => "assert_includes a, b"
   RE_OP_INCL = pat :assert_operator, "_", "(lit include?)", "_"
   register_assert RE_OP_INCL do |t, r, _, obj, _, val|
     exp = s(t, r, :assert_includes, obj, val)
@@ -566,6 +570,7 @@ class AssertScanner < SexpProcessor
   # must_respond_to
   # must_throw
 
+  doco "_(a).must_equal nil" => "_(a).must_be_nil"
   RE_MUST_EQ_NIL = must_pat "_", :must_equal, "(:nil)"
   register_assert RE_MUST_EQ_NIL do |sexp|
     lhs, _, _ = match sexp
@@ -575,7 +580,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(act).must_be_nil"
   end
 
-  # DOCO: _(a.include?(b)).must_equal true -> _(a).must_include b
+  doco "_(a.include?(b)).must_equal true" => "_(a).must_include b"
   RE_MUST_INCLUDE = must_pat "(call _ include? _)", :must_equal, "(:true)"
   register_assert RE_MUST_INCLUDE do |sexp|
     lhs, _, _ = match sexp
@@ -586,7 +591,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_include val"
   end
 
-  # DOCO: _(a.length).must_equal 0 -> _(a).must_be_empty
+  doco "_(a.length).must_equal 0" => "_(a).must_be_empty"
   RE_MUST_BE_EMPTY = must_pat "(call _ [m length size count])", :must_equal, "(lit 0)"
   register_assert RE_MUST_BE_EMPTY do |sexp|
     lhs, _, _ = match sexp
@@ -597,7 +602,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_be_empty"
   end
 
-  # DOCO: _(a).must_equal([]) -> _(a).must_be_empty
+  doco "_(a).must_equal([])" => "_(a).must_be_empty"
   RE_MUST_BE_EMPTY_LIT = must_pat "_", :must_equal, "([m array hash])"
   register_assert RE_MUST_BE_EMPTY_LIT do |sexp|
     lhs, = match sexp
@@ -607,7 +612,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_be_empty"
   end
 
-  # DOCO: _(a.pred?).must_equal true -> _(a).must_be :pred?
+  doco "_(a.pred?).must_equal true" => "_(a).must_be :pred?"
   RE_MUST_BE_PRED = must_pat "(call _ _)", :must_equal, "(:true)"
   register_assert RE_MUST_BE_PRED do |sexp|
     lhs, _, _ = match sexp
@@ -618,7 +623,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_be msg"
   end
 
-  # DOCO: _(a.op(b)).must_equal true -> _(a).must_be :op, b
+  doco "_(a.op(b)).must_equal true" => "_(a).must_be :op, b"
   RE_MUST_BE_OPER = must_pat "(call _ _ _)", :must_equal, "(:true)"
   register_assert RE_MUST_BE_OPER do |sexp|
     lhs, _, _ = match sexp
@@ -631,7 +636,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).must_be msg, arg"
   end
 
-  # DOCO: _(a.include?(b)).must_equal false -> _(a).wont_include b
+  doco "_(a.include?(b)).must_equal false" => "_(a).wont_include b"
   RE_WONT_INCLUDE = must_pat "(call _ include? _)", :must_equal, "(:false)"
   register_assert RE_WONT_INCLUDE do |sexp|
     lhs, _, _ = match sexp
@@ -653,7 +658,7 @@ class AssertScanner < SexpProcessor
   # wont_include
   # wont_match
 
-  # DOCO: _(a.pred?).must_equal false -> _(a).wont_be :pred?
+  doco "_(a.pred?).must_equal false" => "_(a).wont_be :pred?"
   RE_WONT_BE_PRED = must_pat "(call _ _)", :must_equal, "(:false)"
   register_assert RE_WONT_BE_PRED do |sexp|
     lhs, _, _ = match sexp
@@ -664,7 +669,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(obj).wont_be msg"
   end
 
-  # DOCO: _(a.op(b)).must_equal false -> _(a).wont_be :op, b
+  doco "_(a.op(b)).must_equal false" => "_(a).wont_be :op, b"
   RE_WONT_BE_OPER = must_pat "(call _ _ _)", :must_equal, "(:false)"
   register_assert RE_WONT_BE_OPER do |sexp|
     lhs, _, _ = match sexp
@@ -680,16 +685,19 @@ class AssertScanner < SexpProcessor
   ############################################################
   # Structural transformations (or stopping points)
 
+  doco "_(a).must_xxx" => "STOP"
   RE_MUST_GOOD = must_pat "_", "[m /^must/]", "_"
   register_assert RE_MUST_GOOD do |sexp|
     # STOP
   end
 
+  doco "_{ a }.must_xxx" => "STOP"
   RE_MUST_BLOCK_GOOD = must_block_pat "___", "[m /^must/]", "_"
   register_assert RE_MUST_BLOCK_GOOD do |sexp|
     # STOP
   end
 
+  doco "expect(a).must_xxx b" => "_(a).must_xxx b"
   RE_MUST_OTHER = parse "(call (call nil [m expect value] _) [m /^must/] _)"
   register_assert RE_MUST_OTHER do |sexp|
     lhs, msg, rhs = match sexp
@@ -699,6 +707,7 @@ class AssertScanner < SexpProcessor
     change exp, "_(act).#{msg} exp"
   end
 
+  doco "a.must_xxx b" => "_(a).must_xxx b"
   RE_MUST_PLAIN = parse "(call _ [m /^must/] _)"
   register_assert RE_MUST_PLAIN do |t, lhs, msg, rhs|
     exp = must lhs, msg, rhs
@@ -706,12 +715,14 @@ class AssertScanner < SexpProcessor
     change exp, "_(act).#{msg} exp" # TODO: if $v?
   end
 
+  doco "refute val" => "WARNING"
   RE_REF_PLAIN = refute_pat "_"
   register_assert RE_REF_PLAIN do |exp|
     io[exp] = "Try to not use plain refute"
     nil
   end
 
+  doco "assert val" => "WARNING"
   RE_PLAIN = assert_pat "_"
   register_assert RE_PLAIN do |exp|
     io[exp] = "Try to not use plain assert"
