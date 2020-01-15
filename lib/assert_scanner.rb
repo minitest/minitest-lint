@@ -41,6 +41,34 @@ class AssertScanner < SexpProcessor
     end
   end
 
+  mc = (class << self; self; end)
+  mc.attr_accessor :latest
+
+  self.latest = nil
+
+  def self.doco from_to
+    self.latest = from_to
+    # ... otherwise do nothing ...
+  end
+
+  def self.latest_doco_to
+    latest.values.first
+  end
+
+  def self.pattern name, value
+    const_set name, value
+  end
+
+  def self.replacement replacement, patterns, msg = latest_doco_to
+    patterns.each do |k, v|
+      pattern k, v
+    end
+
+    register_assert(*patterns.values) do |t, r, _, *args|
+      change s(t, r, replacement, *args), msg
+    end
+  end
+
   attr_accessor :io, :rr, :count
 
   def initialize
@@ -256,6 +284,11 @@ class AssertScanner < SexpProcessor
 
     change exp, "assert_equal exp, act"
   end
+
+  doco       "assert_equal float_lit, act" => "assert_in_epsilon float_lit, act"
+  replacement(:assert_in_epsilon,
+              RE_IN_EPSILON: pat(:assert_equal,    "(lit, [k Float])", "_"),
+              RE_IN_DELTA:   pat(:assert_in_delta, "_",                "_"))
 
   # DOCO: assert obj.instance_of? cls -> assert_instance_of cls, obj
   RE_INSTANCE_OF = assert_pat "(call _ instance_of? _)"

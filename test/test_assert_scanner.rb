@@ -89,8 +89,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_in_delta
-  todo :assert_in_epsilon
   todo :assert_match
   todo :assert_output
   todo :assert_path_exists
@@ -245,6 +243,22 @@ class TestAssertScanner < Minitest::Test
               aeq(:act, s(:str, "str")),
               # =>
               aeq(s(:str, "str"), :act))
+  end
+
+  def test_assert_in_delta
+    assert_re(:RE_IN_DELTA,
+              "assert_in_epsilon float_lit, act",
+              c(:assert_in_delta, :lhs, :rhs),
+              # =>
+              c(:assert_in_epsilon, :lhs, :rhs))
+  end
+
+  def test_assert_in_epsilon
+    assert_re(:RE_IN_EPSILON,
+              "assert_in_epsilon float_lit, act",
+              aeq(s(:lit, 6.28), :rhs),
+              # =>
+              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
   end
 
   def test_assert_includes
