@@ -518,8 +518,8 @@ class AssertScanner < SexpProcessor
     end
   end
 
-  def self.must_pat lhs, msg, rhs
-    parse "(call (call nil :_ %s) %s %s)" % [lhs, msg, rhs]
+  def self.must_pat lhs, msg, *rhs
+    parse "(call (call nil :_ %s) %s %s)" % [lhs, msg, rhs.join(" ")]
   end
 
   def self.must_block_pat body, msg, rhs
@@ -590,6 +590,18 @@ class AssertScanner < SexpProcessor
   doco "_(obj.include?(val)).must_equal false" => "_(obj).wont_include val"
   exp_rewrite(RE_WONT_INCLUDE: re_wont_include) do |(_, lhs, _, rhs),|
     must(lhs, :wont_include, rhs)
+  end
+
+  doco("_(obj).must_be(:instance_of?, cls)" => "_(obj).must_be_instance_of cls",
+       "_(obj).must_be(:is_a?,        cls)" => "_(obj).must_be_instance_of cls")
+  exp_rewrite(RE_MUST_BE_INSTANCE_OF: must_pat("_", :must_be, "(lit :instance_of?)", "_"),
+              RE_MUST_BE_IS_A:        must_pat("_", :must_be, "(lit :is_a?)",        "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_be_instance_of, rhs)
+  end
+
+  doco "_(obj).must_be(:kind_of?, mod)" => "_(obj).must_be_kind_of mod"
+  exp_rewrite(RE_MUST_BE_KIND_OF: must_pat("_", :must_be, "(lit kind_of?)", "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_be_kind_of, rhs)
   end
 
   ############################################################

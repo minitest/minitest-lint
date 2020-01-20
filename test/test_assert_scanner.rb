@@ -450,8 +450,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal_rhs_str
 
   todo :must_be_close_to
-  todo :must_be_instance_of
-  todo :must_be_kind_of
   todo :must_be_same_as
   todo :must_be_silent
   todo :must_be_within_epsilon
@@ -549,6 +547,30 @@ class TestAssertScanner < Minitest::Test
               meq(s(:call, :lhs, :size), lit(0)),
               # =>
               e(:lhs, :must_be_empty))
+  end
+
+  def test_must_be_instance_of
+    assert_re(:RE_MUST_BE_INSTANCE_OF,
+              "_(obj).must_be_instance_of cls",
+              e(:lhs, :must_be, lit(:instance_of?), :rhs),
+              # =>
+              e(:lhs, :must_be_instance_of, :rhs))
+  end
+
+  def test_must_be_is_a
+    assert_re(:RE_MUST_BE_IS_A,
+              "_(obj).must_be_instance_of cls",
+              e(:lhs, :must_be, lit(:is_a?), :rhs),
+              # =>
+              e(:lhs, :must_be_instance_of, :rhs))
+  end
+
+  def test_must_be_kind_of
+    assert_re(:RE_MUST_BE_KIND_OF,
+              "_(obj).must_be_kind_of mod",
+              e(:lhs, :must_be, lit(:kind_of?), :rhs),
+              # =>
+              e(:lhs, :must_be_kind_of, :rhs))
   end
 
   def test_must_equal_rhs_ntf__nil
