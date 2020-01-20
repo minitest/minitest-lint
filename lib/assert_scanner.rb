@@ -309,18 +309,18 @@ class AssertScanner < SexpProcessor
   # assert_same
 
   # This must be first, to remove the redundancies right off
-  doco "assert test msg" => "assert test"
+  doco "assert obj, msg" => "assert obj"
   pattern RE_MSG: assert_pat("_ _")
   register_assert RE_MSG do |exp|
     handle_arity exp, 3
   end
 
   # This must be second, to flip to refute as soon as possible
-  doco "assert ! test" => "refute test"
+  doco "assert ! obj" => "refute obj"
   replace_call(:refute,
                RE_NOT: assert_pat("(call _ !)"))
 
-  doco "assert val.empty?" => "assert_empty val"
+  doco "assert obj.empty?" => "assert_empty obj"
   replace_call(:assert_empty,
                RE_EMPTY: assert_pat("(call _ empty?)"))
 
@@ -328,7 +328,8 @@ class AssertScanner < SexpProcessor
   replace_call(:assert_equal,
                RE_EQUAL: assert_pat("(call _ == _)"))
 
-  doco "assert_equal float_lit, act" => "assert_in_epsilon float_lit, act"
+  doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
+       "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
   rename(:assert_in_epsilon,
          RE_IN_EPSILON: pat(:assert_equal,    "(lit, [k Float])", "_"),
          RE_IN_DELTA:   pat(:assert_in_delta, "_",                "_"))
@@ -350,11 +351,11 @@ class AssertScanner < SexpProcessor
   unpack_call(:assert_predicate,
               RE_PRED: assert_pat("(call _ _)"))
 
-  doco "assert obj.msg(arg)" => "assert_operator obj, :msg, arg"
+  doco "assert obj.msg(val)" => "assert_operator obj, :msg, val"
   unpack_call(:assert_operator,
               RE_OPER: assert_pat("(call _ _ _)"))
 
-  doco "assert_equal a, b" => "STOP"
+  doco "assert_equal exp, act" => "STOP"
   pattern RE_EQ_MSG: pat(:assert_equal, "_ _ _")
   register_assert RE_EQ_MSG do |exp|
     handle_arity exp, 4
@@ -368,7 +369,7 @@ class AssertScanner < SexpProcessor
   unpack_and_drop(:assert_predicate,
                   RE_EQ_PRED: eq_pat("(true)",  "(call _ _)"))
 
-  doco "assert_equal true, obj.msg(arg)" => "assert_operator obj, :msg, arg"
+  doco "assert_equal true, obj.msg(val)" => "assert_operator obj, :msg, val"
   unpack_and_drop(:assert_operator,
                   RE_EQ_OPER: eq_pat("(true)",  "(call _ _ _)"))
 
@@ -384,12 +385,15 @@ class AssertScanner < SexpProcessor
        RE_EQ_RHS_STR: eq_pat("_", "(str _)"),
        RE_EQ_RHS_NTF: eq_pat("_", "([atom])"))
 
-  doco "assert_equal 0, obj.length" => "assert_empty obj"
+  doco("assert_equal 0, obj.length" => "assert_empty obj",
+       "assert_equal 0, obj.count"  => "assert_empty obj",
+       "assert_equal 0, obj.size"   => "assert_empty obj")
   rewrite(RE_EQ_EMPTY: eq_pat("(lit 0)", "(call _ [m length size count])")) do |t, r, _, _, (_, recv, _)|
     s(t, r, :assert_empty, recv)
   end
 
-  doco "assert_equal [], obj" => "assert_empty obj"
+  doco("assert_equal {}, obj" => "assert_empty obj",
+       "assert_equal [], obj" => "assert_empty obj")
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
 
@@ -404,13 +408,13 @@ class AssertScanner < SexpProcessor
   # lhs msg is count/length/size && rhs != 0 => refute_empty
   # lhs == binary call => refute_operator && rhs == false
 
-  doco "refute test, msg" => "refute test"
+  doco "refute obj, msg" => "refute obj"
   pattern RE_REF_MSG: refute_pat("_ _")
   register_assert RE_REF_MSG do |exp|
     handle_arity exp, 3
   end
 
-  doco "refute ! test" => "assert test"
+  doco "refute ! obj" => "assert obj"
   replace_call(:assert,
                RE_REF_NOT: refute_pat("(call _ !)"))
 
@@ -448,11 +452,11 @@ class AssertScanner < SexpProcessor
   unpack_call(:refute_predicate,
               RE_REF_PRED: refute_pat("(call _ _)"))
 
-  doco "refute obj.msg(arg)" => "refute_operator obj, :msg, arg"
+  doco "refute obj.msg(val)" => "refute_operator obj, :msg, val"
   unpack_call(:refute_operator,
               RE_REF_OPER: refute_pat("(call _ _ _)"))
 
-  doco "assert_oporator enum, :include?, obj" => "assert_includes enum, obj"
+  doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
   rewrite(RE_OP_INCL: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
     s(t, r, :assert_includes, obj, val)
   end
@@ -528,7 +532,7 @@ class AssertScanner < SexpProcessor
     must(lhs, :must_be, s(:lit, msg))
   end
 
-  doco "_(obj.msg(arg)).must_equal true" => "_(obj).must_be :msg, arg"
+  doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
   exp_rewrite(RE_MUST_BE_OPER: re_must_be_oper) do |(_, lhs, msg, rhs),|
     next if msg == :[]
 
@@ -559,7 +563,7 @@ class AssertScanner < SexpProcessor
     must(lhs, :wont_be, s(:lit, msg))
   end
 
-  doco "_(obj.msg(arg)).must_equal false" => "_(obj).wont_be :msg, arg"
+  doco "_(obj.msg(val)).must_equal false" => "_(obj).wont_be :msg, val"
   exp_rewrite(RE_WONT_BE_OPER: re_wont_be_oper) do |(_, lhs, msg, rhs),|
     next if msg == :[]
 
@@ -569,37 +573,46 @@ class AssertScanner < SexpProcessor
   ############################################################
   # Structural transformations (or stopping points)
 
+  # TODO: arg vs no arg?
   re_must_other = parse("(call (call nil [m expect value] _) [m /^must/] _)")
 
-  doco "_(a).must_xxx" => "STOP"
+  # TODO: arg vs no arg?
+  doco("_(obj).must_<something> val" => "STOP",
+       "_(obj).must_<something>"     => "STOP")
   rewrite(RE_MUST_GOOD: must_pat("_", "[m /^must/]", "_")) do
     # STOP
   end
 
-  doco "_{ a }.must_xxx" => "STOP"
+  # TODO: arg vs no arg?
+  doco("_{ ... }.must_<something> val" => "STOP",
+       "_{ ... }.must_<something>"     => "STOP")
   rewrite(RE_MUST_BLOCK_GOOD: must_block_pat("___", "[m /^must/]", "_")) do
     # STOP
   end
 
-  doco("expect(act).must_<something> exp" => "_(act).must_<something> exp",
-        "value(act).must_<something> exp" => "_(act).must_<something> exp")
+  doco("expect(obj).must_<something> val" => "_(obj).must_<something> val",
+       "value(obj).must_<something> val"  => "_(obj).must_<something> val",
+       "expect(obj).must_<something>"     => "_(obj).must_<something>",
+       "value(obj).must_<something>"      => "_(obj).must_<something>")
   exp_rewrite(RE_MUST_OTHER: re_must_other) do |lhs, msg, rhs|
     must lhs, msg, rhs
   end
 
-  doco "act.must_<something> exp" => "_(act).must_<something> exp"
+  # TODO: arg vs no arg?
+  doco("obj.must_<something> val" => "_(obj).must_<something> val",
+       "obj.must_<something>"     => "_(obj).must_<something>")
   rewrite(RE_MUST_PLAIN: parse("(call _ [m /^must/] _)")) do |t, lhs, msg, rhs|
     must lhs, msg, rhs
   end
 
-  doco "refute val" => "WARNING"
+  doco "refute obj" => "WARNING"
   RE_REF_PLAIN = refute_pat "_"
   register_assert RE_REF_PLAIN do |exp|
     io[exp] = "Try to not use plain refute"
     nil
   end
 
-  doco "assert val" => "WARNING"
+  doco "assert obj" => "WARNING"
   RE_PLAIN = assert_pat "_"
   register_assert RE_PLAIN do |exp|
     io[exp] = "Try to not use plain assert"

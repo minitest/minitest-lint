@@ -68,8 +68,8 @@ class TestAssertScanner < Minitest::Test
       c(:assert, s(:call, inc, :==, s(:true)))          => "redundant message?",
       c(:assert_equal, inc, s(:true))                   => "assert_equal exp, act",
       c(:assert_equal, s(:true), inc)                   => "assert_equal lit, act",
-      c(:assert_operator, lhs, s(:lit, :include?), rhs) => "assert_operator obj, :msg, arg",
-      c(:assert_includes, lhs, rhs)                     => "assert_includes enum, obj",
+      c(:assert_operator, lhs, s(:lit, :include?), rhs) => "assert_operator obj, :msg, val",
+      c(:assert_includes, lhs, rhs)                     => "assert_includes obj, val",
     }
 
     assert_equal exp, scan.io
@@ -79,8 +79,8 @@ class TestAssertScanner < Minitest::Test
       "  assert(([1, 2, 3].include?(b) == true))   # redundant message?",
       "  assert_equal([1, 2, 3].include?(b), true) # assert_equal exp, act",
       "  assert_equal(true, [1, 2, 3].include?(b)) # assert_equal lit, act",
-      "  assert_operator([1, 2, 3], :include?, b)  # assert_operator obj, :msg, arg",
-      "  assert_includes([1, 2, 3], b)             # assert_includes enum, obj",
+      "  assert_operator([1, 2, 3], :include?, b)  # assert_operator obj, :msg, val",
+      "  assert_includes([1, 2, 3], b)             # assert_includes obj, val",
     ]
 
     assert_equal exp, scan.out
@@ -116,7 +116,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_assert__not
     assert_re(:RE_NOT,
-              "refute test",
+              "refute obj",
               a(s(:call, :lhs, :!)),
               # =>
               r(:lhs))
@@ -124,7 +124,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_assert_empty
     assert_re(:RE_EMPTY,
-              "assert_empty val",
+              "assert_empty obj",
               a(s(:call, :lhs, :empty?)),
               # =>
               c(:assert_empty, :lhs))
@@ -191,7 +191,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_assert_equal__oper
     assert_re(:RE_EQ_OPER,
-              "assert_operator obj, :msg, arg",
+              "assert_operator obj, :msg, val",
               aeq(s(:true), s(:call, :obj, :msg, :rhs)),
               # =>
               c(:assert_operator, :obj, lit(:msg), :rhs))
@@ -303,7 +303,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_assert_operator
     assert_re(:RE_OPER,
-              "assert_operator obj, :msg, arg",
+              "assert_operator obj, :msg, val",
               a(s(:call, :lhs, :msg, :rhs)),
               # =>
               c(:assert_operator, :lhs, lit(:msg), :rhs))
@@ -311,7 +311,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_assert_operator__incl
     assert_re(:RE_OP_INCL,
-              "assert_includes enum, obj",
+              "assert_includes obj, val",
               c(:assert_operator, :lhs, lit(:include?), :rhs),
               # =>
               ain(:lhs, :rhs))
@@ -356,7 +356,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_refute__not
     assert_re(:RE_REF_NOT,
-              "assert test",
+              "assert obj",
               r(s(:call, :lhs, :!)),
               # =>
               a(:lhs))
@@ -420,7 +420,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_refute_oper
     assert_re(:RE_REF_OPER,
-              "refute_operator obj, :msg, arg",
+              "refute_operator obj, :msg, val",
               r(s(:call, :lhs, :msg, :rhs)),
               # =>
               c(:refute_operator, :lhs, lit(:msg), :rhs))
@@ -465,7 +465,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_must___plain
     assert_re(:RE_MUST_PLAIN,
-              "_(act).must_<something> exp",
+              "_(obj).must_<something> val",
               s(:call, :lhs, :must_equal, :rhs),
               # =>
               meq(:lhs, :rhs))
@@ -483,7 +483,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_must__plain_expect
     assert_re(:RE_MUST_OTHER,
-              "_(act).must_<something> exp",
+              "_(obj).must_<something> val",
               s(:call, c(:expect, :act), :must_equal, :exp),
               # =>
               meq(:act, :exp))
@@ -491,7 +491,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_must__plain_value
     assert_re(:RE_MUST_OTHER,
-              "_(act).must_<something> exp",
+              "_(obj).must_<something> val",
               s(:call, c(:value, :act), :must_equal, :exp),
               # =>
               meq(:act, :exp))
@@ -499,7 +499,7 @@ class TestAssertScanner < Minitest::Test
 
   def test_must_be__op
     assert_re(:RE_MUST_BE_OPER,
-              "_(obj).must_be :msg, arg",
+              "_(obj).must_be :msg, val",
               meq(s(:call, :lhs, :msg, :rhs), s(:true)),
               # =>
               e(:lhs, :must_be, lit(:msg), :rhs))
@@ -508,9 +508,9 @@ class TestAssertScanner < Minitest::Test
   def test_must_be__pred
     assert_re(:RE_MUST_BE_PRED,
               "_(obj).must_be :pred?",
-              meq(s(:call, :lhs, :msg?), s(:true)),
+              meq(s(:call, :lhs, :pred?), s(:true)),
               # =>
-              e(:lhs, :must_be, lit(:msg?)))
+              e(:lhs, :must_be, lit(:pred?)))
   end
 
   def test_must_be_empty__array
@@ -575,9 +575,9 @@ class TestAssertScanner < Minitest::Test
   todo :wont_respond_to
   todo :wont_be_same_as
 
-  def test_wont_be__op
+  def test_wont_be__oper
     assert_re(:RE_WONT_BE_OPER,
-              "_(obj).wont_be :msg, arg",
+              "_(obj).wont_be :msg, val",
               meq(s(:call, :lhs, :msg, :rhs), s(:false)),
               # =>
               e(:lhs, :wont_be, lit(:msg), :rhs))
@@ -586,9 +586,9 @@ class TestAssertScanner < Minitest::Test
   def test_wont_be__pred
     assert_re(:RE_WONT_BE_PRED,
               "_(obj).wont_be :pred?",
-              meq(s(:call, :lhs, :msg?), s(:false)),
+              meq(s(:call, :lhs, :pred?), s(:false)),
               # =>
-              e(:lhs, :wont_be, lit(:msg?)))
+              e(:lhs, :wont_be, lit(:pred?)))
   end
 
   def test_wont_include
