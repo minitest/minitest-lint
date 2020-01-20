@@ -48,12 +48,18 @@ class AssertScanner < SexpProcessor
 
   mc = (class << self; self; end)
   mc.attr_accessor :latest
+  mc.attr_accessor :__doco
 
   self.latest = nil
+  self.__doco = {}
 
   def self.doco from_to
+    self.latest = [from_to.to_a.first].to_h
+    __doco.merge! from_to
+  end
+
+  def self.meta from_to
     self.latest = from_to
-    # ... otherwise do nothing ...
   end
 
   def self.latest_doco_to
@@ -75,49 +81,49 @@ class AssertScanner < SexpProcessor
     end
   end
 
-  doco "old_assert(*args)" => "new_assert(*args)"
+  meta "old_assert(*args)" => "new_assert(*args)"
   def self.rename new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, _m, *args|
       s(t, r, new_msg, *args)
     end
   end
 
-  doco "old_assert obj.msg(*args)" => "new_assert obj, *args"
+  meta "old_assert obj.msg(*args)" => "new_assert obj, *args"
   def self.replace_call new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, _m, (_, lhs, _, *rest)|
       s(t, r, new_msg, lhs, *rest)
     end
   end
 
-  doco "old_assert obj.msg(*args)" => "new_assert obj, :msg, *args"
+  meta "old_assert obj.msg(*args)" => "new_assert obj, :msg, *args"
   def self.unpack_call new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, _m, (_, recv, m, *rest)|
       s(t, r, new_msg, recv, s(:lit, m), *rest)
     end
   end
 
-  doco "old_assert _expected, obj.msg(*args)" => "new_assert obj, :msg, *args"
+  meta "old_assert _expected, obj.msg(*args)" => "new_assert obj, :msg, *args"
   def self.unpack_and_drop new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, _m, _lhs, (_, recv, m, *rest)|
       s(t, r, new_msg, recv, s(:lit, m), *rest)
     end
   end
 
-  doco "old_assert _expected, obj" => "new_assert obj"
+  meta "old_assert _expected, obj" => "new_assert obj"
   def self.rename_and_drop new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, _m, _lhs, rhs|
       s(t, r, new_msg, rhs)
     end
   end
 
-  doco "assert lhs, rhs" => "assert rhs, lhs"
+  meta "assert lhs, rhs" => "assert rhs, lhs"
   def self.swap patterns, msg = latest_doco_to
     rewrite patterns do |t, r, m, lhs, rhs|
       s(t, r, m, rhs, lhs)
     end
   end
 
-  doco "old_assert lhs.msg(rhs)" => "new_assert rhs, lhs"
+  meta "old_assert lhs.msg(rhs)" => "new_assert rhs, lhs"
   def self.replace_and_swap new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, m, (_, lhs, _, rhs)|
       s(t, r, new_msg, rhs, lhs)
