@@ -10,6 +10,14 @@ class AssertScanner < SexpProcessor
   VERSION = "1.0.0"
 
   def self.run args = ARGV
+    unless args.include? "--graph" then
+      scan args
+    else
+      graph
+    end
+  end
+
+  def self.scan args
     expander = PathExpander.new args, "**/*.{rb,rake}"
     files = expander.process
 
@@ -17,6 +25,46 @@ class AssertScanner < SexpProcessor
     scanner.scan(*files)
 
     puts scanner.count
+  end
+
+  def self.graph
+    new.graph
+  end
+
+  def graph
+    require "graph"
+
+    g = Graph.new
+    g.rotate
+    g.boxes
+
+    sg = {}
+    sg["assert"] = g.cluster("assert")
+    sg["refute"] = g.cluster("refute")
+    sg["must"]   = g.cluster("must")
+    sg["wont"]   = g.cluster("wont")
+    sg[nil]      = g
+
+
+    doco = self.class.__doco
+
+    doco.to_a.flatten.each do |name|
+      where = name[/assert|refute|must|wont/]
+      node = sg[where].node name
+
+      case where
+      when "assert", "must" then
+        g.darkgreen << node
+      when "refute", "wont" then
+        g.red       << node
+      end
+    end
+
+    doco.each do |from, to|
+      g[from][to]
+    end
+
+    puts g
   end
 
   @assertions = {}

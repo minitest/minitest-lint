@@ -14,6 +14,7 @@ Hoe.spec "assert_scanner" do
   dependency "ruby2ruby",      "~> 2.4"
   dependency "path_expander",  "~> 1.0"
   dependency "sexp_processor", "~> 4.12"
+  dependency "graph",          "~> 2.9"
 
   dependency "minitest", "~> 5.0", :dev
 
@@ -22,6 +23,13 @@ end
 
 task :autotest => :isolate do
   sh "autotest"
+end
+
+task :graph => :isolate do
+  $: << "lib"
+  require "assert_scanner"
+
+  AssertScanner.graph
 end
 
 task :parse => :isolate do
