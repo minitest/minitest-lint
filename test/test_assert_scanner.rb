@@ -448,8 +448,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal_lhs_str
   todo :must_equal_rhs_lit
   todo :must_equal_rhs_str
-  todo :must_equal_rhs_ntf__true
-  todo :must_equal_rhs_ntf__false
 
   todo :must_be_close_to
   todo :must_be_instance_of
@@ -533,6 +531,14 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_MUST_BE_EMPTY,
               "_(obj).must_be_empty",
               meq(s(:call, :lhs, :length), lit(0)),
+              # =>
+              e(:lhs, :must_be_empty))
+  end
+
+  def test_must_be_empty__count
+    assert_re(:RE_MUST_BE_EMPTY,
+              "_(obj).must_be_empty",
+              meq(s(:call, :lhs, :count), lit(0)),
               # =>
               e(:lhs, :must_be_empty))
   end
