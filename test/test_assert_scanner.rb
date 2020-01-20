@@ -22,6 +22,7 @@ class TestAssertScanner < Minitest::Test
   def bm(*a, m, r);  s(:call, blk(*a), m, r);    end
   def meq(l,r);      e(l, :must_equal,    r);    end
   def lit(x);        s(:lit, x);                 end
+  def mbe(l, m, *r); e(l, :must_be, lit(m), *r); end
 
   def assert_pattern scanner, from, msg = nil, to = nil
     pattern = AssertScanner.const_get scanner
@@ -498,7 +499,7 @@ class TestAssertScanner < Minitest::Test
               "_(obj).must_be :msg, val",
               meq(s(:call, :lhs, :msg, :rhs), s(:true)),
               # =>
-              e(:lhs, :must_be, lit(:msg), :rhs))
+              mbe(:lhs, :msg, :rhs))
   end
 
   def test_must_be__pred
@@ -506,7 +507,7 @@ class TestAssertScanner < Minitest::Test
               "_(obj).must_be :pred?",
               meq(s(:call, :lhs, :pred?), s(:true)),
               # =>
-              e(:lhs, :must_be, lit(:pred?)))
+              mbe(:lhs, :pred?))
   end
 
   def test_must_be_empty__array
@@ -552,7 +553,7 @@ class TestAssertScanner < Minitest::Test
   def test_must_be_instance_of
     assert_re(:RE_MUST_BE_INSTANCE_OF,
               "_(obj).must_be_instance_of cls",
-              e(:lhs, :must_be, lit(:instance_of?), :rhs),
+              mbe(:lhs, :instance_of?, :rhs),
               # =>
               e(:lhs, :must_be_instance_of, :rhs))
   end
@@ -560,7 +561,7 @@ class TestAssertScanner < Minitest::Test
   def test_must_be_is_a
     assert_re(:RE_MUST_BE_IS_A,
               "_(obj).must_be_instance_of cls",
-              e(:lhs, :must_be, lit(:is_a?), :rhs),
+              mbe(:lhs, :is_a?, :rhs),
               # =>
               e(:lhs, :must_be_instance_of, :rhs))
   end
@@ -568,7 +569,7 @@ class TestAssertScanner < Minitest::Test
   def test_must_be_kind_of
     assert_re(:RE_MUST_BE_KIND_OF,
               "_(obj).must_be_kind_of mod",
-              e(:lhs, :must_be, lit(:kind_of?), :rhs),
+              mbe(:lhs, :kind_of?, :rhs),
               # =>
               e(:lhs, :must_be_kind_of, :rhs))
   end
