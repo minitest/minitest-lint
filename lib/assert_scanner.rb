@@ -428,10 +428,12 @@ class AssertScanner < SexpProcessor
     s(t, r, :assert_includes, rhs, s(:str, str[0, 20]))
   end
 
+  NOT_LAS = "[- [any (lit _) (str _) ([atom])]]" # LAS = lit, atom, str
+
   doco "assert_equal act, lit" => "assert_equal lit, act"
-  swap(RE_EQ_RHS_LIT: eq_pat("_", "(lit _)"),
-       RE_EQ_RHS_STR: eq_pat("_", "(str _)"),
-       RE_EQ_RHS_NTF: eq_pat("_", "([atom])"))
+  swap(RE_EQ_RHS_LIT: eq_pat(NOT_LAS, "(lit _)"),
+       RE_EQ_RHS_STR: eq_pat(NOT_LAS, "(str _)"),
+       RE_EQ_RHS_NTF: eq_pat(NOT_LAS, "([atom])"))
 
   doco("assert_equal 0, obj.length" => "assert_empty obj",
        "assert_equal 0, obj.count"  => "assert_empty obj",

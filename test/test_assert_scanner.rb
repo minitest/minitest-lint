@@ -51,6 +51,14 @@ class TestAssertScanner < Minitest::Test
     assert_pattern scanner, from
   end
 
+  def assert_nothing sexp
+    scan = AssertScanner.new
+
+    scan.analyze_assert sexp
+
+    assert_empty scan.io
+  end
+
   ######################################################################
   # Sanity Test:
 
@@ -228,6 +236,14 @@ class TestAssertScanner < Minitest::Test
               aeq(:act, s(:nil)),
               # =>
               aeq(s(:nil), :act))
+  end
+
+  def test_assert_equal__rhs_ntf__true_true
+    assert_nothing aeq(s(:true), s(:true))
+  end
+
+  def test_assert_equal__rhs_ntf__lit_true
+    assert_nothing aeq(s(:lit, 42), s(:true))
   end
 
   def test_assert_equal__rhs_ntf__true
