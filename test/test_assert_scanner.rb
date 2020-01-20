@@ -574,6 +574,14 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be_kind_of, :rhs))
   end
 
+  def test_must_be_respond_to
+    assert_re(:RE_MUST_BE_RESPOND_TO,
+              "_(obj).must_respond_to val",
+              mbe(:lhs, :respond_to?, :rhs),
+              # =>
+              e(:lhs, :must_respond_to, :rhs))
+  end
+
   def test_must_equal_rhs_ntf__nil
     assert_re(:RE_MUST_EQ_NIL,
               "_(obj).must_be_nil",

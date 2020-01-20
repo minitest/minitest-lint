@@ -604,6 +604,11 @@ class AssertScanner < SexpProcessor
     must(lhs, :must_be_kind_of, rhs)
   end
 
+  doco "_(obj).must_be(:respond_to?, val)" => "_(obj).must_respond_to val"
+  exp_rewrite(RE_MUST_BE_RESPOND_TO: must_pat("_", :must_be, "(lit respond_to?)", "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_respond_to, rhs)
+  end
+
   ############################################################
   # Negative Expectations
 
