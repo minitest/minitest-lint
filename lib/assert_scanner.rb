@@ -39,17 +39,18 @@ class AssertScanner < SexpProcessor
     g.boxes
 
     sg = {}
-    sg["assert"] = g.cluster("assert")
-    sg["refute"] = g.cluster("refute")
-    sg["must"]   = g.cluster("must")
-    sg["wont"]   = g.cluster("wont")
-    sg[nil]      = g
+    sg.default = g
 
+    %w[assert refute must wont].each do |name|
+      c = g.cluster(name)
+      c.label(name)
+      sg[name] = c
+    end
 
     doco = self.class.__doco
 
     doco.to_a.flatten.each do |name|
-      where = name[/assert|refute|must|wont/]
+      where = name[/assert|refute|must|wont|STOP|WARNING/]
       node = sg[where].node name
 
       case where
@@ -57,6 +58,13 @@ class AssertScanner < SexpProcessor
         g.darkgreen << node
       when "refute", "wont" then
         g.red       << node
+      when "STOP" then
+        g.filled             << node
+        g.darkgreen          << node
+        g.fontcolor("white") << node
+      when "WARNING" then
+        g.filled        << node
+        g.darkgoldenrod << node
       end
     end
 
