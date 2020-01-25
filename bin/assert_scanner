@@ -1,4 +1,6 @@
-#!/usr/bin/env ruby -ws
+#!/usr/bin/env ruby -w
+
+$: << "lib"
 
 require "assert_scanner"
 
