@@ -27,6 +27,13 @@ task :autotest => :isolate do
   sh "autotest"
 end
 
+task :list => :isolate do
+  $: << "lib"
+  require "assert_scanner"
+
+  AssertScanner.list
+end
+
 task :graph => :isolate do
   $: << "lib"
   require "assert_scanner"
