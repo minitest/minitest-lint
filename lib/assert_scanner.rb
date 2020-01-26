@@ -34,8 +34,8 @@ class AssertScanner < SexpProcessor
     puts scanner.count
   end
 
-  def self.graph
-    new.graph
+  def self.graph io = $stdout
+    new.graph io
   end
 
   def self.list
@@ -76,7 +76,7 @@ class AssertScanner < SexpProcessor
     end
   end
 
-  def graph
+  def graph io = $stdout
     require "graph"
 
     g = Graph.new
@@ -117,7 +117,7 @@ class AssertScanner < SexpProcessor
       g[from][to]
     end
 
-    puts g
+    io.puts g
   end
 
   def list

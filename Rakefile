@@ -31,7 +31,10 @@ task :graph => :isolate do
   $: << "lib"
   require "assert_scanner"
 
-  AssertScanner.graph
+  File.open "assert.dot", "w" do |f|
+    AssertScanner.graph f
+  end
+  sh "open assert.dot"
 end
 
 task :parse => :isolate do
