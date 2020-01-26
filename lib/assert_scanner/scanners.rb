@@ -402,11 +402,13 @@ class AssertScanner
   # must_throw
 
   re_must_be_oper  = must_pat("(call _ _ _)",        :must_equal, "(:true)")
-  re_wont_include  = must_pat("(call _ include? _)", :must_equal, "(:false)")
+  re_must_be_include_f  = must_pat("(call _ include? _)", :must_equal, "(:false)")
   re_must_be_empty = must_pat("(call _ [m length size count])", :must_equal, "(lit 0)")
   re_must_include  = must_pat("(call _ include? _)", :must_equal, "(:true)")
   re_must_be_empty_lit = must_pat("_",               :must_equal, "([m array hash])")
   re_must_be_pred  = must_pat("(call _ _)",          :must_equal, "(:true)")
+  re_must_be_pred_f = must_pat("(call _ _)", :must_equal, "(:false)")
+  re_must_be_oper_f = must_pat("(call _ _ _)", :must_equal, "(:false)")
 
   doco "_(obj).must_equal nil" => "_(obj).must_be_nil"
   exp_rewrite(RE_MUST_EQ_NIL: must_pat("_", :must_equal, "(:nil)")) do |lhs,|
@@ -434,6 +436,18 @@ class AssertScanner
     must(lhs, :must_be, s(:lit, msg))
   end
 
+  doco "_(obj.pred?).must_equal false" => "_(obj).wont_be :pred?"
+  exp_rewrite(RE_MUST_BE_PRED_F: re_must_be_pred_f) do |(_, lhs, msg), _, _|
+    must(lhs, :wont_be, s(:lit, msg))
+  end
+
+  doco "_(obj.msg(val)).must_equal false" => "_(obj).wont_be :msg, val"
+  exp_rewrite(RE_MUST_BE_OPER_F: re_must_be_oper_f) do |(_, lhs, msg, rhs),|
+    next if msg == :[]
+
+    must(lhs, :wont_be, s(:lit, msg), rhs)
+  end
+
   # TODO: remove?
   doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
   exp_rewrite(RE_MUST_BE_OPER: re_must_be_oper) do |(_, lhs, msg, rhs),|
@@ -444,7 +458,7 @@ class AssertScanner
 
   # TODO: remove?
   doco "_(obj.include?(val)).must_equal false" => "_(obj).wont_include val"
-  exp_rewrite(RE_WONT_INCLUDE: re_wont_include) do |(_, lhs, _, rhs),|
+  exp_rewrite(RE_MUST_BE_INCLUDE_F: re_must_be_include_f) do |(_, lhs, _, rhs),|
     must(lhs, :wont_include, rhs)
   end
 
@@ -475,23 +489,6 @@ class AssertScanner
   # wont_equal
   # wont_include
   # wont_match
-
-  # TODO: move to positive
-
-  re_wont_be_pred = must_pat("(call _ _)", :must_equal, "(:false)")
-  re_wont_be_oper = must_pat("(call _ _ _)", :must_equal, "(:false)")
-
-  doco "_(obj.pred?).must_equal false" => "_(obj).wont_be :pred?"
-  exp_rewrite(RE_WONT_BE_PRED: re_wont_be_pred) do |(_, lhs, msg), _, _|
-    must(lhs, :wont_be, s(:lit, msg))
-  end
-
-  doco "_(obj.msg(val)).must_equal false" => "_(obj).wont_be :msg, val"
-  exp_rewrite(RE_WONT_BE_OPER: re_wont_be_oper) do |(_, lhs, msg, rhs),|
-    next if msg == :[]
-
-    must(lhs, :wont_be, s(:lit, msg), rhs)
-  end
 
   ############################################################
   # Structural transformations (or stopping points)

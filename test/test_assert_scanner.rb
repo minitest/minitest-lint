@@ -205,20 +205,20 @@ class TestAssertScanner < Minitest::Test
               c(:assert_operator, :obj, lit(:msg), :rhs))
   end
 
-  def test_assert_equal__pred
-    assert_re(:RE_EQ_PRED,
-              "assert_predicate obj, :pred?",
-              aeq(s(:true), s(:call, :obj, :msg)),
-              # =>
-              c(:assert_predicate, :obj, lit(:msg)))
-  end
-
   def test_assert_equal__oper_false
     assert_re(:RE_NEQ_OPER,
               "refute_operator obj, :msg, val",
               aeq(s(:false), s(:call, :obj, :msg, :rhs)),
               # =>
               c(:refute_operator, :obj, lit(:msg), :rhs))
+  end
+
+  def test_assert_equal__pred
+    assert_re(:RE_EQ_PRED,
+              "assert_predicate obj, :pred?",
+              aeq(s(:true), s(:call, :obj, :msg)),
+              # =>
+              c(:assert_predicate, :obj, lit(:msg)))
   end
 
   def test_assert_equal__pred_false
@@ -433,12 +433,28 @@ class TestAssertScanner < Minitest::Test
               meq(:act, :exp))
   end
 
-  def test_must_be__op
+  def test_must_be__include_f
+    assert_re(:RE_MUST_BE_INCLUDE_F,
+              "_(obj).wont_include val",
+              meq(s(:call, :lhs, :include?, :rhs), s(:false)),
+              # =>
+              e(:lhs, :wont_include, :rhs))
+  end
+
+  def test_must_be__oper
     assert_re(:RE_MUST_BE_OPER,
               "_(obj).must_be :msg, val",
               meq(s(:call, :lhs, :msg, :rhs), s(:true)),
               # =>
               mbe(:lhs, :msg, :rhs))
+  end
+
+  def test_must_be__oper_f
+    assert_re(:RE_MUST_BE_OPER_F,
+              "_(obj).wont_be :msg, val",
+              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:msg), :rhs))
   end
 
   def test_must_be__pred
@@ -447,6 +463,14 @@ class TestAssertScanner < Minitest::Test
               meq(s(:call, :lhs, :pred?), s(:true)),
               # =>
               mbe(:lhs, :pred?))
+  end
+
+  def test_must_be__pred_f
+    assert_re(:RE_MUST_BE_PRED_F,
+              "_(obj).wont_be :pred?",
+              meq(s(:call, :lhs, :pred?), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:pred?)))
   end
 
   def test_must_be_empty__array
@@ -672,30 +696,6 @@ class TestAssertScanner < Minitest::Test
   # _(lhs.size).wont_be(:>, 0) -> must_be_empty
   # _(lhs.size).must_be(:>, 0) -> wont_be_empty
   # _(lhs.length).must_be(:>=, 4) # TODO: warn about magic numbers?
-
-  def test_wont_be__oper
-    assert_re(:RE_WONT_BE_OPER,
-              "_(obj).wont_be :msg, val",
-              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
-              # =>
-              e(:lhs, :wont_be, lit(:msg), :rhs))
-  end
-
-  def test_wont_be__pred
-    assert_re(:RE_WONT_BE_PRED,
-              "_(obj).wont_be :pred?",
-              meq(s(:call, :lhs, :pred?), s(:false)),
-              # =>
-              e(:lhs, :wont_be, lit(:pred?)))
-  end
-
-  def test_wont_include
-    assert_re(:RE_WONT_INCLUDE,
-              "_(obj).wont_include val",
-              meq(s(:call, :lhs, :include?, :rhs), s(:false)),
-              # =>
-              e(:lhs, :wont_include, :rhs))
-  end
 end
 
 __END__
