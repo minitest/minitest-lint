@@ -141,6 +141,10 @@ class AssertScanner
     pat :assert_equal, lhs, rhs
   end
 
+  def self.lit(x)
+    "(lit #{x})"
+  end
+
   ############################################################
   # Pattern Helpers:
 
@@ -402,6 +406,7 @@ class AssertScanner
   # must_throw
 
   re_must_be_oper  = must_pat("(call _ _ _)",        :must_equal, "(:true)")
+  # TODO: rename must_eq_include_false
   re_must_be_include_f  = must_pat("(call _ include? _)", :must_equal, "(:false)")
   re_must_be_empty = must_pat("(call _ [m length size count])", :must_equal, "(lit 0)")
   re_must_include  = must_pat("(call _ include? _)", :must_equal, "(:true)")
@@ -409,8 +414,8 @@ class AssertScanner
   re_must_be_pred  = must_pat("(call _ _)",          :must_equal, "(:true)")
   re_must_be_pred_f = must_pat("(call _ _)", :must_equal, "(:false)")
   re_must_be_oper_f = must_pat("(call _ _ _)", :must_equal, "(:false)")
-
   re_must_eq_float = must_pat("_", :must_equal, "(lit [k Float])")
+  re_must_be_include = must_pat("_", :must_be, lit(:include?), "_")
 
   doco "_(obj).must_equal nil" => "_(obj).must_be_nil"
   exp_rewrite(RE_MUST_EQ_NIL: must_pat("_", :must_equal, "(:nil)")) do |lhs,|
@@ -455,6 +460,11 @@ class AssertScanner
     next if msg == :[]
 
     must(lhs, :wont_be, s(:lit, msg), rhs)
+  end
+
+  doco "_(obj).must_be :include?, val" => "_(obj).must_include val"
+  exp_rewrite(RE_MUST_BE_INCLUDE: re_must_be_include) do |lhs, _, _, rhs|
+    must(lhs, :must_include, rhs)
   end
 
   # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS

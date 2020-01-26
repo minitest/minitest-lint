@@ -456,6 +456,14 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_be, lit(:msg), :rhs))
   end
 
+  def test_must_be__include
+    assert_re(:RE_MUST_BE_INCLUDE,
+              "_(obj).must_include val",
+              mbe(:lhs, :include?, :rhs),
+              # =>
+              e(:lhs, :must_include, :rhs))
+  end
+
   def test_must_be__pred
     assert_re(:RE_MUST_BE_PRED,
               "_(obj).must_be :pred?",
