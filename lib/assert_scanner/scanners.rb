@@ -246,6 +246,14 @@ class AssertScanner
   unpack_and_drop(:assert_operator,
                   RE_EQ_OPER: eq_pat("(true)",  "(call _ _ _)"))
 
+  doco "assert_equal false, obj.pred?" => "refute_predicate obj, :pred?"
+  unpack_and_drop(:refute_predicate,
+                  RE_NEQ_PRED: eq_pat("(false)",  "(call _ _)"))
+
+  doco "assert_equal false, obj.msg(val)" => "refute_operator obj, :msg, val"
+  unpack_and_drop(:refute_operator,
+                  RE_NEQ_OPER: eq_pat("(false)",  "(call _ _ _)"))
+
   doco "assert_equal 'long str', str" => "assert_includes str, 'substr'"
   rewrite(RE_EQ_LHS_STR: eq_pat("(str _)", "_")) do |t, r, _, (_, str), rhs, *|
     next unless str && str.length > 20

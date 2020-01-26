@@ -213,6 +213,22 @@ class TestAssertScanner < Minitest::Test
               c(:assert_predicate, :obj, lit(:msg)))
   end
 
+  def test_assert_equal__oper_false
+    assert_re(:RE_NEQ_OPER,
+              "refute_operator obj, :msg, val",
+              aeq(s(:false), s(:call, :obj, :msg, :rhs)),
+              # =>
+              c(:refute_operator, :obj, lit(:msg), :rhs))
+  end
+
+  def test_assert_equal__pred_false
+    assert_re(:RE_NEQ_PRED,
+              "refute_predicate obj, :pred?",
+              aeq(s(:false), s(:call, :obj, :msg)),
+              # =>
+              c(:refute_predicate, :obj, lit(:msg)))
+  end
+
   def test_assert_equal__rhs_lit
     assert_re(:RE_EQ_RHS_LIT,
               "assert_equal lit, act",
