@@ -190,6 +190,7 @@ class AssertScanner
   replace_call(:refute,
                RE_NOT: assert_pat("(call _ !)"))
 
+  # TODO: remove?
   doco "assert obj.empty?" => "assert_empty obj"
   replace_call(:assert_empty,
                RE_EMPTY: assert_pat("(call _ empty?)"))
@@ -208,20 +209,24 @@ class AssertScanner
          RE_IN_EPSILON: pat(:assert_equal,    "(lit, [k Float])", "_"),
          RE_IN_DELTA:   pat(:assert_in_delta, "_",                "_"))
 
+  # TODO: remove?
   doco "assert obj.instance_of? cls" => "assert_instance_of cls, obj"
   replace_and_swap(:assert_instance_of,
                    RE_INSTANCE_OF: assert_pat("(call _ instance_of? _)"))
 
+  # TODO: remove?
   doco "assert obj.respond_to? val" => "assert_respond_to obj, val"
   replace_call(:assert_respond_to,
                RE_RESPOND_TO: assert_pat("(call _ respond_to? _)"))
 
+  # TODO: remove?
   doco("assert obj.kind_of? mod" => "assert_kind_of mod, obj",
        "assert obj.is_a? mod"    => "assert_kind_of mod, obj")
   replace_and_swap(:assert_kind_of,
                    RE_KIND_OF: assert_pat("(call _ kind_of? _)"),
                    RE_IS_A:    assert_pat("(call _ is_a? _)"))
 
+  # TODO: remove?
   doco "assert obj.include? val" => "assert_includes obj, val"
   replace_call(:assert_includes,
                RE_INCLUDE: assert_pat("(call _ include? _)"))
@@ -326,15 +331,18 @@ class AssertScanner
   replace_call(:assert_equal,
                RE_REF_EQUAL_NOT: refute_pat("(call _ != _)"))
 
+  # TODO: remove?
   doco "refute obj.instance_of? cls" => "refute_instance_of cls, obj"
   replace_and_swap(:refute_instance_of,
                    RE_REF_INSTANCE_OF: refute_pat("(call _ instance_of? _)"))
 
+  # TODO: remove?
   doco "refute obj.kind_of? mod" => "refute_kind_of mod, obj"
   replace_and_swap(:refute_kind_of,
                    RE_REF_KIND_OF: refute_pat("(call _ kind_of? _)"),
                    RE_REF_IS_A:    refute_pat("(call _ is_a? _)"))
 
+  # TODO: remove?
   doco "refute obj.include? val" => "refute_includes obj, val"
   replace_call(:refute_includes,
                RE_REF_INCLUDE: refute_pat("(call _ include? _)"))
@@ -405,6 +413,7 @@ class AssertScanner
     must lhs, :must_be_nil
   end
 
+  # TODO: remove?
   doco "_(obj.include?(val)).must_equal true" => "_(obj).must_include val"
   exp_rewrite(RE_MUST_INCLUDE: re_must_include) do |(_, lhs, _, rhs),|
     must(lhs, :must_include, rhs)
@@ -425,6 +434,7 @@ class AssertScanner
     must(lhs, :must_be, s(:lit, msg))
   end
 
+  # TODO: remove?
   doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
   exp_rewrite(RE_MUST_BE_OPER: re_must_be_oper) do |(_, lhs, msg, rhs),|
     next if msg == :[]
@@ -432,6 +442,7 @@ class AssertScanner
     must(lhs, :must_be, s(:lit, msg), rhs)
   end
 
+  # TODO: remove?
   doco "_(obj.include?(val)).must_equal false" => "_(obj).wont_include val"
   exp_rewrite(RE_WONT_INCLUDE: re_wont_include) do |(_, lhs, _, rhs),|
     must(lhs, :wont_include, rhs)
