@@ -10,11 +10,12 @@ class AssertScanner < SexpProcessor
   VERSION = "1.0.0"
 
   def self.run args = ARGV
-    unless args.include? "--graph" then
-      scan args
-    else
-      graph
-    end
+    # TODO: real option processing
+    return graph    if args.include? "--graph"
+    return list     if args.include? "--list"
+    return raw_list if args.include? "--raw"
+
+    scan args
   end
 
   def self.scan args
@@ -31,6 +32,14 @@ class AssertScanner < SexpProcessor
     new.graph
   end
 
+  def self.list
+    new.list
+  end
+
+  def self.raw_list
+    new.raw_list
+  end
+
   def graph
     require "graph"
 
@@ -41,7 +50,7 @@ class AssertScanner < SexpProcessor
     sg = {}
     sg.default = g
 
-    %w[assert refute must wont].each do |name|
+    ORDER.each do |name|
       c = g.cluster(name)
       c.label(name)
       sg[name] = c
@@ -50,7 +59,7 @@ class AssertScanner < SexpProcessor
     doco = self.class.__doco
 
     doco.to_a.flatten.each do |name|
-      where = name[/assert|refute|must|wont|STOP|WARNING/]
+      where = name[/#{RE}|STOP|WARNING/]
       node = sg[where].node name
 
       case where
@@ -73,6 +82,35 @@ class AssertScanner < SexpProcessor
     end
 
     puts g
+  end
+
+  ORDER = %w{assert refute must wont}
+  RE = Regexp.union(*ORDER) # TODO: rename?
+
+  def list
+    doco = self.class.__doco
+
+    puts "# GROUPED:"
+
+    doco
+      .group_by { |a,b| ORDER.index a[RE] }
+      .sort
+      .each do |_, items|
+        items.each do |from, to|
+          puts "%-40s => %s" % [from, to]
+        end
+        puts
+      end
+  end
+
+  def raw_list
+    doco = self.class.__doco
+
+    puts "# RAW:"
+
+    doco.each do |from, to|
+      puts "%-40s => %s" % [from, to]
+    end
   end
 
   @assertions = {}
@@ -217,7 +255,7 @@ class AssertScanner < SexpProcessor
     _, recv, msg, *args = exp
 
     case msg
-    when /^(assert|refute|must|wont)/ then
+    when /^(?:#{RE})/ then
       io["%s:%s:" % [exp.file, exp.line]] = nil
       io["  %s # %s" % [rr.process(exp), "original"]] = nil
 
