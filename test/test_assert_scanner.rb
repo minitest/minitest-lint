@@ -286,7 +286,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_assert_in_epsilon
-    assert_re(:RE_IN_EPSILON,
+    assert_re(:RE_EQ_FLOAT,
               "assert_in_epsilon float_lit, act",
               aeq(s(:lit, 6.28), :rhs),
               # =>
@@ -386,7 +386,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_include__include
   todo :must_include__key
 
-  todo :must_be_close_to
   todo :must_be_same_as
   todo :must_be_silent
   todo :must_be_within_epsilon
@@ -551,6 +550,14 @@ class TestAssertScanner < Minitest::Test
               meq(:lhs, s(:nil)),
               # =>
               e(:lhs, :must_be_nil))
+  end
+
+  def test_must_be_close_to
+    assert_re(:RE_MUST_EQ_FLOAT,
+              "_(obj).must_be_close_to float_lit",
+              meq(:lhs, s(:lit, 6.28)),
+              # =>
+              e(:lhs, :must_be_close_to, s(:lit, 6.28)))
   end
 
   def test_must_include

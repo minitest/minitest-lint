@@ -206,8 +206,8 @@ class AssertScanner
   doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
        "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
   rename(:assert_in_epsilon,
-         RE_IN_EPSILON: pat(:assert_equal,    "(lit, [k Float])", "_"),
-         RE_IN_DELTA:   pat(:assert_in_delta, "_",                "_"))
+         RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
+         RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
 
   # TODO: remove?
   doco "assert obj.instance_of? cls" => "assert_instance_of cls, obj"
@@ -410,9 +410,16 @@ class AssertScanner
   re_must_be_pred_f = must_pat("(call _ _)", :must_equal, "(:false)")
   re_must_be_oper_f = must_pat("(call _ _ _)", :must_equal, "(:false)")
 
+  re_must_eq_float = must_pat("_", :must_equal, "(lit [k Float])")
+
   doco "_(obj).must_equal nil" => "_(obj).must_be_nil"
   exp_rewrite(RE_MUST_EQ_NIL: must_pat("_", :must_equal, "(:nil)")) do |lhs,|
     must lhs, :must_be_nil
+  end
+
+  doco "_(obj).must_equal float_lit" => "_(obj).must_be_close_to float_lit"
+  exp_rewrite(RE_MUST_EQ_FLOAT: re_must_eq_float) do |lhs, _, rhs|
+    must(lhs, :must_be_close_to, rhs)
   end
 
   # TODO: remove?
@@ -421,7 +428,9 @@ class AssertScanner
     must(lhs, :must_include, rhs)
   end
 
-  doco "_(obj.length).must_equal 0" => "_(obj).must_be_empty"
+  doco("_(obj.length).must_equal 0" => "_(obj).must_be_empty",
+       "_(obj.size).must_equal 0"   => "_(obj).must_be_empty",
+       "_(obj.count).must_equal 0"  => "_(obj).must_be_empty")
   exp_rewrite(RE_MUST_BE_EMPTY: re_must_be_empty) do |(_, lhs, _), _, _|
     must(lhs, :must_be_empty)
   end
@@ -447,6 +456,8 @@ class AssertScanner
 
     must(lhs, :wont_be, s(:lit, msg), rhs)
   end
+
+  # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS
 
   # TODO: remove?
   doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
