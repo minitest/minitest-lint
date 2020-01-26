@@ -12,6 +12,14 @@ $d ||= false
 class AssertScanner < SexpProcessor
   VERSION = "1.0.0"
 
+  ORDER = %w{assert refute must wont}
+  RE = Regexp.union(*ORDER) # TODO: rename?
+
+  SCANNERS = {}
+
+  ######################################################################
+  # Runners
+
   def self.run args = ARGV
     # TODO: real option processing
     return graph    if args.include? "--graph"
@@ -41,6 +49,36 @@ class AssertScanner < SexpProcessor
 
   def self.raw_list
     new.raw_list
+  end
+
+  ######################################################################
+  # Main Program:
+
+  attr_accessor :io, :rr, :count
+
+  def initialize
+    super
+
+    self.io            = {}
+    self.count         = 0
+    self.require_empty = false
+    self.rr            = Ruby2Ruby.new
+    self.strict        = false
+  end
+
+  def scan(*files)
+    files.each do |file|
+      next unless file == '-' or File.readable? file
+      warn "# #{file}" if $v
+
+      ruby = file == '-' ? $stdin.read : File.binread(file)
+
+      ast = RubyParser.new.process(ruby, file) rescue nil
+
+      next unless ast
+
+      process ast
+    end
   end
 
   def graph
@@ -87,9 +125,6 @@ class AssertScanner < SexpProcessor
     puts g
   end
 
-  ORDER = %w{assert refute must wont}
-  RE = Regexp.union(*ORDER) # TODO: rename?
-
   def list
     doco = self.class.__doco
 
@@ -116,32 +151,105 @@ class AssertScanner < SexpProcessor
     end
   end
 
-  @assertions = {}
+  ######################################################################
+  # List Methods:
 
-  def self.assertions
-    @assertions
-  end
+  def process_call exp
+    _, recv, msg, *args = exp
 
-  def self.reset_assertions
-    @assertions.clear
-  end
+    case msg
+    when /^(?:#{RE})/ then
+      io["%s:%s:" % [exp.file, exp.line]] = nil
+      io["  %s # %s" % [rr.process(exp), "original"]] = nil
 
-  def self.register_assert *matchers, &handler
-    raise "NO! %p" % [matchers] unless latest
+      exp = analyze_assert exp
+      output_all
 
-    # TODO: register doco against the matcher so they can be looked up
-    matchers.each do |matcher|
-      if assertions.key? matcher then
-        warn "WARNING! Reassigning matcher! %p" % [matcher]
-        warn "old: %s" % [assertions[matcher].source_location]
-        warn "new: %s" % [handler.source_location]
-      end
-
-      assertions[matcher] = handler
+      return exp
     end
 
-    self.latest = nil
+    process recv
+
+    args.each do |arg|
+      process arg
+    end
+
+    exp
   end
+
+  def analyze_assert exp
+    begin
+      found = false
+
+      d
+      d { { :EXP => exp } }
+      d { { :EXP => rr.process(exp) } }
+
+      SCANNERS.each do |pat, blk|
+        d { { :PAT => pat } } if $v
+
+        if pat === exp then
+          new_exp = self.instance_exec(exp, &blk)
+          found = !!new_exp
+          if found then
+            exp = new_exp
+            d { { :NEW => rr.process(exp) } }
+          end
+          break
+        end
+      end
+    end while found
+
+    exp
+  end
+
+  def out
+    out = io.map { |(sexp, msg)|
+      case sexp
+      when Sexp then
+        ruby = rr.process(sexp)
+        [ruby.length, ruby, msg]
+      else
+        [0, sexp, nil]
+      end
+    }
+
+    max = out.map(&:first).max
+    fmt = "  %-#{max}s # %s"
+
+    out.map { |(_, ruby, msg)|
+      if msg then
+        fmt % [ruby, msg]
+      else
+        ruby
+      end
+    }
+  end
+
+  def output_all
+    if io.size > 2 then
+      puts out
+      puts
+    elsif $v
+      puts "question this:", out
+      puts
+    end
+
+    io.clear
+  end
+
+  def d
+    return unless $d
+    o = yield if block_given?
+    if o then
+      p o
+    else
+      puts
+    end
+  end
+
+  ######################################################################
+  # Doco Declarations:
 
   mc = (class << self; self; end)
   mc.attr_accessor :latest
@@ -151,7 +259,10 @@ class AssertScanner < SexpProcessor
   self.__doco = {}
 
   def self.doco from_to
-    self.latest = [from_to.to_a.first].to_h
+    raise ArgumentError, "Already defined: #{from_to}" if
+      from_to.keys.any? { |k| __doco.key? k }
+
+    self.latest = from_to
     __doco.merge! from_to
   end
 
@@ -161,6 +272,30 @@ class AssertScanner < SexpProcessor
 
   def self.latest_doco_to
     latest.values.first
+  end
+
+  ######################################################################
+  # Pattern Declarations:
+
+  def self.reset_scanners
+    SCANNERS.clear
+  end
+
+  def self.register_assert *matchers, &handler
+    raise "NO! %p" % [matchers] unless latest
+
+    # TODO: register doco against the matcher so they can be looked up
+    matchers.each do |matcher|
+      if SCANNERS.key? matcher then
+        warn "WARNING! Reassigning matcher! %p" % [matcher]
+        warn "old: %s" % [SCANNERS[matcher].source_location]
+        warn "new: %s" % [handler.source_location]
+      end
+
+      SCANNERS[matcher] = handler
+    end
+
+    self.latest = nil
   end
 
   def self.pattern patterns
@@ -227,153 +362,8 @@ class AssertScanner < SexpProcessor
     end
   end
 
-  attr_accessor :io, :rr, :count
-
-  def initialize
-    super
-
-    self.io            = {}
-    self.count         = 0
-    self.require_empty = false
-    self.rr            = Ruby2Ruby.new
-    self.strict        = false
-  end
-
-  def scan(*files)
-    files.each do |file|
-      next unless file == '-' or File.readable? file
-      warn "# #{file}" if $v
-
-      ruby = file == '-' ? $stdin.read : File.binread(file)
-
-      ast = RubyParser.new.process(ruby, file) rescue nil
-
-      next unless ast
-
-      process ast
-    end
-  end
-
-  def process_call exp
-    _, recv, msg, *args = exp
-
-    case msg
-    when /^(?:#{RE})/ then
-      io["%s:%s:" % [exp.file, exp.line]] = nil
-      io["  %s # %s" % [rr.process(exp), "original"]] = nil
-
-      exp = analyze_assert exp
-      output_all
-      return exp
-    end
-
-    process recv
-
-    args.each do |arg|
-      process arg
-    end
-
-    exp
-  end
-
   ############################################################
-  # Utilities:
-
-  def handle_arity exp, arity
-    exp, msg = exp[0..arity], exp[arity+1]
-
-    change exp, "redundant message?" if msg if $v
-
-    exp
-  end
-
-  ############################################################$
-  # Output:
-
-  # TODO: hunt down all calls below
-  def change exp, msg
-    raise ArgumentError, "key already exists! %p in %p" % [exp, io] if io.key?(exp)
-    io[exp] = msg
-    self.count += 1
-    exp
-  end
-
-  def out
-    out = io.map { |(sexp, msg)|
-      case sexp
-      when Sexp then
-        ruby = rr.process(sexp)
-        [ruby.length, ruby, msg]
-      else
-        [0, sexp, nil]
-      end
-    }
-
-    max = out.map(&:first).max
-    fmt = "  %-#{max}s # %s"
-
-    out.map { |(_, ruby, msg)|
-      if msg then
-        fmt % [ruby, msg]
-      else
-        ruby
-      end
-    }
-  end
-
-  def output_all
-    if io.size > 2 then
-      puts out
-      puts
-    elsif $v
-      puts "question this:", out
-      puts
-    end
-
-    io.clear
-  end
-
-  def d
-    return unless $d
-    o = yield if block_given?
-    if o then
-      p o
-    else
-      puts
-    end
-  end
-
-  ############################################################
-  # Analyzer
-
-  def analyze_assert exp
-    begin
-      found = false
-
-      d
-      d { { :EXP => exp } }
-      d { { :EXP => rr.process(exp) } }
-
-      self.class.assertions.each do |pat, blk|
-        d { { :PAT => pat } } if $v
-
-        if pat === exp then
-          new_exp = self.instance_exec(exp, &blk)
-          found = !!new_exp
-          if found then
-            exp = new_exp
-            d { { :NEW => rr.process(exp) } }
-          end
-          break
-        end
-      end
-    end while found
-
-    exp
-  end
-
-  ############################################################
-  # Patterns:
+  # Pattern Declaration Helpers:
 
   def self.parse str
     Sexp::Matcher.parse str
@@ -393,6 +383,24 @@ class AssertScanner < SexpProcessor
 
   def self.eq_pat lhs, rhs
     pat :assert_equal, lhs, rhs
+  end
+
+  ############################################################
+  # Pattern Helpers:
+
+  def change exp, msg
+    raise ArgumentError, "key already exists! %p in %p" % [exp, io] if io.key?(exp)
+    io[exp] = msg
+    self.count += 1
+    exp
+  end
+
+  def handle_arity exp, arity
+    exp, msg = exp[0..arity], exp[arity+1]
+
+    change exp, "redundant message?" if msg if $v
+
+    exp
   end
 
   ############################################################
@@ -499,6 +507,22 @@ class AssertScanner < SexpProcessor
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
 
+  doco "assert exp != act" => "refute_equal exp, act"
+  replace_call(:refute_equal,
+               RE_NEQUAL: assert_pat("(call _ != _)"))
+
+  doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
+  rewrite(RE_OP_INCL: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
+    s(t, r, :assert_includes, obj, val)
+  end
+
+  doco "assert obj" => "WARNING"
+  RE_PLAIN = assert_pat "_"
+  register_assert RE_PLAIN do |exp|
+    io[exp] = "Try to not use plain assert"
+    nil
+  end
+
   ############################################################
   # Negative Assertions
 
@@ -524,10 +548,6 @@ class AssertScanner < SexpProcessor
   doco "refute val.empty?" => "refute_empty val"
   replace_call(:refute_empty,
                RE_REF_EMPTY: refute_pat("(call _ empty?)"))
-
-  doco "assert exp != act" => "refute_equal exp, act"
-  replace_call(:refute_equal,
-               RE_NEQUAL: assert_pat("(call _ != _)"))
 
   doco "refute exp == act" => "refute_equal exp, act"
   replace_call(:refute_equal,
@@ -558,9 +578,11 @@ class AssertScanner < SexpProcessor
   unpack_call(:refute_operator,
               RE_REF_OPER: refute_pat("(call _ _ _)"))
 
-  doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
-  rewrite(RE_OP_INCL: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
-    s(t, r, :assert_includes, obj, val)
+  doco "refute obj" => "WARNING"
+  RE_REF_PLAIN = refute_pat "_"
+  register_assert RE_REF_PLAIN do |exp|
+    io[exp] = "Try to not use plain refute"
+    nil
   end
 
   ############################################################
@@ -724,19 +746,5 @@ class AssertScanner < SexpProcessor
        "obj.must_<something>"     => "_(obj).must_<something>")
   rewrite(RE_MUST_PLAIN: parse("(call _ [m /^must/] _)")) do |t, lhs, msg, rhs|
     must lhs, msg, rhs
-  end
-
-  doco "refute obj" => "WARNING"
-  RE_REF_PLAIN = refute_pat "_"
-  register_assert RE_REF_PLAIN do |exp|
-    io[exp] = "Try to not use plain refute"
-    nil
-  end
-
-  doco "assert obj" => "WARNING"
-  RE_PLAIN = assert_pat "_"
-  register_assert RE_PLAIN do |exp|
-    io[exp] = "Try to not use plain assert"
-    nil
   end
 end

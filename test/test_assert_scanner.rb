@@ -27,7 +27,7 @@ class TestAssertScanner < Minitest::Test
   def assert_pattern scanner, from, msg = nil, to = nil
     pattern = AssertScanner.const_get scanner
     scan = AssertScanner.new
-    proc = AssertScanner.assertions[pattern]
+    proc = AssertScanner::SCANNERS[pattern]
 
     scan.instance_exec from, &proc
 
@@ -230,6 +230,10 @@ class TestAssertScanner < Minitest::Test
               aeq(s(:false), :act))
   end
 
+  def test_assert_equal__rhs_ntf__lit_true
+    assert_nothing aeq(s(:lit, 42), s(:true))
+  end
+
   def test_assert_equal__rhs_ntf__nil
     assert_re(:RE_EQ_RHS_NTF,
               "assert_equal lit, act",
@@ -238,20 +242,16 @@ class TestAssertScanner < Minitest::Test
               aeq(s(:nil), :act))
   end
 
-  def test_assert_equal__rhs_ntf__true_true
-    assert_nothing aeq(s(:true), s(:true))
-  end
-
-  def test_assert_equal__rhs_ntf__lit_true
-    assert_nothing aeq(s(:lit, 42), s(:true))
-  end
-
   def test_assert_equal__rhs_ntf__true
     assert_re(:RE_EQ_RHS_NTF,
               "assert_equal lit, act",
               aeq(:act, s(:true)),
               # =>
               aeq(s(:true), :act))
+  end
+
+  def test_assert_equal__rhs_ntf__true_true
+    assert_nothing aeq(s(:true), s(:true))
   end
 
   def test_assert_equal__rhs_str
@@ -543,6 +543,14 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be_empty))
   end
 
+  def test_must_be_empty__count
+    assert_re(:RE_MUST_BE_EMPTY,
+              "_(obj).must_be_empty",
+              meq(s(:call, :lhs, :count), lit(0)),
+              # =>
+              e(:lhs, :must_be_empty))
+  end
+
   def test_must_be_empty__hash
     assert_re(:RE_MUST_BE_EMPTY_LIT,
               "_(obj).must_be_empty",
@@ -555,14 +563,6 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_MUST_BE_EMPTY,
               "_(obj).must_be_empty",
               meq(s(:call, :lhs, :length), lit(0)),
-              # =>
-              e(:lhs, :must_be_empty))
-  end
-
-  def test_must_be_empty__count
-    assert_re(:RE_MUST_BE_EMPTY,
-              "_(obj).must_be_empty",
-              meq(s(:call, :lhs, :count), lit(0)),
               # =>
               e(:lhs, :must_be_empty))
   end
