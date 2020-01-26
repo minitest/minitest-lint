@@ -214,7 +214,7 @@ class AssertScanner
 
   doco "assert obj.include? val" => "assert_includes obj, val"
   replace_call(:assert_includes,
-               RE_INCL: assert_pat("(call _ include? _)"))
+               RE_INCLUDE: assert_pat("(call _ include? _)"))
 
   doco "assert obj.pred?" => "assert_predicate obj, :pred?"
   unpack_call(:assert_predicate,
@@ -273,7 +273,7 @@ class AssertScanner
                RE_NEQUAL: assert_pat("(call _ != _)"))
 
   doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
-  rewrite(RE_OP_INCL: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
+  rewrite(RE_OP_INCLUDE: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
     s(t, r, :assert_includes, obj, val)
   end
 
@@ -329,7 +329,7 @@ class AssertScanner
 
   doco "refute obj.include? val" => "refute_includes obj, val"
   replace_call(:refute_includes,
-               RE_REF_INCL: refute_pat("(call _ include? _)"))
+               RE_REF_INCLUDE: refute_pat("(call _ include? _)"))
 
   doco "refute obj.pred?" => "refute_predicate obj, :pred?"
   unpack_call(:refute_predicate,

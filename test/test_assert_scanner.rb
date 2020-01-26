@@ -278,7 +278,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_assert_includes
-    assert_re(:RE_INCL,
+    assert_re(:RE_INCLUDE,
               "assert_includes obj, val",
               a(s(:call, :lhs, :include?, :rhs)),
               # =>
@@ -326,7 +326,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_assert_operator__incl
-    assert_re(:RE_OP_INCL,
+    assert_re(:RE_OP_INCLUDE,
               "assert_includes obj, val",
               c(:assert_operator, :lhs, lit(:include?), :rhs),
               # =>
@@ -411,7 +411,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_refute_includes
-    assert_re(:RE_REF_INCL,
+    assert_re(:RE_REF_INCLUDE,
               "refute_includes obj, val",
               r(s(:call, :lhs, :include?, :rhs)),
               # =>
