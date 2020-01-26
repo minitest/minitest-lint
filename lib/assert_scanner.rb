@@ -1,3 +1,6 @@
+$:.unshift File.expand_path "~/Links/SP/lib"
+$:.unshift File.expand_path "~/Links/G/lib"
+
 require "ruby_parser"
 require "sexp_processor"
 require "path_expander"
@@ -321,6 +324,9 @@ class AssertScanner < SexpProcessor
   def output_all
     if io.size > 2 then
       puts out
+      puts
+    elsif $v
+      puts "question this:", out
       puts
     end
 
@@ -667,6 +673,8 @@ class AssertScanner < SexpProcessor
   # wont_equal
   # wont_include
   # wont_match
+
+  # TODO: move to positive
 
   re_wont_be_pred = must_pat("(call _ _)", :must_equal, "(:false)")
   re_wont_be_oper = must_pat("(call _ _ _)", :must_equal, "(:false)")

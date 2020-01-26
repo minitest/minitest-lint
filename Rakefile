@@ -7,6 +7,8 @@ Hoe.plugin :seattlerb
 Hoe.plugin :isolate
 Hoe.plugin :rdoc
 
+Hoe.add_include_dirs File.expand_path "~/Work/p4/zss/src/sexp_processor/dev/lib"
+
 Hoe.spec "assert_scanner" do
   developer "Ryan Davis", "ryand-ruby@zenspider.com"
 
