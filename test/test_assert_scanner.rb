@@ -466,15 +466,24 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal_rhs_lit
   todo :must_equal_rhs_str
 
+  todo :must_be__nil
+  todo :must_be__empty
+
+  todo :must_include__include
+  todo :must_include__key
+
   todo :must_be_close_to
   todo :must_be_same_as
   todo :must_be_silent
   todo :must_be_within_epsilon
   todo :must_match
   todo :must_output
+  todo :must_output__empty
   todo :must_raise
   todo :must_respond_to
   todo :must_throw
+
+  todo :path_must_exist
 
   def test_must___plain
     assert_re(:RE_MUST_PLAIN,
@@ -618,6 +627,11 @@ class TestAssertScanner < Minitest::Test
   # Negative Expectations
 
   todo :wont_be_empty
+  todo :wont_be__empty
+  todo :wont_be__nil
+  todo :wont_be__include
+  todo :wont_be__key
+
   todo :wont_equal
   todo :wont_be_close_to
   todo :wont_be_within_epsilon
@@ -627,6 +641,14 @@ class TestAssertScanner < Minitest::Test
   todo :wont_be_nil
   todo :wont_respond_to
   todo :wont_be_same_as
+  todo :path_wont_exist
+
+  # # TODO: make sure I'm picking up _/value/expect
+  # # TODO: make sure I'm picking up _ { ... }.must/wont...
+  #
+  # _(lhs.size).wont_be(:>, 0) -> must_be_empty
+  # _(lhs.size).must_be(:>, 0) -> wont_be_empty
+  # _(lhs.length).must_be(:>=, 4) # TODO: warn about magic numbers?
 
   def test_wont_be__oper
     assert_re(:RE_WONT_BE_OPER,
@@ -652,3 +674,12 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_include, :rhs))
   end
 end
+
+__END__
+# TODO: some sort of auditing:
+
+require "minitest/assertions"
+require "minitest/expectations"
+
+p Minitest::Assertions.public_instance_methods.grep(/assert|refute/)
+p Minitest::Expectations.public_instance_methods.grep(/must|wont/)
