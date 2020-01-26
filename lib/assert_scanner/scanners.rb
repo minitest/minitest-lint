@@ -151,6 +151,7 @@ class AssertScanner
     exp
   end
 
+  # TODO: audit usage
   def handle_arity exp, arity
     exp, msg = exp[0..arity], exp[arity+1]
 
@@ -163,7 +164,6 @@ class AssertScanner
   # Positive Assertions
 
   # TODO:
-  # assert obj.is_a? klass
   # assert_raises Exception do ... end
   # assert_equal "str", klass.name
   # assert_cmp
@@ -177,6 +177,12 @@ class AssertScanner
   pattern RE_MSG: assert_pat("_ _")
   register_assert RE_MSG do |exp|
     handle_arity exp, 3
+  end
+
+  doco "assert_equal exp, act, msg" => "assert_equal exp, act"
+  pattern RE_EQ_MSG: pat(:assert_equal, "_ _ _")
+  register_assert RE_EQ_MSG do |exp|
+    handle_arity exp, 4
   end
 
   # This must be second, to flip to refute as soon as possible
@@ -227,12 +233,6 @@ class AssertScanner
   doco "assert obj.msg(val)" => "assert_operator obj, :msg, val"
   unpack_call(:assert_operator,
               RE_OPER: assert_pat("(call _ _ _)"))
-
-  doco "assert_equal exp, act" => "STOP"
-  pattern RE_EQ_MSG: pat(:assert_equal, "_ _ _")
-  register_assert RE_EQ_MSG do |exp|
-    handle_arity exp, 4
-  end
 
   doco "assert_equal nil, obj" => "assert_nil obj"
   rename_and_drop(:assert_nil,
