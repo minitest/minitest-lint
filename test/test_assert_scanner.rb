@@ -102,7 +102,6 @@ class TestAssertScanner < Minitest::Test
   todo :assert_output
   todo :assert_path_exists
   todo :assert_raises
-  todo :assert_respond_to
   todo :assert_same
   todo :assert_silent
   todo :assert_throws
@@ -340,6 +339,14 @@ class TestAssertScanner < Minitest::Test
               a(s(:call, :lhs, :pred?)),
               # =>
               c(:assert_predicate, :lhs, lit(:pred?)))
+  end
+
+  def test_assert_respond_to
+    assert_re(:RE_RESPOND_TO,
+              "assert_respond_to obj, val",
+              a(s(:call, :lhs, :respond_to?, :rhs)),
+              # =>
+              c(:assert_respond_to, :lhs, :rhs))
   end
 
   ######################################################################

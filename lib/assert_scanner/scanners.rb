@@ -202,6 +202,10 @@ class AssertScanner
   replace_and_swap(:assert_instance_of,
                    RE_INSTANCE_OF: assert_pat("(call _ instance_of? _)"))
 
+  doco "assert obj.respond_to? val" => "assert_respond_to obj, val"
+  replace_call(:assert_respond_to,
+               RE_RESPOND_TO: assert_pat("(call _ respond_to? _)"))
+
   doco("assert obj.kind_of? mod" => "assert_kind_of mod, obj",
        "assert obj.is_a? mod"    => "assert_kind_of mod, obj")
   replace_and_swap(:assert_kind_of,
