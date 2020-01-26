@@ -310,7 +310,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_assert_nequal
-    assert_re(:RE_NEQUAL,
+    assert_re(:RE_EQUAL_NOT,
               "refute_equal exp, act",
               a(s(:call, :lhs, :!=, :rhs)),
               # =>
@@ -347,115 +347,6 @@ class TestAssertScanner < Minitest::Test
               a(s(:call, :lhs, :respond_to?, :rhs)),
               # =>
               c(:assert_respond_to, :lhs, :rhs))
-  end
-
-  ######################################################################
-  # Negative Assertions
-
-  todo :refute_in_delta
-  todo :refute_in_epsilon
-  todo :refute_match
-  todo :refute_nil
-  todo :refute_operator
-  todo :refute_path_exists
-  todo :refute_predicate
-  todo :refute_respond_to
-  todo :refute_same
-
-  def test_refute
-    assert_re(:RE_REF_PLAIN,
-              "Try to not use plain refute",
-              r(:whatever),
-              # =>
-              r(:whatever))
-  end
-
-  def test_refute__msg
-    assert_re(:RE_REF_MSG,
-              "redundant message?",
-              r(:test, s(:str, "msg")),
-              # =>
-              r(:test))
-  end
-
-  def test_refute__not
-    assert_re(:RE_REF_NOT,
-              "assert obj",
-              r(s(:call, :lhs, :!)),
-              # =>
-              a(:lhs))
-  end
-
-  def test_refute_empty
-    assert_re(:RE_REF_EMPTY,
-              "refute_empty val",
-              r(s(:call, :lhs, :empty?)),
-              # =>
-              c(:refute_empty, :lhs))
-  end
-
-  def test_refute_equal
-    assert_re(:RE_REF_EQUAL,
-              "refute_equal exp, act",
-              r(s(:call, :lhs, :==, :rhs)),
-              # =>
-              c(:refute_equal, :lhs, :rhs))
-  end
-
-  def test_refute_nequal
-    assert_re(:RE_REF_NEQUAL,
-              "assert_equal exp, act",
-              r(s(:call, :lhs, :!=, :rhs)),
-              # =>
-              c(:assert_equal, :lhs, :rhs))
-  end
-
-  def test_refute_includes
-    assert_re(:RE_REF_INCLUDE,
-              "refute_includes obj, val",
-              r(s(:call, :lhs, :include?, :rhs)),
-              # =>
-              c(:refute_includes, :lhs, :rhs))
-  end
-
-  def test_refute_instance_of
-    assert_re(:RE_REF_INSTANCE_OF,
-              "refute_instance_of cls, obj",
-              r(s(:call, :obj, :instance_of?, :cls)),
-              # =>
-              c(:refute_instance_of, :cls, :obj))
-  end
-
-  def test_refute_is_a
-    assert_re(:RE_REF_IS_A,
-              "refute_kind_of mod, obj",
-              r(s(:call, :obj, :is_a?, :mod)),
-              # =>
-              c(:refute_kind_of, :mod, :obj))
-  end
-
-  def test_refute_kind_of
-    assert_re(:RE_REF_KIND_OF,
-              "refute_kind_of mod, obj",
-              r(s(:call, :obj, :kind_of?, :mod)),
-              # =>
-              c(:refute_kind_of, :mod, :obj))
-  end
-
-  def test_refute_oper
-    assert_re(:RE_REF_OPER,
-              "refute_operator obj, :msg, val",
-              r(s(:call, :lhs, :msg, :rhs)),
-              # =>
-              c(:refute_operator, :lhs, lit(:msg), :rhs))
-  end
-
-  def test_refute_pred
-    assert_re(:RE_REF_PRED,
-              "refute_predicate obj, :pred?",
-              r(s(:call, :lhs, :msg)),
-              # =>
-              c(:refute_predicate, :lhs, lit(:msg)))
   end
 
   ######################################################################
@@ -628,6 +519,115 @@ class TestAssertScanner < Minitest::Test
               meq(s(:call, :lhs, :include?, :rhs), s(:true)),
               # =>
               e(:lhs, :must_include, :rhs))
+  end
+
+  ######################################################################
+  # Negative Assertions
+
+  todo :refute_in_delta
+  todo :refute_in_epsilon
+  todo :refute_match
+  todo :refute_nil
+  todo :refute_operator
+  todo :refute_path_exists
+  todo :refute_predicate
+  todo :refute_respond_to
+  todo :refute_same
+
+  def test_refute
+    assert_re(:RE_REF_PLAIN,
+              "Try to not use plain refute",
+              r(:whatever),
+              # =>
+              r(:whatever))
+  end
+
+  def test_refute__msg
+    assert_re(:RE_REF_MSG,
+              "redundant message?",
+              r(:test, s(:str, "msg")),
+              # =>
+              r(:test))
+  end
+
+  def test_refute__not
+    assert_re(:RE_REF_NOT,
+              "assert obj",
+              r(s(:call, :lhs, :!)),
+              # =>
+              a(:lhs))
+  end
+
+  def test_refute_empty
+    assert_re(:RE_REF_EMPTY,
+              "refute_empty val",
+              r(s(:call, :lhs, :empty?)),
+              # =>
+              c(:refute_empty, :lhs))
+  end
+
+  def test_refute_equal
+    assert_re(:RE_REF_EQUAL,
+              "refute_equal exp, act",
+              r(s(:call, :lhs, :==, :rhs)),
+              # =>
+              c(:refute_equal, :lhs, :rhs))
+  end
+
+  def test_refute_equal_not
+    assert_re(:RE_REF_EQUAL_NOT,
+              "assert_equal exp, act",
+              r(s(:call, :lhs, :!=, :rhs)),
+              # =>
+              c(:assert_equal, :lhs, :rhs))
+  end
+
+  def test_refute_includes
+    assert_re(:RE_REF_INCLUDE,
+              "refute_includes obj, val",
+              r(s(:call, :lhs, :include?, :rhs)),
+              # =>
+              c(:refute_includes, :lhs, :rhs))
+  end
+
+  def test_refute_instance_of
+    assert_re(:RE_REF_INSTANCE_OF,
+              "refute_instance_of cls, obj",
+              r(s(:call, :obj, :instance_of?, :cls)),
+              # =>
+              c(:refute_instance_of, :cls, :obj))
+  end
+
+  def test_refute_is_a
+    assert_re(:RE_REF_IS_A,
+              "refute_kind_of mod, obj",
+              r(s(:call, :obj, :is_a?, :mod)),
+              # =>
+              c(:refute_kind_of, :mod, :obj))
+  end
+
+  def test_refute_kind_of
+    assert_re(:RE_REF_KIND_OF,
+              "refute_kind_of mod, obj",
+              r(s(:call, :obj, :kind_of?, :mod)),
+              # =>
+              c(:refute_kind_of, :mod, :obj))
+  end
+
+  def test_refute_oper
+    assert_re(:RE_REF_OPER,
+              "refute_operator obj, :msg, val",
+              r(s(:call, :lhs, :msg, :rhs)),
+              # =>
+              c(:refute_operator, :lhs, lit(:msg), :rhs))
+  end
+
+  def test_refute_pred
+    assert_re(:RE_REF_PRED,
+              "refute_predicate obj, :pred?",
+              r(s(:call, :lhs, :msg)),
+              # =>
+              c(:refute_predicate, :lhs, lit(:msg)))
   end
 
   ######################################################################

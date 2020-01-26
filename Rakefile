@@ -60,4 +60,13 @@ task :debug => :isolate do
   puts scanner.count
 end
 
+def shell cmd
+  system "#{ENV["SHELL"]} -c %p" % cmd
+end
+
+task :sort => :isolate do
+  shell "diff -u <(./bin/assert_scanner --raw) <(./bin/assert_scanner --list | grep .)"
+  shell "grepsort -u def.test_ test/test_assert_scanner.rb"
+end
+
 # vim: syntax=ruby

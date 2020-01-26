@@ -192,6 +192,10 @@ class AssertScanner
   replace_call(:assert_equal,
                RE_EQUAL: assert_pat("(call _ == _)"))
 
+  doco "assert exp != act" => "refute_equal exp, act"
+  replace_call(:refute_equal,
+               RE_EQUAL_NOT: assert_pat("(call _ != _)"))
+
   doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
        "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
   rename(:assert_in_epsilon,
@@ -268,10 +272,6 @@ class AssertScanner
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
 
-  doco "assert exp != act" => "refute_equal exp, act"
-  replace_call(:refute_equal,
-               RE_NEQUAL: assert_pat("(call _ != _)"))
-
   doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
   rewrite(RE_OP_INCLUDE: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
     s(t, r, :assert_includes, obj, val)
@@ -316,7 +316,7 @@ class AssertScanner
 
   doco "refute exp != act" => "assert_equal exp, act"
   replace_call(:assert_equal,
-               RE_REF_NEQUAL: refute_pat("(call _ != _)"))
+               RE_REF_EQUAL_NOT: refute_pat("(call _ != _)"))
 
   doco "refute obj.instance_of? cls" => "refute_instance_of cls, obj"
   replace_and_swap(:refute_instance_of,

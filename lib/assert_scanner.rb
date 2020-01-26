@@ -123,8 +123,6 @@ class AssertScanner < SexpProcessor
   def list
     doco = self.class.__doco
 
-    puts "# GROUPED:"
-
     doco
       .group_by { |a,b| ORDER.index a[RE] }
       .sort
@@ -138,8 +136,6 @@ class AssertScanner < SexpProcessor
 
   def raw_list
     doco = self.class.__doco
-
-    puts "# RAW:"
 
     doco.each do |from, to|
       puts "%-40s => %s" % [from, to]
