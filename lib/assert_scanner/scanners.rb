@@ -208,7 +208,6 @@ class AssertScanner
   # TODO:
   # assert_raises Exception do ... end
   # assert_equal "str", klass.name
-  # assert_cmp
   # assert_match
   # assert_raises
   # assert_respond_to
@@ -334,7 +333,6 @@ class AssertScanner
   # Negative Assertions
 
   # TODO:
-  # refute_cmp
   # refute_match
   # refute_nil
   # assert(obj.size > 0) => refute_empty
@@ -458,7 +456,8 @@ class AssertScanner
     must(lhs, :must_be_empty)
   end
 
-  doco "_(obj).must_equal([])" => "_(obj).must_be_empty"
+  doco("_(obj).must_equal([])" => "_(obj).must_be_empty",
+       "_(obj).must_equal({})" => "_(obj).must_be_empty")
   exp_rewrite(RE_MUST_BE_EMPTY_LIT: re_must_be_empty_lit) do |lhs,|
     must(lhs, :must_be_empty)
   end
@@ -471,6 +470,13 @@ class AssertScanner
   doco "_(obj.pred?).must_equal false" => "_(obj).wont_be :pred?"
   exp_rewrite(RE_MUST_BE_PRED_F: re_must_be_pred_f) do |(_, lhs, msg), _, _|
     must(lhs, :wont_be, s(:lit, msg))
+  end
+
+  doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
+  exp_rewrite(RE_MUST_BE_OPER: re_must_be_oper) do |(_, lhs, msg, rhs),|
+    next if msg == :[]
+
+    must(lhs, :must_be, s(:lit, msg), rhs)
   end
 
   doco "_(obj.msg(val)).must_equal false" => "_(obj).wont_be :msg, val"
@@ -486,13 +492,6 @@ class AssertScanner
   end
 
   # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS
-
-  doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
-  exp_rewrite(RE_MUST_BE_OPER: re_must_be_oper) do |(_, lhs, msg, rhs),|
-    next if msg == :[]
-
-    must(lhs, :must_be, s(:lit, msg), rhs)
-  end
 
   doco("_(obj).must_be(:instance_of?, cls)" => "_(obj).must_be_instance_of cls",
        "_(obj).must_be(:is_a?,        cls)" => "_(obj).must_be_instance_of cls")
