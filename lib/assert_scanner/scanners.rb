@@ -97,6 +97,27 @@ class AssertScanner
     end
   end
 
+  meta "old_assert lhs, :msg, rhs" => "new_assert, lhs, rhs"
+  def self.promote_oper new_msg, patterns, msg = latest_doco_to
+    rewrite patterns do |t, r, _m, lhs, _msg, *rest|
+      s(t, r, new_msg, lhs, *rest)
+    end
+  end
+
+  meta "old_assert lhs, :msg, rhs" => "new_assert, rhs, lhs"
+  def self.promote_oper_swap new_msg, patterns, msg = latest_doco_to
+    rewrite patterns do |t, r, _m, lhs, _msg, *rest|
+      s(t, r, new_msg, *rest, lhs)
+    end
+  end
+
+  meta "old_assert lhs, :msg" => "new_assert, lhs"
+  def self.promote_pred new_msg, patterns, msg = latest_doco_to
+    rewrite patterns do |t, r, _m, lhs, _msg|
+      s(t, r, new_msg, lhs)
+    end
+  end
+
   meta "old_assert _expected, obj" => "new_assert obj"
   def self.rename_and_drop new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, _m, _lhs, rhs|
@@ -111,6 +132,7 @@ class AssertScanner
     end
   end
 
+  # TODO: remove
   meta "old_assert lhs.msg(rhs)" => "new_assert rhs, lhs"
   def self.replace_and_swap new_msg, patterns, msg = latest_doco_to
     rewrite patterns do |t, r, m, (_, lhs, _, rhs)|
@@ -141,7 +163,23 @@ class AssertScanner
     pat :assert_equal, lhs, rhs
   end
 
-  def self.lit(x)
+  def self.pred l, m
+    pat :assert_predicate, l, lit(m)
+  end
+
+  def self.a_oper l, m, r
+    pat :assert_operator, l, "(lit #{m})", r
+  end
+
+  def self.r_oper l, m, r
+    pat :refute_operator, l, "(lit #{m})", r
+  end
+
+  def self.r_pred l, m
+    pat :refute_predicate, l, "(lit #{m})"
+  end
+
+  def self.lit x
     "(lit #{x})"
   end
 
@@ -194,11 +232,6 @@ class AssertScanner
   replace_call(:refute,
                RE_NOT: assert_pat("(call _ !)"))
 
-  # TODO: remove?
-  doco "assert obj.empty?" => "assert_empty obj"
-  replace_call(:assert_empty,
-               RE_EMPTY: assert_pat("(call _ empty?)"))
-
   doco "assert exp == act" => "assert_equal exp, act"
   replace_call(:assert_equal,
                RE_EQUAL: assert_pat("(call _ == _)"))
@@ -212,28 +245,6 @@ class AssertScanner
   rename(:assert_in_epsilon,
          RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
          RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
-
-  # TODO: remove?
-  doco "assert obj.instance_of? cls" => "assert_instance_of cls, obj"
-  replace_and_swap(:assert_instance_of,
-                   RE_INSTANCE_OF: assert_pat("(call _ instance_of? _)"))
-
-  # TODO: remove?
-  doco "assert obj.respond_to? val" => "assert_respond_to obj, val"
-  replace_call(:assert_respond_to,
-               RE_RESPOND_TO: assert_pat("(call _ respond_to? _)"))
-
-  # TODO: remove?
-  doco("assert obj.kind_of? mod" => "assert_kind_of mod, obj",
-       "assert obj.is_a? mod"    => "assert_kind_of mod, obj")
-  replace_and_swap(:assert_kind_of,
-                   RE_KIND_OF: assert_pat("(call _ kind_of? _)"),
-                   RE_IS_A:    assert_pat("(call _ is_a? _)"))
-
-  # TODO: remove?
-  doco "assert obj.include? val" => "assert_includes obj, val"
-  replace_call(:assert_includes,
-               RE_INCLUDE: assert_pat("(call _ include? _)"))
 
   doco "assert obj.pred?" => "assert_predicate obj, :pred?"
   unpack_call(:assert_predicate,
@@ -290,9 +301,27 @@ class AssertScanner
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
 
   doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
-  rewrite(RE_OP_INCLUDE: pat(:assert_operator, "_", "(lit include?)", "_")) do |t, r, _, obj, _, val|
-    s(t, r, :assert_includes, obj, val)
-  end
+  promote_oper(:assert_includes,
+               RE_OPER_INCLUDE: a_oper("_", :include?, "_"))
+
+  doco "assert_operator obj, :instance_of?, cls" => "assert_instance_of cls, obj"
+  promote_oper_swap(:assert_instance_of,
+                    RE_OPER_INSTANCE_OF: a_oper("_", :instance_of?, "_"))
+
+  doco "assert_operator obj, :respond_to?, val" => "assert_respond_to obj, val"
+  promote_oper(:assert_respond_to,
+               RE_OPER_RESPOND_TO: a_oper("_", :respond_to?, "_"))
+
+  doco("assert_operator obj, :kind_of?, mod" => "assert_kind_of mod, obj",
+       "assert_operator obj, :is_a?, mod"    => "assert_kind_of mod, obj")
+  promote_oper_swap(:assert_kind_of,
+                    RE_OPER_KIND_OF: a_oper("_", :kind_of?, "_"),
+                    RE_OPER_IS_A:    a_oper("_", :is_a?, "_"))
+
+  doco "assert_predicate obj, :empty?" => "assert_empty obj"
+  promote_pred(:assert_empty,
+               RE_PRED_EMPTY: pred("_", :empty?))
+
 
   doco "assert obj" => "WARNING"
   RE_PLAIN = assert_pat "_"
@@ -323,9 +352,6 @@ class AssertScanner
                RE_REF_NOT: refute_pat("(call _ !)"))
 
   # TODO: normalize doco terms val/obj/etc
-  doco "refute val.empty?" => "refute_empty val"
-  replace_call(:refute_empty,
-               RE_REF_EMPTY: refute_pat("(call _ empty?)"))
 
   doco "refute exp == act" => "refute_equal exp, act"
   replace_call(:refute_equal,
@@ -335,22 +361,6 @@ class AssertScanner
   replace_call(:assert_equal,
                RE_REF_EQUAL_NOT: refute_pat("(call _ != _)"))
 
-  # TODO: remove?
-  doco "refute obj.instance_of? cls" => "refute_instance_of cls, obj"
-  replace_and_swap(:refute_instance_of,
-                   RE_REF_INSTANCE_OF: refute_pat("(call _ instance_of? _)"))
-
-  # TODO: remove?
-  doco "refute obj.kind_of? mod" => "refute_kind_of mod, obj"
-  replace_and_swap(:refute_kind_of,
-                   RE_REF_KIND_OF: refute_pat("(call _ kind_of? _)"),
-                   RE_REF_IS_A:    refute_pat("(call _ is_a? _)"))
-
-  # TODO: remove?
-  doco "refute obj.include? val" => "refute_includes obj, val"
-  replace_call(:refute_includes,
-               RE_REF_INCLUDE: refute_pat("(call _ include? _)"))
-
   doco "refute obj.pred?" => "refute_predicate obj, :pred?"
   unpack_call(:refute_predicate,
               RE_REF_PRED: refute_pat("(call _ _)"))
@@ -358,6 +368,23 @@ class AssertScanner
   doco "refute obj.msg(val)" => "refute_operator obj, :msg, val"
   unpack_call(:refute_operator,
               RE_REF_OPER: refute_pat("(call _ _ _)"))
+
+  doco "refute_operator obj, :instance_of?, cls" => "refute_instance_of cls, obj"
+  promote_oper_swap(:refute_instance_of,
+                    RE_REF_OPER_INSTANCE_OF: r_oper("_", :instance_of?, "_"))
+
+  doco "refute_operator obj, :kind_of?, mod" => "refute_kind_of mod, obj"
+  promote_oper_swap(:refute_kind_of,
+                    RE_REF_OPER_KIND_OF: r_oper("_", :kind_of?, "_"),
+                    RE_REF_OPER_IS_A:    r_oper("_", :is_a?, "_"))
+
+  doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
+  promote_oper(:refute_includes,
+               RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"))
+
+  doco "refute_predicate val, :empty?" => "refute_empty val"
+  promote_pred(:refute_empty,
+               RE_REF_PRED_EMPTY: r_pred("_", :empty?))
 
   doco "refute obj" => "WARNING"
   RE_REF_PLAIN = refute_pat "_"
@@ -406,10 +433,7 @@ class AssertScanner
   # must_throw
 
   re_must_be_oper  = must_pat("(call _ _ _)",        :must_equal, "(:true)")
-  # TODO: rename must_eq_include_false
-  re_must_be_include_f  = must_pat("(call _ include? _)", :must_equal, "(:false)")
   re_must_be_empty = must_pat("(call _ [m length size count])", :must_equal, "(lit 0)")
-  re_must_include  = must_pat("(call _ include? _)", :must_equal, "(:true)")
   re_must_be_empty_lit = must_pat("_",               :must_equal, "([m array hash])")
   re_must_be_pred  = must_pat("(call _ _)",          :must_equal, "(:true)")
   re_must_be_pred_f = must_pat("(call _ _)", :must_equal, "(:false)")
@@ -425,12 +449,6 @@ class AssertScanner
   doco "_(obj).must_equal float_lit" => "_(obj).must_be_close_to float_lit"
   exp_rewrite(RE_MUST_EQ_FLOAT: re_must_eq_float) do |lhs, _, rhs|
     must(lhs, :must_be_close_to, rhs)
-  end
-
-  # TODO: remove?
-  doco "_(obj.include?(val)).must_equal true" => "_(obj).must_include val"
-  exp_rewrite(RE_MUST_INCLUDE: re_must_include) do |(_, lhs, _, rhs),|
-    must(lhs, :must_include, rhs)
   end
 
   doco("_(obj.length).must_equal 0" => "_(obj).must_be_empty",
@@ -469,18 +487,11 @@ class AssertScanner
 
   # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS
 
-  # TODO: remove?
   doco "_(obj.msg(val)).must_equal true" => "_(obj).must_be :msg, val"
   exp_rewrite(RE_MUST_BE_OPER: re_must_be_oper) do |(_, lhs, msg, rhs),|
     next if msg == :[]
 
     must(lhs, :must_be, s(:lit, msg), rhs)
-  end
-
-  # TODO: remove?
-  doco "_(obj.include?(val)).must_equal false" => "_(obj).wont_include val"
-  exp_rewrite(RE_MUST_BE_INCLUDE_F: re_must_be_include_f) do |(_, lhs, _, rhs),|
-    must(lhs, :wont_include, rhs)
   end
 
   doco("_(obj).must_be(:instance_of?, cls)" => "_(obj).must_be_instance_of cls",
@@ -499,20 +510,6 @@ class AssertScanner
   exp_rewrite(RE_MUST_BE_RESPOND_TO: must_pat("_", :must_be, "(lit respond_to?)", "_")) do |lhs, _, _, rhs|
     must(lhs, :must_respond_to, rhs)
   end
-
-  ############################################################
-  # Negative Expectations
-
-  # TODO:
-  # wont_be
-  # wont_be_empty
-  # wont_be_nil
-  # wont_equal
-  # wont_include
-  # wont_match
-
-  ############################################################
-  # Structural transformations (or stopping points)
 
   # TODO: arg vs no arg?
   re_must_other = parse("(call (call nil [m expect value] _) [m /^must/] _)")
@@ -544,5 +541,23 @@ class AssertScanner
        "obj.must_<something>"     => "_(obj).must_<something>")
   rewrite(RE_MUST_PLAIN: parse("(call _ [m /^must/] _)")) do |t, lhs, msg, rhs|
     must lhs, msg, rhs
+  end
+
+  ############################################################
+  # Negative Expectations
+
+  # TODO:
+  # wont_be
+  # wont_be_empty
+  # wont_be_nil
+  # wont_equal
+  # wont_include
+  # wont_match
+
+  re_wont_be_include = must_pat("_", :wont_be, lit(:include?), "_")
+
+  doco "_(obj).wont_be :include?, val" => "_(obj).wont_include val"
+  exp_rewrite(RE_WONT_BE_INCLUDE: re_wont_be_include) do |lhs, _, _, rhs|
+    must(lhs, :wont_include, rhs)
   end
 end
