@@ -192,14 +192,6 @@ class TestAssertScanner < Minitest::Test
               apr(:lhs, :pred?))
   end
 
-  def test_assert_empty
-    assert_re(:RE_PRED_EMPTY,
-              "assert_empty obj",
-              apr(:lhs, :empty?),
-              # =>
-              c(:assert_empty, :lhs))
-  end
-
   def test_assert_equal
     assert_re(:RE_EQUAL,
               "assert_equal exp, act",
@@ -393,6 +385,14 @@ class TestAssertScanner < Minitest::Test
               aop(:obj, :respond_to?, :msg),
               # =>
               c(:assert_respond_to, :obj, :msg))
+  end
+
+  def test_assert_predicate__empty
+    assert_re(:RE_PRED_EMPTY,
+              "assert_empty obj",
+              apr(:lhs, :empty?),
+              # =>
+              c(:assert_empty, :lhs))
   end
 
   ######################################################################
