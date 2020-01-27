@@ -102,6 +102,37 @@ class TestAssertScanner < Minitest::Test
     assert_equal exp, scan.out
   end
 
+  def test_001_sanity
+    ruby = %(expect([1, 2, 3].include?(b)).must_equal true, "is b in 1..3?") # TODO
+    ruby = %(expect([1, 2, 3].include?(b)).must_equal true)
+
+    sexp = RubyParser.new.process ruby
+    scan = AssertScanner.new
+
+    scan.analyze_assert sexp
+
+    lhs = s(:array, s(:lit, 1), s(:lit, 2), s(:lit, 3))
+    rhs = c(:b)
+    inc = s(:call, lhs, :include?, rhs)
+
+    exp = {
+      e(inc, :must_equal, s(:true))             => "_(obj).must_<something> val",
+      e(lhs, :must_be, s(:lit, :include?), rhs) => "_(obj).must_be :msg, val",
+      e(lhs, :must_include, rhs)                => "_(obj).must_include val"
+    }
+
+    assert_equal exp, scan.io
+
+    exp = [
+      #  expect([1, 2, 3].include?(b)).must_equal true # original
+      "  _([1, 2, 3].include?(b)).must_equal(true) # _(obj).must_<something> val",
+      "  _([1, 2, 3]).must_be(:include?, b)        # _(obj).must_be :msg, val",
+      "  _([1, 2, 3]).must_include(b)              # _(obj).must_include val"
+    ]
+
+    assert_equal exp, scan.out
+  end
+
   ######################################################################
   # Positive Assertions
 
