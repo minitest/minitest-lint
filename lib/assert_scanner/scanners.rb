@@ -431,7 +431,7 @@ class AssertScanner
   # must_throw
 
   re_must_be_oper  = must_pat("(call _ _ _)",        :must_equal, "(:true)")
-  re_must_be_empty = must_pat("(call _ [m length size count])", :must_equal, "(lit 0)")
+  re_must_size_zero = must_pat("(call _ [m length size count])", :must_equal, "(lit 0)")
   re_must_be_empty_lit = must_pat("_",               :must_equal, "([m array hash])")
   re_must_be_pred  = must_pat("(call _ _)",          :must_equal, "(:true)")
   re_must_be_pred_f = must_pat("(call _ _)", :must_equal, "(:false)")
@@ -453,7 +453,7 @@ class AssertScanner
   doco("_(obj.length).must_equal 0" => "_(obj).must_be_empty",
        "_(obj.size).must_equal 0"   => "_(obj).must_be_empty",
        "_(obj.count).must_equal 0"  => "_(obj).must_be_empty")
-  exp_rewrite(RE_MUST_BE_EMPTY: re_must_be_empty) do |(_, lhs, _), _, _|
+  exp_rewrite(RE_MUST_SIZE_ZERO: re_must_size_zero) do |(_, lhs, _), _, _|
     must(lhs, :must_be_empty)
   end
 

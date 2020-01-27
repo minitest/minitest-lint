@@ -526,7 +526,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be_empty__count
-    assert_re(:RE_MUST_BE_EMPTY,
+    assert_re(:RE_MUST_SIZE_ZERO,
               "_(obj).must_be_empty",
               meq(s(:call, :lhs, :count), lit(0)),
               # =>
@@ -542,7 +542,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be_empty__length
-    assert_re(:RE_MUST_BE_EMPTY,
+    assert_re(:RE_MUST_SIZE_ZERO,
               "_(obj).must_be_empty",
               meq(s(:call, :lhs, :length), lit(0)),
               # =>
@@ -550,7 +550,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be_empty__size
-    assert_re(:RE_MUST_BE_EMPTY,
+    assert_re(:RE_MUST_SIZE_ZERO,
               "_(obj).must_be_empty",
               meq(s(:call, :lhs, :size), lit(0)),
               # =>
