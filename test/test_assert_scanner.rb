@@ -411,7 +411,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal_rhs_str
 
   todo :must_be__nil
-  todo :must_be__empty
 
   todo :must_include__include
   todo :must_include__key
@@ -460,6 +459,14 @@ class TestAssertScanner < Minitest::Test
               s(:call, c(:value, :act), :must_equal, :exp),
               # =>
               meq(:act, :exp))
+  end
+
+  def test_must_be__empty
+    assert_re(:RE_MUST_BE__EMPTY,
+              "_(obj).must_be_empty",
+              mbe(:lhs, :empty?),
+              # =>
+              e(:lhs, :must_be_empty))
   end
 
   def test_must_be__include

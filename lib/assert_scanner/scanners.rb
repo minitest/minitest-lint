@@ -438,6 +438,7 @@ class AssertScanner
   re_must_be_oper_f = must_pat("(call _ _ _)", :must_equal, "(:false)")
   re_must_eq_float = must_pat("_", :must_equal, "(lit [k Float])")
   re_must_be_include = must_pat("_", :must_be, lit(:include?), "_")
+  re_must_be__empty = must_pat("_", :must_be, lit(:empty?))
 
   doco "_(obj).must_equal nil" => "_(obj).must_be_nil"
   exp_rewrite(RE_MUST_EQ_NIL: must_pat("_", :must_equal, "(:nil)")) do |lhs,|
@@ -459,6 +460,11 @@ class AssertScanner
   doco("_(obj).must_equal([])" => "_(obj).must_be_empty",
        "_(obj).must_equal({})" => "_(obj).must_be_empty")
   exp_rewrite(RE_MUST_BE_EMPTY_LIT: re_must_be_empty_lit) do |lhs,|
+    must(lhs, :must_be_empty)
+  end
+
+  doco "_(obj).must_be(:empty?)" => "_(obj).must_be_empty"
+  exp_rewrite(RE_MUST_BE__EMPTY: re_must_be__empty) do |lhs,|
     must(lhs, :must_be_empty)
   end
 
