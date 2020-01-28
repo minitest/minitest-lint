@@ -825,6 +825,14 @@ class TestAssertScanner < Minitest::Test
               c(:refute_kind_of, :mod, :obj))
   end
 
+  def test_refute_operator__respond_to
+    assert_re(:RE_REF_OPER_RESPOND_TO,
+              "refute_respond_to obj, val",
+              rop(:obj, :respond_to?, :msg),
+              # =>
+              c(:refute_respond_to, :obj, :msg))
+  end
+
   def test_refute_predicate
     assert_re(:RE_REF_PRED,
               "refute_predicate obj, :pred?",

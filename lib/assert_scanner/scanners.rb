@@ -437,6 +437,10 @@ class AssertScanner
                     RE_REF_OPER_KIND_OF: r_oper("_", :kind_of?, "_"),
                     RE_REF_OPER_IS_A:    r_oper("_", :is_a?, "_"))
 
+  doco "refute_operator obj, :respond_to?, val" => "refute_respond_to obj, val"
+  promote_oper(:refute_respond_to,
+               RE_REF_OPER_RESPOND_TO: r_oper("_", :respond_to?, "_"))
+
   doco "refute_predicate val, :empty?" => "refute_empty val"
   promote_pred(:refute_empty,
                RE_REF_PRED_EMPTY: r_pred("_", :empty?))
