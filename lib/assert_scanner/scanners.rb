@@ -1,4 +1,6 @@
 class AssertScanner
+  # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS
+
   ORDER = %w{assert refute must wont}
   RE = Regexp.union(*ORDER) # TODO: rename?
 
@@ -420,6 +422,14 @@ class AssertScanner
     parse "(call (iter (call nil :_) 0 %s) %s %s)" % [body, msg, rhs]
   end
 
+  def self.meq_pat lhs, rhs
+    must_pat(lhs, :must_equal, rhs)
+  end
+
+  def self.mbe_pat lhs, *rhs
+    must_pat(lhs, :must_be, *rhs)
+  end
+
   def match exp
     _, (_, _, _, lhs), msg, *rhs = exp
     return lhs, msg, *rhs
@@ -442,18 +452,38 @@ class AssertScanner
   # must_respond_to
   # must_throw
 
-  re_must_be_oper  = must_pat("(call _ _ _)",        :must_equal, "(:true)")
-  re_must_size_zero = must_pat("(call _ [m length size count])", :must_equal, "(lit 0)")
-  re_must_be_empty_lit = must_pat("_",               :must_equal, "([m array hash])")
-  re_must_be_pred  = must_pat("(call _ _)",          :must_equal, "(:true)")
-  re_must_be_pred_f = must_pat("(call _ _)", :must_equal, "(:false)")
-  re_must_be_oper_f = must_pat("(call _ _ _)", :must_equal, "(:false)")
-  re_must_eq_float = must_pat("_", :must_equal, "(lit [k Float])")
-  re_must_be_include = must_pat("_", :must_be, lit(:include?), "_")
-  re_must_be__empty = must_pat("_", :must_be, lit(:empty?))
+  # TODO: rename all these to name RHS
+  re_must_other        = parse("(call (call nil [m expect value] _) [m /^must/] ___)")
+  re_must_plain        = parse("(call [- (call nil :_ ___)]         [m /^must/] ___)")
+  re_must_size_zero    = meq_pat("(call _ [m length size count])", lit(0))
+  re_must_be_oper      = meq_pat("(call _ _ _)", "(:true)")
+  re_must_be_empty_lit = meq_pat("_" ,           "([m array hash])")
+  re_must_be_pred      = meq_pat("(call _ _)",   "(:true)")
+  re_must_be_pred_f    = meq_pat("(call _ _)",   "(:false)")
+  re_must_be_oper_f    = meq_pat("(call _ _ _)", "(:false)")
+  re_must_eq_float     = meq_pat("_",            "(lit [k Float])")
+  re_must_be_include   = mbe_pat("_",            lit(:include?), "_")
+  re_must_be__empty    = mbe_pat("_",            lit(:empty?))
+
+  # This must be first to immediately rewrite them to normal form
+  doco("expect(obj).must_<something> val" => "_(obj).must_<something> val",
+       "value(obj).must_<something> val"  => "_(obj).must_<something> val",
+       "expect(obj).must_<something>"     => "_(obj).must_<something>",
+       "value(obj).must_<something>"      => "_(obj).must_<something>")
+  exp_rewrite(RE_MUST_OTHER: re_must_other) do |lhs, msg, *rhs|
+    must lhs, msg, *rhs
+  end
+
+  # TODO: arg vs no arg?
+  # This must be second so it doesn't catch the above
+  doco("obj.must_<something> val" => "_(obj).must_<something> val",
+       "obj.must_<something>"     => "_(obj).must_<something>")
+  rewrite(RE_MUST_PLAIN: re_must_plain) do |t, lhs, msg, *rhs|
+    must lhs, msg, *rhs
+  end
 
   doco "_(obj).must_equal nil" => "_(obj).must_be_nil"
-  exp_rewrite(RE_MUST_EQ_NIL: must_pat("_", :must_equal, "(:nil)")) do |lhs,|
+  exp_rewrite(RE_MUST_EQ_NIL: meq_pat("_", "(:nil)")) do |lhs,|
     must lhs, :must_be_nil
   end
 
@@ -509,55 +539,21 @@ class AssertScanner
     must(lhs, :must_include, rhs)
   end
 
-  # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS
-
   doco("_(obj).must_be(:instance_of?, cls)" => "_(obj).must_be_instance_of cls",
        "_(obj).must_be(:is_a?,        cls)" => "_(obj).must_be_instance_of cls")
-  exp_rewrite(RE_MUST_BE_INSTANCE_OF: must_pat("_", :must_be, "(lit :instance_of?)", "_"),
-              RE_MUST_BE_IS_A:        must_pat("_", :must_be, "(lit :is_a?)",        "_")) do |lhs, _, _, rhs|
+  exp_rewrite(RE_MUST_BE_INSTANCE_OF: mbe_pat("_", "(lit :instance_of?)", "_"),
+              RE_MUST_BE_IS_A:        mbe_pat("_", "(lit :is_a?)",        "_")) do |lhs, _, _, rhs|
     must(lhs, :must_be_instance_of, rhs)
   end
 
   doco "_(obj).must_be(:kind_of?, mod)" => "_(obj).must_be_kind_of mod"
-  exp_rewrite(RE_MUST_BE_KIND_OF: must_pat("_", :must_be, "(lit kind_of?)", "_")) do |lhs, _, _, rhs|
+  exp_rewrite(RE_MUST_BE_KIND_OF: mbe_pat("_", "(lit kind_of?)", "_")) do |lhs, _, _, rhs|
     must(lhs, :must_be_kind_of, rhs)
   end
 
   doco "_(obj).must_be(:respond_to?, val)" => "_(obj).must_respond_to val"
-  exp_rewrite(RE_MUST_BE_RESPOND_TO: must_pat("_", :must_be, "(lit respond_to?)", "_")) do |lhs, _, _, rhs|
+  exp_rewrite(RE_MUST_BE_RESPOND_TO: mbe_pat("_", "(lit respond_to?)", "_")) do |lhs, _, _, rhs|
     must(lhs, :must_respond_to, rhs)
-  end
-
-  # TODO: arg vs no arg?
-  re_must_other = parse("(call (call nil [m expect value] _) [m /^must/] _)")
-
-  # TODO: arg vs no arg?
-  doco("_(obj).must_<something> val" => "STOP",
-       "_(obj).must_<something>"     => "STOP")
-  rewrite(RE_MUST_GOOD: must_pat("_", "[m /^must/]", "_")) do
-    # STOP
-  end
-
-  # TODO: arg vs no arg?
-  doco("_{ ... }.must_<something> val" => "STOP",
-       "_{ ... }.must_<something>"     => "STOP")
-  rewrite(RE_MUST_BLOCK_GOOD: must_block_pat("___", "[m /^must/]", "_")) do
-    # STOP
-  end
-
-  doco("expect(obj).must_<something> val" => "_(obj).must_<something> val",
-       "value(obj).must_<something> val"  => "_(obj).must_<something> val",
-       "expect(obj).must_<something>"     => "_(obj).must_<something>",
-       "value(obj).must_<something>"      => "_(obj).must_<something>")
-  exp_rewrite(RE_MUST_OTHER: re_must_other) do |lhs, msg, rhs|
-    must lhs, msg, rhs
-  end
-
-  # TODO: arg vs no arg?
-  doco("obj.must_<something> val" => "_(obj).must_<something> val",
-       "obj.must_<something>"     => "_(obj).must_<something>")
-  rewrite(RE_MUST_PLAIN: parse("(call _ [m /^must/] _)")) do |t, lhs, msg, rhs|
-    must lhs, msg, rhs
   end
 
   ############################################################

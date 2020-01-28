@@ -67,6 +67,13 @@ class TestAssertScanner < Minitest::Test
     assert_empty scan.io
   end
 
+  def refute_re scanner, from
+    pattern = AssertScanner.const_get scanner
+
+    refute_operator pattern, :===, from
+    refute_match pattern, from
+  end
+
   ######################################################################
   # Sanity Test:
 
@@ -436,22 +443,17 @@ class TestAssertScanner < Minitest::Test
               meq(:lhs, :rhs))
   end
 
-  def test_must___plain_good
-    assert_re_done(:RE_MUST_GOOD, # TODO: GOOD -> DONE|STOP ?
-                   e(:lhs, :must_xxx, :rhs))
-  end
-
-  def test_must__plain_block_good
-    assert_re_done(:RE_MUST_BLOCK_GOOD,
-                   bm(:lhs, :must_xxx, :rhs))
+  def test_must___plain_bad
+    refute_re(:RE_MUST_PLAIN,
+              e(:lhs, :must_equal, lit(42)))
   end
 
   def test_must__plain_expect
     assert_re(:RE_MUST_OTHER,
               "_(obj).must_<something> val",
-              s(:call, c(:expect, :act), :must_equal, :exp),
+              s(:call, c(:expect, :act), :must_be, lit(:<), :arg),
               # =>
-              meq(:act, :exp))
+              mbe(:act, :<, :arg))
   end
 
   def test_must__plain_value
