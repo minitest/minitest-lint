@@ -411,6 +411,18 @@ class AssertScanner
          RE_REF_EQ_FLOAT: pat(:refute_equal,    "(lit, [k Float])", "_"),
          RE_REF_IN_DELTA: pat(:refute_in_delta, "_",                "_"))
 
+  doco("refute_equal 0, obj.count"  => "refute_empty obj",
+       "refute_equal 0, obj.length" => "refute_empty obj",
+       "refute_equal 0, obj.size"   => "refute_empty obj")
+  rewrite(RE_REF_EQ_EMPTY: r_eq_pat(lit(0), size_pat)) do |t, r, _, _, (_, recv, _)|
+    s(t, r, :refute_empty, recv)
+  end
+
+  doco("refute_equal [], obj" => "refute_empty obj",
+       "refute_equal {}, obj" => "refute_empty obj")
+  rename_and_drop(:refute_empty,
+                  RE_REF_EQ_EMPTY_LIT: r_eq_pat("([m array hash])", "_"))
+
   doco "refute_operator obj, :instance_of?, cls" => "refute_instance_of cls, obj"
   promote_oper_swap(:refute_instance_of,
                     RE_REF_OPER_INSTANCE_OF: r_oper("_", :instance_of?, "_"))

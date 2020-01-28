@@ -657,6 +657,30 @@ class TestAssertScanner < Minitest::Test
               c(:refute_equal, :lhs, :rhs))
   end
 
+  def test_refute_equal__empty
+    assert_re(:RE_REF_EQ_EMPTY,
+              "refute_empty obj",
+              req(lit(0), s(:call, :whatever, :length)),
+              # =>
+              c(:refute_empty, :whatever))
+  end
+
+  def test_refute_equal__empty_array
+    assert_re(:RE_REF_EQ_EMPTY_LIT,
+              "refute_empty obj",
+              req(s(:array), :lhs),
+              # =>
+              c(:refute_empty, :lhs))
+  end
+
+  def test_refute_equal__empty_hash
+    assert_re(:RE_REF_EQ_EMPTY_LIT,
+              "refute_empty obj",
+              req(s(:hash), :lhs),
+              # =>
+              c(:refute_empty, :lhs))
+  end
+
   def test_refute_equal__float
     assert_re(:RE_REF_EQ_FLOAT,
               "refute_in_epsilon float_lit, act",
