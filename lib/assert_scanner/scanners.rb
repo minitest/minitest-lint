@@ -380,10 +380,6 @@ class AssertScanner
   unpack_call(:refute_operator,
               RE_REF_OPER: refute_pat("(call _ _ _)"))
 
-  doco "refute_equal nil, obj" => "refute_nil obj"
-  rename_and_drop(:refute_nil,
-                 RE_REF_EQ_NIL: r_eq_pat("(:nil)", "_"))
-
   doco "refute_equal true, obj.pred?" => "refute_predicate obj, :pred?"
   unpack_and_drop(:refute_predicate,
                   RE_REF_EQ_PRED: r_eq_pat("(true)",  "(call _ _)"))
@@ -405,6 +401,10 @@ class AssertScanner
        RE_REF_EQ_RHS_STR: r_eq_pat(NOT_LAS, "(str _)"),
        RE_REF_EQ_RHS_NTF: r_eq_pat(NOT_LAS, "([atom])"))
 
+  doco "refute_equal nil, obj" => "refute_nil obj"
+  rename_and_drop(:refute_nil,
+                 RE_REF_EQ_NIL: r_eq_pat("(:nil)", "_"))
+
   doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
        "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
   rename(:refute_in_epsilon,
@@ -423,6 +423,10 @@ class AssertScanner
   rename_and_drop(:refute_empty,
                   RE_REF_EQ_EMPTY_LIT: r_eq_pat("([m array hash])", "_"))
 
+  doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
+  promote_oper(:refute_includes,
+               RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"))
+
   doco "refute_operator obj, :instance_of?, cls" => "refute_instance_of cls, obj"
   promote_oper_swap(:refute_instance_of,
                     RE_REF_OPER_INSTANCE_OF: r_oper("_", :instance_of?, "_"))
@@ -432,10 +436,6 @@ class AssertScanner
   promote_oper_swap(:refute_kind_of,
                     RE_REF_OPER_KIND_OF: r_oper("_", :kind_of?, "_"),
                     RE_REF_OPER_IS_A:    r_oper("_", :is_a?, "_"))
-
-  doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
-  promote_oper(:refute_includes,
-               RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"))
 
   doco "refute_predicate val, :empty?" => "refute_empty val"
   promote_pred(:refute_empty,
