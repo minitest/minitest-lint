@@ -665,6 +665,14 @@ class TestAssertScanner < Minitest::Test
               req(:lhs, :rhs))
   end
 
+  def test_refute_equal__nil
+    assert_re(:RE_REF_EQ_NIL,
+              "refute_nil obj",
+              req(s(:nil), :whatever),
+              # =>
+              c(:refute_nil, :whatever))
+  end
+
   def test_refute_in_delta
     assert_re(:RE_REF_IN_DELTA,
               "refute_in_epsilon float_lit, act",

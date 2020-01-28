@@ -173,6 +173,10 @@ class AssertScanner
     pat :assert_operator, l, "(lit #{m})", r
   end
 
+  def self.r_eq_pat lhs, rhs
+    pat :refute_equal, lhs, rhs
+  end
+
   def self.r_oper l, m, r
     pat :refute_operator, l, "(lit #{m})", r
   end
@@ -375,6 +379,10 @@ class AssertScanner
   doco "refute obj.msg(val)" => "refute_operator obj, :msg, val"
   unpack_call(:refute_operator,
               RE_REF_OPER: refute_pat("(call _ _ _)"))
+
+  doco "refute_equal nil, obj" => "refute_nil obj"
+  rename_and_drop(:refute_nil,
+                 RE_REF_EQ_NIL: r_eq_pat("(:nil)", "_"))
 
   doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
        "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
