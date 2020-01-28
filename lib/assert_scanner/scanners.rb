@@ -345,6 +345,12 @@ class AssertScanner
     handle_arity exp, 3
   end
 
+  doco "refute_equal exp, act, msg" => "refute_equal exp, act"
+  pattern RE_REF_EQ_MSG: pat(:refute_equal, "_ _ _")
+  register_assert RE_REF_EQ_MSG do |exp|
+    handle_arity exp, 4
+  end
+
   doco "refute ! obj" => "assert obj"
   replace_call(:assert,
                RE_REF_NOT: refute_pat("(call _ !)"))

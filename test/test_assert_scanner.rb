@@ -27,6 +27,7 @@ class TestAssertScanner < Minitest::Test
   def lit(x);        s(:lit, x);                 end
   def mbe(l, m, *r); e(l, :must_be, lit(m), *r); end
   def meq(l,r);      e(l, :must_equal,    r);    end
+  def req(*args);    c(:refute_equal, *args);    end
   def rop(l, m, r);  a_lit(:refute_operator,  l, m, r); end
   def rpr(l, m);     a_lit(:refute_predicate, l, m);    end
   def wbe(l, m, *r); e(l, :wont_be, lit(m), *r); end
@@ -638,6 +639,14 @@ class TestAssertScanner < Minitest::Test
               r(s(:call, :lhs, :==, :rhs)),
               # =>
               c(:refute_equal, :lhs, :rhs))
+  end
+
+  def test_refute_equal__msg
+    assert_re(:RE_REF_EQ_MSG,
+              "redundant message?",
+              req(:lhs, :rhs, :msg),
+              # =>
+              req(:lhs, :rhs))
   end
 
   def test_refute_equal_not
