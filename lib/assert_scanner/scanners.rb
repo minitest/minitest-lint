@@ -565,10 +565,17 @@ class AssertScanner
   # wont_include
   # wont_match
 
-  re_wont_be_include = must_pat("_", :wont_be, lit(:include?), "_")
+  def self.declare_wont_be msg
+    sym = msg.to_s.delete("?")
+    pat = must_pat("_", :wont_be, lit(msg), "_")
 
-  doco "_(obj).wont_be :include?, val" => "_(obj).wont_include val"
-  exp_rewrite(RE_WONT_BE_INCLUDE: re_wont_be_include) do |lhs, _, _, rhs|
-    must(lhs, :wont_include, rhs)
+    doco "_(obj).wont_be :#{msg}, val" => "_(obj).wont_#{sym} val"
+    exp_rewrite("RE_WONT_BE_#{sym.upcase}".to_sym => pat) do |lhs, _, _, rhs|
+      must(lhs, "wont_#{sym}".to_sym, rhs)
+    end
   end
+
+  declare_wont_be :include?
+  declare_wont_be :respond_to?
+
 end
