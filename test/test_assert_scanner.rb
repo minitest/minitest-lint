@@ -633,6 +633,14 @@ class TestAssertScanner < Minitest::Test
               a(:lhs))
   end
 
+  def test_refute__not_equal
+    assert_re(:RE_REF_EQUAL_NOT,
+              "assert_equal exp, act",
+              r(s(:call, :lhs, :!=, :rhs)),
+              # =>
+              c(:assert_equal, :lhs, :rhs))
+  end
+
   def test_refute_equal
     assert_re(:RE_REF_EQUAL,
               "refute_equal exp, act",
@@ -647,14 +655,6 @@ class TestAssertScanner < Minitest::Test
               req(:lhs, :rhs, :msg),
               # =>
               req(:lhs, :rhs))
-  end
-
-  def test_refute_equal_not
-    assert_re(:RE_REF_EQUAL_NOT,
-              "assert_equal exp, act",
-              r(s(:call, :lhs, :!=, :rhs)),
-              # =>
-              c(:assert_equal, :lhs, :rhs))
   end
 
   def test_refute_operator
