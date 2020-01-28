@@ -570,10 +570,10 @@ class TestAssertScanner < Minitest::Test
 
   def test_must_be_is_a
     assert_re(:RE_MUST_BE_IS_A,
-              "_(obj).must_be_instance_of cls",
+              "_(obj).must_be_kind_of mod",
               mbe(:lhs, :is_a?, :rhs),
               # =>
-              e(:lhs, :must_be_instance_of, :rhs))
+              e(:lhs, :must_be_kind_of, :rhs))
   end
 
   def test_must_be_kind_of

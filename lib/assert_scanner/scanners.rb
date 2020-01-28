@@ -539,15 +539,15 @@ class AssertScanner
     must(lhs, :must_include, rhs)
   end
 
-  doco("_(obj).must_be(:instance_of?, cls)" => "_(obj).must_be_instance_of cls",
-       "_(obj).must_be(:is_a?,        cls)" => "_(obj).must_be_instance_of cls")
-  exp_rewrite(RE_MUST_BE_INSTANCE_OF: mbe_pat("_", "(lit :instance_of?)", "_"),
-              RE_MUST_BE_IS_A:        mbe_pat("_", "(lit :is_a?)",        "_")) do |lhs, _, _, rhs|
+  doco "_(obj).must_be :instance_of?, cls" => "_(obj).must_be_instance_of cls"
+  exp_rewrite(RE_MUST_BE_INSTANCE_OF: mbe_pat("_", "(lit :instance_of?)", "_"),) do |lhs, _, _, rhs|
     must(lhs, :must_be_instance_of, rhs)
   end
 
-  doco "_(obj).must_be(:kind_of?, mod)" => "_(obj).must_be_kind_of mod"
-  exp_rewrite(RE_MUST_BE_KIND_OF: mbe_pat("_", "(lit kind_of?)", "_")) do |lhs, _, _, rhs|
+  doco("_(obj).must_be :kind_of?, mod" => "_(obj).must_be_kind_of mod",
+       "_(obj).must_be :is_a?, mod"    => "_(obj).must_be_kind_of mod")
+  exp_rewrite(RE_MUST_BE_IS_A:    mbe_pat("_", "(lit :is_a?)",        "_"),
+              RE_MUST_BE_KIND_OF: mbe_pat("_", "(lit kind_of?)", "_")) do |lhs, _, _, rhs|
     must(lhs, :must_be_kind_of, rhs)
   end
 
