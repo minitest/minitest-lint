@@ -423,6 +423,13 @@ class AssertScanner
   rename_and_drop(:refute_empty,
                   RE_REF_EQ_EMPTY_LIT: r_eq_pat("([m array hash])", "_"))
 
+  doco "refute_equal 'long str', str" => "refute_includes str, 'substr'"
+  rewrite(RE_REF_EQ_LHS_STR: r_eq_pat("(str _)", "_")) do |t, r, _, (_, str), rhs, *|
+    next unless str && str.length > 20
+
+    s(t, r, :refute_includes, rhs, s(:str, str[0, 20]))
+  end
+
   doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
   promote_oper(:refute_includes,
                RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"))

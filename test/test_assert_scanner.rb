@@ -28,6 +28,7 @@ class TestAssertScanner < Minitest::Test
   def mbe(l, m, *r); e(l, :must_be, lit(m), *r); end
   def meq(l,r);      e(l, :must_equal,    r);    end
   def req(*args);    c(:refute_equal, *args);    end
+  def rin(*args);    c(:refute_includes, *args); end
   def rop(l, m, r);  a_lit(:refute_operator,  l, m, r); end
   def rpr(l, m);     a_lit(:refute_predicate, l, m);    end
   def wbe(l, m, *r); e(l, :wont_be, lit(m), *r); end
@@ -687,6 +688,17 @@ class TestAssertScanner < Minitest::Test
               req(s(:lit, 6.28), :rhs),
               # =>
               c(:refute_in_epsilon, s(:lit, 6.28), :rhs))
+  end
+
+  def test_refute_equal__lhs_str
+    long = "string " * 100
+    short = long[0, 20]
+
+    assert_re(:RE_REF_EQ_LHS_STR,
+              "refute_includes str, 'substr'",
+              req(s(:str, long), :rhs),
+              # =>
+              rin(:rhs, s(:str, short)))
   end
 
   def test_refute_equal__msg
