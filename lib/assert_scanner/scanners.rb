@@ -384,6 +384,22 @@ class AssertScanner
   rename_and_drop(:refute_nil,
                  RE_REF_EQ_NIL: r_eq_pat("(:nil)", "_"))
 
+  doco "refute_equal true, obj.pred?" => "refute_predicate obj, :pred?"
+  unpack_and_drop(:refute_predicate,
+                  RE_REF_EQ_PRED: r_eq_pat("(true)",  "(call _ _)"))
+
+  doco "refute_equal true, obj.msg(val)" => "refute_operator obj, :msg, val"
+  unpack_and_drop(:refute_operator,
+                  RE_REF_EQ_OPER: r_eq_pat("(true)",  "(call _ _ _)"))
+
+  doco "refute_equal false, obj.pred?" => "assert_predicate obj, :pred?"
+  unpack_and_drop(:assert_predicate,
+                  RE_REF_NEQ_PRED: r_eq_pat("(false)",  "(call _ _)"))
+
+  doco "refute_equal false, obj.msg(val)" => "assert_operator obj, :msg, val"
+  unpack_and_drop(:assert_operator,
+                  RE_REF_NEQ_OPER: r_eq_pat("(false)",  "(call _ _ _)"))
+
   doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
        "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
   rename(:refute_in_epsilon,

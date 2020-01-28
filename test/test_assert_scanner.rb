@@ -259,14 +259,6 @@ class TestAssertScanner < Minitest::Test
               c(:assert_nil, :whatever))
   end
 
-  def test_assert_equal__oper
-    assert_re(:RE_EQ_OPER,
-              "assert_operator obj, :msg, val",
-              aeq(s(:true), s(:call, :obj, :msg, :rhs)),
-              # =>
-              aop(:obj, :msg, :rhs))
-  end
-
   def test_assert_equal__oper_false
     assert_re(:RE_NEQ_OPER,
               "refute_operator obj, :msg, val",
@@ -275,12 +267,12 @@ class TestAssertScanner < Minitest::Test
               rop(:obj, :msg, :rhs))
   end
 
-  def test_assert_equal__pred
-    assert_re(:RE_EQ_PRED,
-              "assert_predicate obj, :pred?",
-              aeq(s(:true), s(:call, :obj, :msg)),
+  def test_assert_equal__oper_true
+    assert_re(:RE_EQ_OPER,
+              "assert_operator obj, :msg, val",
+              aeq(s(:true), s(:call, :obj, :msg, :rhs)),
               # =>
-              apr(:obj, :msg))
+              aop(:obj, :msg, :rhs))
   end
 
   def test_assert_equal__pred_false
@@ -289,6 +281,14 @@ class TestAssertScanner < Minitest::Test
               aeq(s(:false), s(:call, :obj, :msg)),
               # =>
               rpr(:obj, :msg))
+  end
+
+  def test_assert_equal__pred_true
+    assert_re(:RE_EQ_PRED,
+              "assert_predicate obj, :pred?",
+              aeq(s(:true), s(:call, :obj, :msg)),
+              # =>
+              apr(:obj, :msg))
   end
 
   def test_assert_equal__rhs_lit
@@ -641,6 +641,14 @@ class TestAssertScanner < Minitest::Test
               c(:assert_equal, :lhs, :rhs))
   end
 
+  def test_refute__operator
+    assert_re(:RE_REF_OPER,
+              "refute_operator obj, :msg, val",
+              r(s(:call, :lhs, :msg, :rhs)),
+              # =>
+              rop(:lhs, :msg, :rhs))
+  end
+
   def test_refute_equal
     assert_re(:RE_REF_EQUAL,
               "refute_equal exp, act",
@@ -673,20 +681,44 @@ class TestAssertScanner < Minitest::Test
               c(:refute_nil, :whatever))
   end
 
+  def test_refute_equal__oper_false
+    assert_re(:RE_REF_NEQ_OPER,
+              "assert_operator obj, :msg, val",
+              req(s(:false), s(:call, :obj, :msg, :rhs)),
+              # =>
+              aop(:obj, :msg, :rhs))
+  end
+
+  def test_refute_equal__oper_true
+    assert_re(:RE_REF_EQ_OPER,
+              "refute_operator obj, :msg, val",
+              req(s(:true), s(:call, :obj, :msg, :rhs)),
+              # =>
+              rop(:obj, :msg, :rhs))
+  end
+
+  def test_refute_equal__pred_false
+    assert_re(:RE_REF_NEQ_PRED,
+              "assert_predicate obj, :pred?",
+              req(s(:false), s(:call, :obj, :msg)),
+              # =>
+              apr(:obj, :msg))
+  end
+
+  def test_refute_equal__pred_true
+    assert_re(:RE_REF_EQ_PRED,
+              "refute_predicate obj, :pred?",
+              req(s(:true), s(:call, :obj, :msg)),
+              # =>
+              rpr(:obj, :msg))
+  end
+
   def test_refute_in_delta
     assert_re(:RE_REF_IN_DELTA,
               "refute_in_epsilon float_lit, act",
               c(:refute_in_delta, :lhs, :rhs),
               # =>
               c(:refute_in_epsilon, :lhs, :rhs))
-  end
-
-  def test_refute_operator
-    assert_re(:RE_REF_OPER,
-              "refute_operator obj, :msg, val",
-              r(s(:call, :lhs, :msg, :rhs)),
-              # =>
-              rop(:lhs, :msg, :rhs))
   end
 
   def test_refute_operator__include
