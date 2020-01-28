@@ -400,6 +400,11 @@ class AssertScanner
   unpack_and_drop(:assert_operator,
                   RE_REF_NEQ_OPER: r_eq_pat("(false)",  "(call _ _ _)"))
 
+  doco "refute_equal act, lit" => "refute_equal lit, act"
+  swap(RE_REF_EQ_RHS_LIT: r_eq_pat(NOT_LAS, "(lit _)"),
+       RE_REF_EQ_RHS_STR: r_eq_pat(NOT_LAS, "(str _)"),
+       RE_REF_EQ_RHS_NTF: r_eq_pat(NOT_LAS, "([atom])"))
+
   doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
        "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
   rename(:refute_in_epsilon,

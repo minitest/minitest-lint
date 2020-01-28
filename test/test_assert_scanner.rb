@@ -232,6 +232,14 @@ class TestAssertScanner < Minitest::Test
               c(:assert_empty, :lhs))
   end
 
+  def test_assert_equal__float
+    assert_re(:RE_EQ_FLOAT,
+              "assert_in_epsilon float_lit, act",
+              aeq(s(:lit, 6.28), :rhs),
+              # =>
+              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
+  end
+
   def test_assert_equal__lhs_str
     long = "string " * 100
     short = long[0, 20]
@@ -337,14 +345,6 @@ class TestAssertScanner < Minitest::Test
               aeq(:act, s(:str, "str")),
               # =>
               aeq(s(:str, "str"), :act))
-  end
-
-  def test_assert_equal_float
-    assert_re(:RE_EQ_FLOAT,
-              "assert_in_epsilon float_lit, act",
-              aeq(s(:lit, 6.28), :rhs),
-              # =>
-              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
   end
 
   def test_assert_in_delta
@@ -711,6 +711,54 @@ class TestAssertScanner < Minitest::Test
               req(s(:true), s(:call, :obj, :msg)),
               # =>
               rpr(:obj, :msg))
+  end
+
+  def test_refute_equal__rhs_lit
+    assert_re(:RE_REF_EQ_RHS_LIT,
+              "refute_equal lit, act",
+              req(:act, lit(:val)),
+              # =>
+              req(lit(:val), :act))
+  end
+
+  def test_refute_equal__rhs_ntf__false
+    assert_re(:RE_REF_EQ_RHS_NTF,
+              "refute_equal lit, act",
+              req(:act, s(:false)),
+              # =>
+              req(s(:false), :act))
+  end
+
+  def test_refute_equal__rhs_ntf__lit_true
+    assert_nothing req(s(:lit, 42), s(:true))
+  end
+
+  def test_refute_equal__rhs_ntf__nil
+    assert_re(:RE_REF_EQ_RHS_NTF,
+              "refute_equal lit, act",
+              req(:act, s(:nil)),
+              # =>
+              req(s(:nil), :act))
+  end
+
+  def test_refute_equal__rhs_ntf__true
+    assert_re(:RE_REF_EQ_RHS_NTF,
+              "refute_equal lit, act",
+              req(:act, s(:true)),
+              # =>
+              req(s(:true), :act))
+  end
+
+  def test_refute_equal__rhs_ntf__true_true
+    assert_nothing req(s(:true), s(:true))
+  end
+
+  def test_refute_equal__rhs_str
+    assert_re(:RE_REF_EQ_RHS_STR,
+              "refute_equal lit, act",
+              req(:act, s(:str, "str")),
+              # =>
+              req(s(:str, "str"), :act))
   end
 
   def test_refute_in_delta
