@@ -120,18 +120,17 @@ class AssertScanner < SexpProcessor
     io.puts g
   end
 
-  def list
+  def list pages = ENV["PAGES"]
     doco = self.class.__doco
 
-    doco
+    sep = pages ? "\cL" : "\n"
+
+    puts doco
       .group_by { |a,b| ORDER.index a[RE] }
       .sort
-      .each do |_, items|
-        items.each do |from, to|
-          puts "%-40s => %s" % [from, to]
-        end
-        puts
-      end
+      .map { |_, items|
+        items.map { |from, to| "%-40s => %s\n" % [from, to] }.join
+      }.join sep
   end
 
   def raw_list

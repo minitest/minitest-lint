@@ -34,6 +34,15 @@ task :list => :isolate do
   AssertScanner.list
 end
 
+task :print => :isolate do
+  cmds = ["rake list PAGES=1",
+          "cupsfilter -i text/plain -o landscape -o lpi=4 -o cpi=8",
+          "/usr/libexec/cups/filter/cgpdftopdf 1 1 1 1 number-up=4 > text.pdf"]
+
+  sh cmds.join " | "
+  sh "open text.pdf"
+end
+
 task :graph => :isolate do
   $: << "lib"
   require "assert_scanner"
