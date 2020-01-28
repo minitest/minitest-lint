@@ -332,20 +332,20 @@ class TestAssertScanner < Minitest::Test
               aeq(s(:str, "str"), :act))
   end
 
+  def test_assert_equal_float
+    assert_re(:RE_EQ_FLOAT,
+              "assert_in_epsilon float_lit, act",
+              aeq(s(:lit, 6.28), :rhs),
+              # =>
+              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
+  end
+
   def test_assert_in_delta
     assert_re(:RE_IN_DELTA,
               "assert_in_epsilon float_lit, act",
               c(:assert_in_delta, :lhs, :rhs),
               # =>
               c(:assert_in_epsilon, :lhs, :rhs))
-  end
-
-  def test_assert_in_epsilon
-    assert_re(:RE_EQ_FLOAT,
-              "assert_in_epsilon float_lit, act",
-              aeq(s(:lit, 6.28), :rhs),
-              # =>
-              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
   end
 
   def test_assert_operator__include
@@ -601,8 +601,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Assertions
 
-  todo :refute_in_delta
-  todo :refute_in_epsilon
   todo :refute_match
   todo :refute_nil
   todo :refute_path_exists
@@ -649,12 +647,28 @@ class TestAssertScanner < Minitest::Test
               c(:refute_equal, :lhs, :rhs))
   end
 
+  def test_refute_equal__float
+    assert_re(:RE_REF_EQ_FLOAT,
+              "refute_in_epsilon float_lit, act",
+              req(s(:lit, 6.28), :rhs),
+              # =>
+              c(:refute_in_epsilon, s(:lit, 6.28), :rhs))
+  end
+
   def test_refute_equal__msg
     assert_re(:RE_REF_EQ_MSG,
               "redundant message?",
               req(:lhs, :rhs, :msg),
               # =>
               req(:lhs, :rhs))
+  end
+
+  def test_refute_in_delta
+    assert_re(:RE_REF_IN_DELTA,
+              "refute_in_epsilon float_lit, act",
+              c(:refute_in_delta, :lhs, :rhs),
+              # =>
+              c(:refute_in_epsilon, :lhs, :rhs))
   end
 
   def test_refute_operator

@@ -239,12 +239,6 @@ class AssertScanner
   replace_call(:refute_equal,
                RE_EQUAL_NOT: assert_pat("(call _ != _)"))
 
-  doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
-       "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
-  rename(:assert_in_epsilon,
-         RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
-         RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
-
   doco "assert obj.pred?" => "assert_predicate obj, :pred?"
   unpack_call(:assert_predicate,
               RE_PRED: assert_pat("(call _ _)"))
@@ -298,6 +292,12 @@ class AssertScanner
        "assert_equal [], obj" => "assert_empty obj")
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
+
+  doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
+       "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
+  rename(:assert_in_epsilon,
+         RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
+         RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
 
   doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
   promote_oper(:assert_includes,
@@ -389,6 +389,12 @@ class AssertScanner
   doco "refute_predicate val, :empty?" => "refute_empty val"
   promote_pred(:refute_empty,
                RE_REF_PRED_EMPTY: r_pred("_", :empty?))
+
+  doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
+       "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
+  rename(:refute_in_epsilon,
+         RE_REF_EQ_FLOAT: pat(:refute_equal,    "(lit, [k Float])", "_"),
+         RE_REF_IN_DELTA: pat(:refute_in_delta, "_",                "_"))
 
   doco "refute obj" => "WARNING"
   RE_REF_PLAIN = refute_pat "_"
