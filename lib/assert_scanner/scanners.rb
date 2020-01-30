@@ -624,11 +624,12 @@ class AssertScanner
   # wont_match
 
   def self.declare_wont_be pred, msg = pred
-    msg = msg.to_s.delete("?")
-    pat = must_pat("_", :wont_be, lit(pred), "_")
+    const = pred.to_s.delete("?").upcase
+    msg   = msg.to_s.delete("?")
+    pat   = must_pat("_", :wont_be, lit(pred), "_")
 
     doco "_(obj).wont_be :#{pred}, val" => "_(obj).wont_#{msg} val"
-    exp_rewrite(:"RE_WONT_BE_#{msg.upcase}" => pat) do |lhs, _, _, rhs|
+    exp_rewrite(:"RE_WONT_BE_#{const}" => pat) do |lhs, _, _, rhs|
       must(lhs, :"wont_#{msg}", rhs)
     end
   end
@@ -650,14 +651,12 @@ class AssertScanner
   # TODO: _(obj.size).wont_equal 0          => _(obj).wont_be_empty
   # TODO: _(obj).wont_equal([])             => _(obj).wont_be_empty
   # TODO: _(obj).wont_equal({})             => _(obj).wont_be_empty
-  # TODO: _(obj).wont_be :empty?            => _(obj).wont_be_empty
-  # TODO: _(obj).wont_be :include?, val     => _(obj).wont_include val
+
+  declare_wont_be :nil?, :be_nil
+  declare_wont_be :empty?, :be_empty
   declare_wont_be :include?
-  # TODO: _(obj).wont_be :instance_of?, cls => _(obj).wont_be_instance_of cls
-  # TODO: _(obj).wont_be :kind_of?, mod     => _(obj).wont_be_kind_of mod
-  # declare_wont_be :kind_of?
-  # TODO: _(obj).wont_be :is_a?, mod        => _(obj).wont_be_kind_of mod
-  # declare_wont_be :is_a?, :kind_of
-  # TODO: _(obj).wont_be :respond_to?, val  => _(obj).wont_respond_to val
+  declare_wont_be :instance_of?, :be_instance_of
+  declare_wont_be :kind_of?, :be_kind_of
+  declare_wont_be :is_a?, :be_kind_of
   declare_wont_be :respond_to?
 end

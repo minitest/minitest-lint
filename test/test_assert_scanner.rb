@@ -888,9 +888,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_be__empty
-  todo :wont_be__nil
-
   todo :wont_equal__pred_true
   todo :wont_equal__oper_true
   todo :wont_equal__pred_false
@@ -907,10 +904,7 @@ class TestAssertScanner < Minitest::Test
   todo :wont_equal_rhs_str
   todo :wont_equal_big_string
 
-  todo :wont_be__instance_of
-  todo :wont_be__is_a
   todo :wont_be__key
-  todo :wont_be__kind_of
   todo :wont_be__match1
   todo :wont_be__match2
   todo :wont_be__match3
@@ -918,12 +912,52 @@ class TestAssertScanner < Minitest::Test
 
   todo :path_wont_exist
 
+  def test_wont_be__empty
+    assert_re(:RE_WONT_BE_EMPTY,
+              "_(obj).wont_be_empty val",
+              wbe(:lhs, :empty?, :rhs),
+              # =>
+              e(:lhs, :wont_be_empty, :rhs))
+  end
+
   def test_wont_be__include
     assert_re(:RE_WONT_BE_INCLUDE,
               "_(obj).wont_include val",
               wbe(:lhs, :include?, :rhs),
               # =>
               e(:lhs, :wont_include, :rhs))
+  end
+
+  def test_wont_be__instance_of
+    assert_re(:RE_WONT_BE_INSTANCE_OF,
+              "_(obj).wont_be_instance_of val",
+              wbe(:lhs, :instance_of?, :rhs),
+              # =>
+              e(:lhs, :wont_be_instance_of, :rhs))
+  end
+
+  def test_wont_be__is_a
+    assert_re(:RE_WONT_BE_IS_A,
+              "_(obj).wont_be_kind_of val",
+              wbe(:lhs, :is_a?, :rhs),
+              # =>
+              e(:lhs, :wont_be_kind_of, :rhs))
+  end
+
+  def test_wont_be__kind_of
+    assert_re(:RE_WONT_BE_KIND_OF,
+              "_(obj).wont_be_kind_of val",
+              wbe(:lhs, :kind_of?, :rhs),
+              # =>
+              e(:lhs, :wont_be_kind_of, :rhs))
+  end
+
+  def test_wont_be__nil
+    assert_re(:RE_WONT_BE_NIL,
+              "_(obj).wont_be_nil val",
+              wbe(:lhs, :nil?, :rhs),
+              # =>
+              e(:lhs, :wont_be_nil, :rhs))
   end
 
   def test_wont_be__respond_to
