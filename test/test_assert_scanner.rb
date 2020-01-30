@@ -425,24 +425,31 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Expectations
 
-  todo :must_from_value_arg
-  todo :must_from_value
-  todo :must_from_expect_arg
-  todo :must_from_expect
-  todo :must_on_obj_arg
-  todo :must_on_obj
-
   todo :must_equal
-  todo :must_equal_true
-  todo :must_equal_false
-  todo :must_equal_pred
-  todo :must_equal_oper
+  todo :must_equal__true
+  todo :must_equal__false
+  todo :must_equal__pred
+  todo :must_equal__oper
 
-  todo :must_equal_big_string
-  todo :must_equal_assert_equal?
-  todo :must_equal_lhs_str
-  todo :must_equal_rhs_lit
-  todo :must_equal_rhs_str
+  todo :must_equal__big_string
+  todo :must_equal__assert_equal?
+  todo :must_equal__lhs_str
+  todo :must_equal__rhs_lit
+  todo :must_equal__rhs_str
+
+  todo :must_equal__nil
+  todo :must_equal__float
+  todo :must_equal__count_0
+  todo :must_equal__length_0
+  todo :must_equal__size_0
+  todo :must_equal__array
+  todo :must_equal__hash
+
+  todo :must_be__key
+  todo :must_be__match1
+  todo :must_be__match2
+  todo :must_be__match3
+  todo :must_be__same_as
 
   todo :must_be__nil
 
@@ -450,14 +457,7 @@ class TestAssertScanner < Minitest::Test
   todo :must_include__key
 
   todo :must_be_same_as
-  todo :must_be_silent
   todo :must_be_within_epsilon
-  todo :must_match
-  todo :must_output
-  todo :must_output__empty
-  todo :must_raise
-  todo :must_respond_to
-  todo :must_throw
 
   todo :path_must_exist
 
@@ -504,38 +504,6 @@ class TestAssertScanner < Minitest::Test
               mbe(:lhs, :include?, :rhs),
               # =>
               e(:lhs, :must_include, :rhs))
-  end
-
-  def test_must_be__oper
-    assert_re(:RE_MUST_BE_OPER,
-              "_(obj).must_be :msg, val",
-              meq(s(:call, :lhs, :msg, :rhs), s(:true)),
-              # =>
-              mbe(:lhs, :msg, :rhs))
-  end
-
-  def test_must_be__oper_f
-    assert_re(:RE_MUST_BE_OPER_F,
-              "_(obj).wont_be :msg, val",
-              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
-              # =>
-              e(:lhs, :wont_be, lit(:msg), :rhs))
-  end
-
-  def test_must_be__pred
-    assert_re(:RE_MUST_BE_PRED,
-              "_(obj).must_be :pred?",
-              meq(s(:call, :lhs, :pred?), s(:true)),
-              # =>
-              mbe(:lhs, :pred?))
-  end
-
-  def test_must_be__pred_f
-    assert_re(:RE_MUST_BE_PRED_F,
-              "_(obj).wont_be :pred?",
-              meq(s(:call, :lhs, :pred?), s(:false)),
-              # =>
-              e(:lhs, :wont_be, lit(:pred?)))
   end
 
   def test_must_be_close_to
@@ -618,7 +586,39 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_respond_to, :rhs))
   end
 
-  def test_must_equal_rhs_ntf__nil
+  def test_must_eq__oper
+    assert_re(:RE_MUST_BE_OPER,
+              "_(obj).must_be :msg, val",
+              meq(s(:call, :lhs, :msg, :rhs), s(:true)),
+              # =>
+              mbe(:lhs, :msg, :rhs))
+  end
+
+  def test_must_eq__oper_f
+    assert_re(:RE_MUST_BE_OPER_F,
+              "_(obj).wont_be :msg, val",
+              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:msg), :rhs))
+  end
+
+  def test_must_eq__pred
+    assert_re(:RE_MUST_BE_PRED,
+              "_(obj).must_be :pred?",
+              meq(s(:call, :lhs, :pred?), s(:true)),
+              # =>
+              mbe(:lhs, :pred?))
+  end
+
+  def test_must_eq__pred_f
+    assert_re(:RE_MUST_BE_PRED_F,
+              "_(obj).wont_be :pred?",
+              meq(s(:call, :lhs, :pred?), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:pred?)))
+  end
+
+  def test_must_equal__rhs_ntf__nil
     assert_re(:RE_MUST_EQ_NIL,
               "_(obj).must_be_nil",
               meq(:lhs, s(:nil)),
@@ -1026,7 +1026,6 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be, lit(:pred?)))
   end
 
-  # # TODO: make sure I'm picking up _/value/expect
   # # TODO: make sure I'm picking up _ { ... }.must/wont...
   #
   # _(lhs.size).wont_be(:>, 0) -> must_be_empty
