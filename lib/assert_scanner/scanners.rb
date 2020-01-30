@@ -615,6 +615,7 @@ class AssertScanner
   re_wont_be_oper_f    = weq_pat("(call _ _ _)", "(:false)")
   re_wont_be_pred      = weq_pat("(call _ _)",   "(:true)")
   re_wont_be_pred_f    = weq_pat("(call _ _)",   "(:false)")
+  re_wont_eq_float     = weq_pat("_",            "(lit [k Float])")
 
   def self.declare_wont_be pred, msg = pred
     const = pred.to_s.delete("?").upcase
@@ -673,7 +674,11 @@ class AssertScanner
     must(lhs, :wont_be_nil)
   end
 
-  # TODO: _(obj).wont_equal float_lit       => _(obj).wont_be_close_to float_lit
+  doco "_(obj).wont_equal float_lit" => "_(obj).wont_be_close_to float_lit"
+  exp_rewrite(RE_WONT_EQ_FLOAT: re_wont_eq_float) do |lhs, _, rhs|
+    must(lhs, :wont_be_close_to, rhs)
+  end
+
   # TODO: _(obj.count).wont_equal 0         => _(obj).wont_be_empty
   # TODO: _(obj.length).wont_equal 0        => _(obj).wont_be_empty
   # TODO: _(obj.size).wont_equal 0          => _(obj).wont_be_empty

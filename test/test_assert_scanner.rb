@@ -428,8 +428,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal
   todo :must_equal__true
   todo :must_equal__false
-  todo :must_equal__pred
-  todo :must_equal__oper
 
   todo :must_equal__big_string
   todo :must_equal__assert_equal?
@@ -437,7 +435,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal__rhs_lit
   todo :must_equal__rhs_str
 
-  todo :must_equal__float
   todo :must_equal__count_0
   todo :must_equal__length_0
   todo :must_equal__size_0
@@ -503,14 +500,6 @@ class TestAssertScanner < Minitest::Test
               mbe(:lhs, :include?, :rhs),
               # =>
               e(:lhs, :must_include, :rhs))
-  end
-
-  def test_must_be_close_to
-    assert_re(:RE_MUST_EQ_FLOAT,
-              "_(obj).must_be_close_to float_lit",
-              meq(:lhs, s(:lit, 6.28)),
-              # =>
-              e(:lhs, :must_be_close_to, s(:lit, 6.28)))
   end
 
   def test_must_be_empty__array
@@ -585,36 +574,12 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_respond_to, :rhs))
   end
 
-  def test_must_eq__oper
-    assert_re(:RE_MUST_BE_OPER,
-              "_(obj).must_be :msg, val",
-              meq(s(:call, :lhs, :msg, :rhs), s(:true)),
+  def test_must_equal__float
+    assert_re(:RE_MUST_EQ_FLOAT,
+              "_(obj).must_be_close_to float_lit",
+              meq(:lhs, s(:lit, 6.28)),
               # =>
-              mbe(:lhs, :msg, :rhs))
-  end
-
-  def test_must_eq__oper_f
-    assert_re(:RE_MUST_BE_OPER_F,
-              "_(obj).wont_be :msg, val",
-              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
-              # =>
-              e(:lhs, :wont_be, lit(:msg), :rhs))
-  end
-
-  def test_must_eq__pred
-    assert_re(:RE_MUST_BE_PRED,
-              "_(obj).must_be :pred?",
-              meq(s(:call, :lhs, :pred?), s(:true)),
-              # =>
-              mbe(:lhs, :pred?))
-  end
-
-  def test_must_eq__pred_f
-    assert_re(:RE_MUST_BE_PRED_F,
-              "_(obj).wont_be :pred?",
-              meq(s(:call, :lhs, :pred?), s(:false)),
-              # =>
-              e(:lhs, :wont_be, lit(:pred?)))
+              e(:lhs, :must_be_close_to, s(:lit, 6.28)))
   end
 
   def test_must_equal__nil
@@ -623,6 +588,38 @@ class TestAssertScanner < Minitest::Test
               meq(:lhs, s(:nil)),
               # =>
               e(:lhs, :must_be_nil))
+  end
+
+  def test_must_equal__oper
+    assert_re(:RE_MUST_BE_OPER,
+              "_(obj).must_be :msg, val",
+              meq(s(:call, :lhs, :msg, :rhs), s(:true)),
+              # =>
+              mbe(:lhs, :msg, :rhs))
+  end
+
+  def test_must_equal__oper_f
+    assert_re(:RE_MUST_BE_OPER_F,
+              "_(obj).wont_be :msg, val",
+              meq(s(:call, :lhs, :msg, :rhs), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:msg), :rhs))
+  end
+
+  def test_must_equal__pred
+    assert_re(:RE_MUST_BE_PRED,
+              "_(obj).must_be :pred?",
+              meq(s(:call, :lhs, :pred?), s(:true)),
+              # =>
+              mbe(:lhs, :pred?))
+  end
+
+  def test_must_equal__pred_f
+    assert_re(:RE_MUST_BE_PRED_F,
+              "_(obj).wont_be :pred?",
+              meq(s(:call, :lhs, :pred?), s(:false)),
+              # =>
+              e(:lhs, :wont_be, lit(:pred?)))
   end
 
   ######################################################################
@@ -888,7 +885,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_equal__float
   todo :wont_equal__count_0
   todo :wont_equal__length_0
   todo :wont_equal__size_0
@@ -990,6 +986,14 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :respond_to?, :rhs),
               # =>
               e(:lhs, :wont_respond_to, :rhs))
+  end
+
+  def test_wont_equal__float
+    assert_re(:RE_WONT_EQ_FLOAT,
+              "_(obj).wont_be_close_to float_lit",
+              weq(:lhs, s(:lit, 6.28)),
+              # =>
+              e(:lhs, :wont_be_close_to, s(:lit, 6.28)))
   end
 
   def test_wont_equal__nil
