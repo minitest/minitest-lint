@@ -616,6 +616,8 @@ class AssertScanner
   re_wont_be_pred      = weq_pat("(call _ _)",   "(:true)")
   re_wont_be_pred_f    = weq_pat("(call _ _)",   "(:false)")
   re_wont_eq_float     = weq_pat("_",            "(lit [k Float])")
+  re_wont_size_zero    = weq_pat(size_pat, lit(0))
+  re_wont_be_empty_lit = weq_pat("_" ,           "([m array hash])")
 
   def self.declare_wont_be pred, msg = pred
     const = pred.to_s.delete("?").upcase
@@ -679,11 +681,18 @@ class AssertScanner
     must(lhs, :wont_be_close_to, rhs)
   end
 
-  # TODO: _(obj.count).wont_equal 0         => _(obj).wont_be_empty
-  # TODO: _(obj.length).wont_equal 0        => _(obj).wont_be_empty
-  # TODO: _(obj.size).wont_equal 0          => _(obj).wont_be_empty
-  # TODO: _(obj).wont_equal([])             => _(obj).wont_be_empty
-  # TODO: _(obj).wont_equal({})             => _(obj).wont_be_empty
+  doco("_(obj.count).wont_equal 0"  => "_(obj).wont_be_empty",
+       "_(obj.length).wont_equal 0" => "_(obj).wont_be_empty",
+       "_(obj.size).wont_equal 0"   => "_(obj).wont_be_empty")
+  exp_rewrite(RE_WONT_SIZE_ZERO: re_wont_size_zero) do |(_, lhs, _), _, _|
+    must(lhs, :wont_be_empty)
+  end
+
+  doco("_(obj).wont_equal([])" => "_(obj).wont_be_empty",
+       "_(obj).wont_equal({})" => "_(obj).wont_be_empty")
+  exp_rewrite(RE_WONT_BE_EMPTY_LIT: re_wont_be_empty_lit) do |lhs,|
+    must(lhs, :wont_be_empty)
+  end
 
   declare_wont_be :nil?, :be_nil
   declare_wont_be :empty?, :be_empty
