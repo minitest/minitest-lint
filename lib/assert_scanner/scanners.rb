@@ -484,6 +484,10 @@ class AssertScanner
     must_pat(lhs, :must_be, *rhs)
   end
 
+  def self.weq_pat lhs, rhs
+    must_pat(lhs, :wont_equal, rhs)
+  end
+
   def match exp
     _, (_, _, _, lhs), msg, *rhs = exp
     return lhs, msg, *rhs
@@ -511,10 +515,10 @@ class AssertScanner
   re_must_plain        = parse("(call [- (call nil :_ ___)]         [m /^must/] ___)")
   re_must_size_zero    = meq_pat(size_pat, lit(0))
   re_must_be_oper      = meq_pat("(call _ _ _)", "(:true)")
-  re_must_be_empty_lit = meq_pat("_" ,           "([m array hash])")
   re_must_be_pred      = meq_pat("(call _ _)",   "(:true)")
   re_must_be_pred_f    = meq_pat("(call _ _)",   "(:false)")
   re_must_be_oper_f    = meq_pat("(call _ _ _)", "(:false)")
+  re_must_be_empty_lit = meq_pat("_" ,           "([m array hash])")
   re_must_eq_float     = meq_pat("_",            "(lit [k Float])")
   re_must_be_include   = mbe_pat("_",            lit(:include?), "_")
   re_must_be__empty    = mbe_pat("_",            lit(:empty?))
@@ -615,16 +619,12 @@ class AssertScanner
   ############################################################
   # Negative Expectations
 
-  # TODO:
-  # wont_be
-  # wont_be_empty
-  # wont_be_nil
-  # wont_equal
-  # wont_include
-  # wont_match
-
   re_wont_other        = parse("(call (call nil [m expect value] _) [m /^wont/] ___)")
   re_wont_plain        = parse("(call [- (call nil :_ ___)]         [m /^wont/] ___)")
+  re_wont_be_oper      = weq_pat("(call _ _ _)", "(:true)")
+  re_wont_be_oper_f    = weq_pat("(call _ _ _)", "(:false)")
+  re_wont_be_pred      = weq_pat("(call _ _)",   "(:true)")
+  re_wont_be_pred_f    = weq_pat("(call _ _)",   "(:false)")
 
   def self.declare_wont_be pred, msg = pred
     const = pred.to_s.delete("?").upcase
@@ -654,10 +654,30 @@ class AssertScanner
     must lhs, msg, *rhs
   end
 
-  # TODO: _(obj.pred?).wont_equal true      => _(obj).wont_be :pred?
-  # TODO: _(obj.msg(val)).wont_equal true   => _(obj).wont_be :msg, val
-  # TODO: _(obj.pred?).wont_equal false     => _(obj).must_be :pred?
-  # TODO: _(obj.msg(val)).wont_equal false  => _(obj).must_be :msg, val
+  doco "_(obj.pred?).wont_equal true" => "_(obj).wont_be :pred?"
+  exp_rewrite(RE_WONT_BE_PRED: re_wont_be_pred) do |(_, lhs, msg),|
+    must(lhs, :wont_be, s(:lit, msg))
+  end
+
+  doco "_(obj.msg(val)).wont_equal true" => "_(obj).wont_be :msg, val"
+  exp_rewrite(RE_WONT_BE_OPER: re_wont_be_oper) do |(_, lhs, msg, rhs),|
+    next if msg == :[]
+
+    must(lhs, :wont_be, s(:lit, msg), rhs)
+  end
+
+  doco "_(obj.pred?).wont_equal false" => "_(obj).wont_be :pred?"
+  exp_rewrite(RE_WONT_BE_PRED_F: re_wont_be_pred_f) do |(_, lhs, msg), _, _|
+    must(lhs, :must_be, s(:lit, msg))
+  end
+
+  doco "_(obj.msg(val)).wont_equal false" => "_(obj).wont_be :msg, val"
+  exp_rewrite(RE_WONT_BE_OPER_F: re_wont_be_oper_f) do |(_, lhs, msg, rhs),|
+    next if msg == :[]
+
+    must(lhs, :must_be, s(:lit, msg), rhs)
+  end
+
   # TODO: _(obj).wont_equal nil             => _(obj).wont_be_nil
   # TODO: _(obj).wont_equal float_lit       => _(obj).wont_be_close_to float_lit
   # TODO: _(obj.count).wont_equal 0         => _(obj).wont_be_empty
