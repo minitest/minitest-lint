@@ -309,7 +309,8 @@ class AssertScanner
 
   doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
   promote_oper(:assert_includes,
-               RE_OPER_INCLUDE: a_oper("_", :include?, "_"))
+               RE_OPER_INCLUDE: a_oper("_", :include?, "_"),
+               RE_OPER_KEY:     a_oper("_", :key?, "_"))
 
   doco "assert_operator obj, :instance_of?, cls" => "assert_instance_of cls, obj"
   promote_oper_swap(:assert_instance_of,
@@ -432,7 +433,8 @@ class AssertScanner
 
   doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
   promote_oper(:refute_includes,
-               RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"))
+               RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"),
+               RE_REF_OPER_KEY:     r_oper("_", :key?, "_"))
 
   doco "refute_operator obj, :instance_of?, cls" => "refute_instance_of cls, obj"
   promote_oper_swap(:refute_instance_of,
@@ -511,6 +513,7 @@ class AssertScanner
   re_must_be_empty_lit = meq_pat("_" ,           "([m array hash])")
   re_must_eq_float     = meq_pat("_",            "(lit [k Float])")
   re_must_be_include   = mbe_pat("_",            lit(:include?), "_")
+  re_must_be_key       = mbe_pat("_",            lit(:key?), "_")
   re_must_be__empty    = mbe_pat("_",            lit(:empty?))
   re_must_be__nil      = mbe_pat("_",            lit(:nil?))
 
@@ -591,7 +594,8 @@ class AssertScanner
   end
 
   doco "_(obj).must_be :include?, val" => "_(obj).must_include val"
-  exp_rewrite(RE_MUST_BE_INCLUDE: re_must_be_include) do |lhs, _, _, rhs|
+  exp_rewrite(RE_MUST_BE_INCLUDE: re_must_be_include,
+              RE_MUST_BE_KEY:     re_must_be_key) do |lhs, _, _, rhs|
     must(lhs, :must_include, rhs)
   end
 
@@ -703,6 +707,7 @@ class AssertScanner
   declare_wont_be :nil?, :be_nil
   declare_wont_be :empty?, :be_empty
   declare_wont_be :include?
+  declare_wont_be :key?, :include
   declare_wont_be :instance_of?, :be_instance_of
   declare_wont_be :kind_of?, :be_kind_of
   declare_wont_be :is_a?, :be_kind_of

@@ -163,7 +163,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_oper__key
   todo :assert_oper__match1
   todo :assert_oper__match2
   todo :assert_oper__match3
@@ -399,6 +398,14 @@ class TestAssertScanner < Minitest::Test
               c(:assert_kind_of, :mod, :obj))
   end
 
+  def test_assert_operator__key
+    assert_re(:RE_OPER_KEY,
+              "assert_includes obj, val",
+              aop(:lhs, :key?, :rhs),
+              # =>
+              ain(:lhs, :rhs))
+  end
+
   def test_assert_operator__kind_of
     assert_re(:RE_OPER_KIND_OF,
               "assert_kind_of mod, obj",
@@ -435,14 +442,10 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal__rhs_lit
   todo :must_equal__rhs_str
 
-  todo :must_be__key
   todo :must_be__match1
   todo :must_be__match2
   todo :must_be__match3
   todo :must_be__same_as
-
-  todo :must_include__include
-  todo :must_include__key
 
   todo :must_be__within_epsilon
 
@@ -489,6 +492,14 @@ class TestAssertScanner < Minitest::Test
     assert_re(:RE_MUST_BE_INCLUDE,
               "_(obj).must_include val",
               mbe(:lhs, :include?, :rhs),
+              # =>
+              e(:lhs, :must_include, :rhs))
+  end
+
+  def test_must_be__key
+    assert_re(:RE_MUST_BE_KEY,
+              "_(obj).must_include val",
+              mbe(:lhs, :key?, :rhs),
               # =>
               e(:lhs, :must_include, :rhs))
   end
@@ -864,6 +875,14 @@ class TestAssertScanner < Minitest::Test
               c(:refute_kind_of, :mod, :obj))
   end
 
+  def test_refute_operator__key
+    assert_re(:RE_REF_OPER_KEY,
+              "refute_includes obj, val",
+              rop(:lhs, :key?, :rhs),
+              # =>
+              c(:refute_includes, :lhs, :rhs))
+  end
+
   def test_refute_operator__kind_of
     assert_re(:RE_REF_OPER_KIND_OF,
               "refute_kind_of mod, obj",
@@ -908,13 +927,9 @@ class TestAssertScanner < Minitest::Test
   todo :wont_equal__rhs_lit
   todo :wont_equal__rhs_str
 
-  todo :wont_include__include
-  todo :wont_include__key
-
   todo :wont_be__same_as
   todo :wont_be__within_epsilon
 
-  todo :wont_be__key
   todo :wont_be__match1
   todo :wont_be__match2
   todo :wont_be__match3
@@ -980,6 +995,14 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :is_a?, :rhs),
               # =>
               e(:lhs, :wont_be_kind_of, :rhs))
+  end
+
+  def test_wont_be__key
+    assert_re(:RE_WONT_BE_KEY,
+              "_(obj).wont_include val",
+              wbe(:lhs, :key?, :rhs),
+              # =>
+              e(:lhs, :wont_include, :rhs))
   end
 
   def test_wont_be__kind_of
