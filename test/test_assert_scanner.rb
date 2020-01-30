@@ -168,7 +168,6 @@ class TestAssertScanner < Minitest::Test
   todo :assert_oper__match3
 
   todo :assert_oper__nil
-  todo :assert_oper__file_path_exists
   todo :assert_oper__eql_same_as
 
   def test_assert
@@ -374,6 +373,14 @@ class TestAssertScanner < Minitest::Test
               c(:assert_in_epsilon, :lhs, :rhs))
   end
 
+  def test_assert_operator__file_exist
+    assert_re(:RE_OPER_FILE_EXIST,
+              "assert_path_exists val",
+              aop(s(:const, :File), :exist?, :rhs),
+              # =>
+              c(:assert_path_exists, :rhs))
+  end
+
   def test_assert_operator__include
     assert_re(:RE_OPER_INCLUDE,
               "assert_includes obj, val",
@@ -486,6 +493,14 @@ class TestAssertScanner < Minitest::Test
               mbe(:lhs, :empty?),
               # =>
               e(:lhs, :must_be_empty))
+  end
+
+  def test_must_be__file_exist
+    assert_re(:RE_MUST_BE_FILE_EXIST,
+              "_(val).path_must_exist",
+              mbe(s(:const, :File), :exist?, :rhs),
+              # =>
+              e(:rhs, :path_must_exist))
   end
 
   def test_must_be__include
@@ -637,7 +652,6 @@ class TestAssertScanner < Minitest::Test
 
   todo :refute_match
   todo :refute_oper__nil
-  todo :refute_path_exists
   todo :refute_same
 
   def test_refute
@@ -851,6 +865,14 @@ class TestAssertScanner < Minitest::Test
               c(:refute_in_epsilon, :lhs, :rhs))
   end
 
+  def test_refute_operator__file_exist
+    assert_re(:RE_REF_OPER_FILE_EXIST,
+              "refute_path_exists val",
+              rop(s(:const, :File), :exist?, :rhs),
+              # =>
+              c(:refute_path_exists, :rhs))
+  end
+
   def test_refute_operator__include
     assert_re(:RE_REF_OPER_INCLUDE,
               "refute_includes obj, val",
@@ -971,6 +993,14 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :empty?, :rhs),
               # =>
               e(:lhs, :wont_be_empty, :rhs))
+  end
+
+  def test_wont_be__file_exist
+    assert_re(:RE_WONT_BE_FILE_EXIST,
+              "_(val).path_wont_exist",
+              wbe(s(:const, :File), :exist?, :rhs),
+              # =>
+              e(:rhs, :path_wont_exist))
   end
 
   def test_wont_be__include

@@ -300,6 +300,11 @@ class AssertScanner
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
 
+  doco "assert_operator File, :exist?, val" => "assert_path_exists val"
+  rewrite(RE_OPER_FILE_EXIST: a_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
+    s(t, r, :assert_path_exists, rhs)
+  end
+
   doco "assert_equal 'long str', str" => "assert_includes str, 'substr'"
   rewrite(RE_EQ_LHS_STR: eq_pat("(str _)", "_")) do |t, r, _, (_, str), rhs, *|
     next unless str && str.length > 20
@@ -431,6 +436,11 @@ class AssertScanner
     s(t, r, :refute_includes, rhs, s(:str, str[0, 20]))
   end
 
+  doco "refute_operator File, :exist?, val" => "refute_path_exists val"
+  rewrite(RE_REF_OPER_FILE_EXIST: r_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
+    s(t, r, :refute_path_exists, rhs)
+  end
+
   doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
   promote_oper(:refute_includes,
                RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"),
@@ -484,6 +494,10 @@ class AssertScanner
 
   def self.mbe_pat lhs, *rhs
     must_pat(lhs, :must_be, *rhs)
+  end
+
+  def self.wbe_pat lhs, *rhs
+    must_pat(lhs, :wont_be, *rhs)
   end
 
   def self.weq_pat lhs, rhs
@@ -591,6 +605,11 @@ class AssertScanner
   doco "_(obj).must_be :nil?" => "_(obj).must_be_nil"
   exp_rewrite(RE_MUST_BE_NIL: re_must_be__nil) do |lhs,|
     must(lhs, :must_be_nil)
+  end
+
+  doco "_(File).must_be :exist?, val" => "_(val).path_must_exist"
+  exp_rewrite(RE_MUST_BE_FILE_EXIST: mbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
+    must(rhs, :path_must_exist)
   end
 
   doco "_(obj).must_be :include?, val" => "_(obj).must_include val"
@@ -702,6 +721,11 @@ class AssertScanner
        "_(obj).wont_equal({})" => "_(obj).wont_be_empty")
   exp_rewrite(RE_WONT_BE_EMPTY_LIT: re_wont_be_empty_lit) do |lhs,|
     must(lhs, :wont_be_empty)
+  end
+
+  doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"
+  exp_rewrite(RE_WONT_BE_FILE_EXIST: wbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
+    must(rhs, :path_wont_exist)
   end
 
   declare_wont_be :nil?, :be_nil
