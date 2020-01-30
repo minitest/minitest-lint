@@ -500,16 +500,6 @@ class AssertScanner
   ############################################################
   # Positive Expectations
 
-  # TODO:
-  # must_be
-  # must_be_kind_of
-  # must_equal
-  # must_match
-  # must_output
-  # must_raise
-  # must_respond_to
-  # must_throw
-
   # TODO: rename all these to name RHS
   re_must_other        = parse("(call (call nil [m expect value] _) [m /^must/] ___)")
   re_must_plain        = parse("(call [- (call nil :_ ___)]         [m /^must/] ___)")
@@ -678,7 +668,11 @@ class AssertScanner
     must(lhs, :must_be, s(:lit, msg), rhs)
   end
 
-  # TODO: _(obj).wont_equal nil             => _(obj).wont_be_nil
+  doco "_(obj).wont_equal nil" => "_(obj).wont_be_nil"
+  exp_rewrite(RE_WONT_EQ_NIL: weq_pat("_", "(:nil)")) do |lhs, _, _|
+    must(lhs, :wont_be_nil)
+  end
+
   # TODO: _(obj).wont_equal float_lit       => _(obj).wont_be_close_to float_lit
   # TODO: _(obj.count).wont_equal 0         => _(obj).wont_be_empty
   # TODO: _(obj.length).wont_equal 0        => _(obj).wont_be_empty
@@ -693,4 +687,7 @@ class AssertScanner
   declare_wont_be :kind_of?, :be_kind_of
   declare_wont_be :is_a?, :be_kind_of
   declare_wont_be :respond_to?
+  # TODO: declare_wont_be :=~,     :match
+  # TODO: declare_wont_be :match,  :match
+  # TODO: declare_wont_be :match?, :match
 end

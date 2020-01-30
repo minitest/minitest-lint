@@ -437,7 +437,6 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal__rhs_lit
   todo :must_equal__rhs_str
 
-  todo :must_equal__nil
   todo :must_equal__float
   todo :must_equal__count_0
   todo :must_equal__length_0
@@ -618,7 +617,7 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_be, lit(:pred?)))
   end
 
-  def test_must_equal__rhs_ntf__nil
+  def test_must_equal__nil
     assert_re(:RE_MUST_EQ_NIL,
               "_(obj).must_be_nil",
               meq(:lhs, s(:nil)),
@@ -889,7 +888,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_equal__nil
   todo :wont_equal__float
   todo :wont_equal__count_0
   todo :wont_equal__length_0
@@ -994,7 +992,15 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_respond_to, :rhs))
   end
 
-  def test_wont_eq__oper
+  def test_wont_equal__nil
+    assert_re(:RE_WONT_EQ_NIL,
+              "_(obj).wont_be_nil",
+              weq(:lhs, s(:nil)),
+              # =>
+              e(:lhs, :wont_be_nil))
+  end
+
+  def test_wont_equal__oper
     assert_re(:RE_WONT_BE_OPER,
               "_(obj).wont_be :msg, val",
               weq(s(:call, :lhs, :msg, :rhs), s(:true)),
@@ -1002,7 +1008,7 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :msg, :rhs))
   end
 
-  def test_wont_eq__oper_f
+  def test_wont_equal__oper_f
     assert_re(:RE_WONT_BE_OPER_F,
               "_(obj).wont_be :msg, val",
               weq(s(:call, :lhs, :msg, :rhs), s(:false)),
@@ -1010,7 +1016,7 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be, lit(:msg), :rhs))
   end
 
-  def test_wont_eq__pred
+  def test_wont_equal__pred
     assert_re(:RE_WONT_BE_PRED,
               "_(obj).wont_be :pred?",
               weq(s(:call, :lhs, :pred?), s(:true)),
@@ -1018,7 +1024,7 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :pred?))
   end
 
-  def test_wont_eq__pred_f
+  def test_wont_equal__pred_f
     assert_re(:RE_WONT_BE_PRED_F,
               "_(obj).wont_be :pred?",
               weq(s(:call, :lhs, :pred?), s(:false)),
