@@ -512,6 +512,7 @@ class AssertScanner
   re_must_eq_float     = meq_pat("_",            "(lit [k Float])")
   re_must_be_include   = mbe_pat("_",            lit(:include?), "_")
   re_must_be__empty    = mbe_pat("_",            lit(:empty?))
+  re_must_be__nil      = mbe_pat("_",            lit(:nil?))
 
   # This must be first to immediately rewrite them to normal form
   doco("expect(obj).must_<something> val" => "_(obj).must_<something> val",
@@ -582,6 +583,11 @@ class AssertScanner
   doco "_(obj).must_be :empty?" => "_(obj).must_be_empty"
   exp_rewrite(RE_MUST_BE__EMPTY: re_must_be__empty) do |lhs,|
     must(lhs, :must_be_empty)
+  end
+
+  doco "_(obj).must_be :nil?" => "_(obj).must_be_nil"
+  exp_rewrite(RE_MUST_BE_NIL: re_must_be__nil) do |lhs,|
+    must(lhs, :must_be_nil)
   end
 
   doco "_(obj).must_be :include?, val" => "_(obj).must_include val"

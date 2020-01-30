@@ -164,12 +164,9 @@ class TestAssertScanner < Minitest::Test
   # Positive Assertions
 
   todo :assert_match
-  todo :assert_output
+  todo :assert_oper__nil
   todo :assert_path_exists
-  todo :assert_raises
   todo :assert_same
-  todo :assert_silent
-  todo :assert_throws
 
   def test_assert
     assert_re(:RE_PLAIN,
@@ -502,6 +499,14 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_include, :rhs))
   end
 
+  def test_must_be__nil
+    assert_re(:RE_MUST_BE_NIL,
+              "_(obj).must_be_nil",
+              mbe(:lhs, :nil?),
+              # =>
+              e(:lhs, :must_be_nil))
+  end
+
   def test_must_be_empty__array
     assert_re(:RE_MUST_BE_EMPTY_LIT,
               "_(obj).must_be_empty",
@@ -626,9 +631,8 @@ class TestAssertScanner < Minitest::Test
   # Negative Assertions
 
   todo :refute_match
-  todo :refute_nil
+  todo :refute_oper__nil
   todo :refute_path_exists
-  todo :refute_respond_to
   todo :refute_same
 
   def test_refute
