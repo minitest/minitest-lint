@@ -888,6 +888,14 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_include, :rhs))
   end
 
+  def test_wont_be__respond_to
+    assert_re(:RE_WONT_BE_RESPOND_TO,
+              "_(obj).wont_respond_to val",
+              wbe(:lhs, :respond_to?, :rhs),
+              # =>
+              e(:lhs, :wont_respond_to, :rhs))
+  end
+
   # # TODO: make sure I'm picking up _/value/expect
   # # TODO: make sure I'm picking up _ { ... }.must/wont...
   #
