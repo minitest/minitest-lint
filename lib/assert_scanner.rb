@@ -240,3 +240,79 @@ class AssertScanner < SexpProcessor
 end
 
 require "assert_scanner/scanners.rb"
+
+# x.must_equal true
+# x.must_y z
+# _(x).must_y z
+# _(x.msg y).must_equal true
+# _(x)..msg y
+
+# RE_WTF = parse "(call (call _ [not? [m /^_$/]] _) must_equal (true))"
+# register_assert RE_WTF do |_, (t, lhs, msg, rhs), _, _|
+#   exp = s(t, lhs, :must_be, s(:lit, msg), rhs)
+#
+#   change exp, "lhs.must_be pred rhs"
+# end
+#
+# RE_WTF2 = parse "(call (call _ :_ (call _ _ _)) must_equal (true))"
+# register_assert RE_WTF2 do |_, (_, _, _, (t, lhs, msg, rhs)), _, _|
+#   exp = s(t, lhs, :must_be, s(:lit, msg), rhs)
+#
+#   change exp, "lhs.must_be pred rhs"
+# end
+#
+# RE_MUST_BE_KIND_OF = parse "(call _ must_be (lit is_a?) _)"
+# register_assert RE_MUST_BE_KIND_OF do |t, lhs, msg, msg2, rhs|
+#   exp = s(t, lhs, :must_be_kind_of, rhs)
+#
+#   change exp, "lhs.must_be_kind_of rhs"
+# end
+
+# infect_an_assertion :assert_empty,       :must_be_empty,   :unary
+# infect_an_assertion :assert_equal,       :must_equal
+# infect_an_assertion :assert_in_delta,    :must_be_close_to
+# infect_an_assertion :assert_in_epsilon,  :must_be_within_epsilon
+# infect_an_assertion :assert_includes,    :must_include,    :reverse
+# infect_an_assertion :assert_instance_of, :must_be_instance_of
+# infect_an_assertion :assert_kind_of,     :must_be_kind_of
+# infect_an_assertion :assert_match,       :must_match
+# infect_an_assertion :assert_nil,         :must_be_nil,     :unary
+# infect_an_assertion :assert_operator,    :must_be,         :reverse
+# infect_an_assertion :assert_output,      :must_output,     :block
+# infect_an_assertion :assert_raises,      :must_raise,      :block
+# infect_an_assertion :assert_respond_to,  :must_respond_to, :reverse
+# infect_an_assertion :assert_same,        :must_be_same_as
+# infect_an_assertion :assert_silent,      :must_be_silent,  :block
+# infect_an_assertion :assert_throws,      :must_throw,      :block
+#
+# infect_an_assertion :refute_empty,       :wont_be_empty,   :unary
+# infect_an_assertion :refute_equal,       :wont_equal
+# infect_an_assertion :refute_in_delta,    :wont_be_close_to
+# infect_an_assertion :refute_in_epsilon,  :wont_be_within_epsilon
+# infect_an_assertion :refute_includes,    :wont_include,    :reverse
+# infect_an_assertion :refute_instance_of, :wont_be_instance_of
+# infect_an_assertion :refute_kind_of,     :wont_be_kind_of
+# infect_an_assertion :refute_match,       :wont_match
+# infect_an_assertion :refute_nil,         :wont_be_nil,     :unary
+# infect_an_assertion :refute_operator,    :wont_be,         :reverse
+# infect_an_assertion :refute_respond_to,  :wont_respond_to, :reverse
+# infect_an_assertion :refute_same,        :wont_be_same_as
+
+# RE_MUST_EQ = parse "(call (call nil :_ _) must_equal _)"
+# register_assert RE_MUST_PLAIN do |t, (_, _, m2, lhs), msg, rhs|
+#   exp = s(t, s(:call, nil, m2, lhs), msg, rhs)
+#
+#   change exp, "_(act).#{msg} exp"
+# end
+
+# RE_MUST_INCL_WRAPPED2 = parse "(call (call nil [m value expect] _) must_include _)"
+# register_assert RE_MUST_INCL_WRAPPED2 do |t, (_, _, _, lhs), msg, rhs|
+#   exp = s(t, s(:call, nil, :_, lhs), msg, rhs)
+#
+#   change exp, "_(lhs).#{msg} rhs"
+# end
+#
+# RE_MUST_INCL_WRAPPED = parse "(call (call nil :_ _) must_include _)"
+# register_assert RE_MUST_INCL_WRAPPED do |t, lhs, msg, rhs|
+#   # nothing to do
+# end

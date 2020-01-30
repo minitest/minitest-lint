@@ -633,6 +633,31 @@ class AssertScanner
     end
   end
 
+  # TODO: expect(obj).wont_<something> val  => _(obj).wont_<something> val
+  # TODO: value(obj).wont_<something> val   => _(obj).wont_<something> val
+  # TODO: expect(obj).wont_<something>      => _(obj).wont_<something>
+  # TODO: value(obj).wont_<something>       => _(obj).wont_<something>
+  # TODO: obj.wont_<something> val          => _(obj).wont_<something> val
+  # TODO: obj.wont_<something>              => _(obj).wont_<something>
+  # TODO: _(obj.pred?).wont_equal true      => _(obj).wont_be :pred?
+  # TODO: _(obj.msg(val)).wont_equal true   => _(obj).wont_be :msg, val
+  # TODO: _(obj.pred?).wont_equal false     => _(obj).must_be :pred?
+  # TODO: _(obj.msg(val)).wont_equal false  => _(obj).must_be :msg, val
+  # TODO: _(obj).wont_equal nil             => _(obj).wont_be_nil
+  # TODO: _(obj).wont_equal float_lit       => _(obj).wont_be_close_to float_lit
+  # TODO: _(obj.count).wont_equal 0         => _(obj).wont_be_empty
+  # TODO: _(obj.length).wont_equal 0        => _(obj).wont_be_empty
+  # TODO: _(obj.size).wont_equal 0          => _(obj).wont_be_empty
+  # TODO: _(obj).wont_equal([])             => _(obj).wont_be_empty
+  # TODO: _(obj).wont_equal({})             => _(obj).wont_be_empty
+  # TODO: _(obj).wont_be :empty?            => _(obj).wont_be_empty
+  # TODO: _(obj).wont_be :include?, val     => _(obj).wont_include val
   declare_wont_be :include?
+  # TODO: _(obj).wont_be :instance_of?, cls => _(obj).wont_be_instance_of cls
+  # TODO: _(obj).wont_be :kind_of?, mod     => _(obj).wont_be_kind_of mod
+  # declare_wont_be :kind_of?
+  # TODO: _(obj).wont_be :is_a?, mod        => _(obj).wont_be_kind_of mod
+  # declare_wont_be :is_a?, :kind_of
+  # TODO: _(obj).wont_be :respond_to?, val  => _(obj).wont_respond_to val
   declare_wont_be :respond_to?
 end

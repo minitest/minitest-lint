@@ -12,6 +12,23 @@ class TestAssertScanner < Minitest::Test
     end
   end
 
+  def self.todo! msg
+    define_method "test_#{msg}" do
+      puts
+      puts <<~"EOM"
+        def test_#{msg}
+          assert_re(:RE_#{msg.to_s.upcase.delete_prefix("ASSERT_")},
+                    "assert_xxx lhs, rhs",
+                    a(c(:lhs, :xxx, :rhs)),
+                    # =>
+                    c(:assert_xxx, :lhs, :rhs))
+        end
+      EOM
+      puts
+      flunk "gonna do this next!"
+    end
+  end
+
   def a_lit a, l, m, *r; c(a, l, lit(m), *r); end
 
   def c(msg, *args); s(:call, nil, msg, *args);  end
@@ -406,6 +423,13 @@ class TestAssertScanner < Minitest::Test
 
   ######################################################################
   # Positive Expectations
+
+  todo :must_from_value_arg
+  todo :must_from_value
+  todo :must_from_expect_arg
+  todo :must_from_expect
+  todo :must_on_obj_arg
+  todo :must_on_obj
 
   todo :must_equal
   todo :must_equal_true
@@ -864,20 +888,34 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_be_empty
   todo :wont_be__empty
   todo :wont_be__nil
-  todo :wont_be__key
 
-  todo :wont_equal
-  todo :wont_be_close_to
-  todo :wont_be_within_epsilon
-  todo :wont_be_instance_of
-  todo :wont_be_kind_of
-  todo :wont_match
-  todo :wont_be_nil
-  todo :wont_respond_to
-  todo :wont_be_same_as
+  todo :wont_equal__pred_true
+  todo :wont_equal__oper_true
+  todo :wont_equal__pred_false
+  todo :wont_equal__oper_false
+  todo :wont_equal__nil
+  todo :wont_equal__float
+  todo :wont_equal__count_0
+  todo :wont_equal__length_0
+  todo :wont_equal__size_0
+  todo :wont_equal__array
+  todo :wont_equal__hash
+  todo :wont_equal_lhs_str
+  todo :wont_equal_rhs_lit
+  todo :wont_equal_rhs_str
+  todo :wont_equal_big_string
+
+  todo :wont_be__instance_of
+  todo :wont_be__is_a
+  todo :wont_be__key
+  todo :wont_be__kind_of
+  todo :wont_be__match1
+  todo :wont_be__match2
+  todo :wont_be__match3
+  todo :wont_be__same_as
+
   todo :path_wont_exist
 
   def test_wont_be__include
