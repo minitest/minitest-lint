@@ -163,10 +163,14 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_match
+  todo :assert_oper__key
+  todo :assert_oper__match1
+  todo :assert_oper__match2
+  todo :assert_oper__match3
+
   todo :assert_oper__nil
-  todo :assert_path_exists
-  todo :assert_same
+  todo :assert_oper__file_path_exists
+  todo :assert_oper__eql_same_as
 
   def test_assert
     assert_re(:RE_PLAIN,
@@ -427,16 +431,9 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal__false
 
   todo :must_equal__big_string
-  todo :must_equal__assert_equal?
   todo :must_equal__lhs_str
   todo :must_equal__rhs_lit
   todo :must_equal__rhs_str
-
-  todo :must_equal__count_0
-  todo :must_equal__length_0
-  todo :must_equal__size_0
-  todo :must_equal__array
-  todo :must_equal__hash
 
   todo :must_be__key
   todo :must_be__match1
@@ -444,13 +441,10 @@ class TestAssertScanner < Minitest::Test
   todo :must_be__match3
   todo :must_be__same_as
 
-  todo :must_be__nil
-
   todo :must_include__include
   todo :must_include__key
 
-  todo :must_be_same_as
-  todo :must_be_within_epsilon
+  todo :must_be__within_epsilon
 
   todo :path_must_exist
 
@@ -507,46 +501,6 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be_nil))
   end
 
-  def test_must_be_empty__array
-    assert_re(:RE_MUST_BE_EMPTY_LIT,
-              "_(obj).must_be_empty",
-              meq(:lhs, s(:array)),
-              # =>
-              e(:lhs, :must_be_empty))
-  end
-
-  def test_must_be_empty__count
-    assert_re(:RE_MUST_SIZE_ZERO,
-              "_(obj).must_be_empty",
-              meq(s(:call, :lhs, :count), lit(0)),
-              # =>
-              e(:lhs, :must_be_empty))
-  end
-
-  def test_must_be_empty__hash
-    assert_re(:RE_MUST_BE_EMPTY_LIT,
-              "_(obj).must_be_empty",
-              meq(:lhs, s(:hash)),
-              # =>
-              e(:lhs, :must_be_empty))
-  end
-
-  def test_must_be_empty__length
-    assert_re(:RE_MUST_SIZE_ZERO,
-              "_(obj).must_be_empty",
-              meq(s(:call, :lhs, :length), lit(0)),
-              # =>
-              e(:lhs, :must_be_empty))
-  end
-
-  def test_must_be_empty__size
-    assert_re(:RE_MUST_SIZE_ZERO,
-              "_(obj).must_be_empty",
-              meq(s(:call, :lhs, :size), lit(0)),
-              # =>
-              e(:lhs, :must_be_empty))
-  end
-
   def test_must_be_instance_of
     assert_re(:RE_MUST_BE_INSTANCE_OF,
               "_(obj).must_be_instance_of cls",
@@ -579,12 +533,44 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_respond_to, :rhs))
   end
 
+  def test_must_equal__array
+    assert_re(:RE_MUST_BE_EMPTY_LIT,
+              "_(obj).must_be_empty",
+              meq(:lhs, s(:array)),
+              # =>
+              e(:lhs, :must_be_empty))
+  end
+
+  def test_must_equal__count_0
+    assert_re(:RE_MUST_SIZE_ZERO,
+              "_(obj).must_be_empty",
+              meq(s(:call, :lhs, :count), lit(0)),
+              # =>
+              e(:lhs, :must_be_empty))
+  end
+
   def test_must_equal__float
     assert_re(:RE_MUST_EQ_FLOAT,
               "_(obj).must_be_close_to float_lit",
               meq(:lhs, s(:lit, 6.28)),
               # =>
               e(:lhs, :must_be_close_to, s(:lit, 6.28)))
+  end
+
+  def test_must_equal__hash
+    assert_re(:RE_MUST_BE_EMPTY_LIT,
+              "_(obj).must_be_empty",
+              meq(:lhs, s(:hash)),
+              # =>
+              e(:lhs, :must_be_empty))
+  end
+
+  def test_must_equal__length_0
+    assert_re(:RE_MUST_SIZE_ZERO,
+              "_(obj).must_be_empty",
+              meq(s(:call, :lhs, :length), lit(0)),
+              # =>
+              e(:lhs, :must_be_empty))
   end
 
   def test_must_equal__nil
@@ -625,6 +611,14 @@ class TestAssertScanner < Minitest::Test
               meq(s(:call, :lhs, :pred?), s(:false)),
               # =>
               e(:lhs, :wont_be, lit(:pred?)))
+  end
+
+  def test_must_equal__size_0
+    assert_re(:RE_MUST_SIZE_ZERO,
+              "_(obj).must_be_empty",
+              meq(s(:call, :lhs, :size), lit(0)),
+              # =>
+              e(:lhs, :must_be_empty))
   end
 
   ######################################################################
@@ -683,15 +677,7 @@ class TestAssertScanner < Minitest::Test
               c(:refute_equal, :lhs, :rhs))
   end
 
-  def test_refute_equal__empty
-    assert_re(:RE_REF_EQ_EMPTY,
-              "refute_empty obj",
-              req(lit(0), s(:call, :whatever, :length)),
-              # =>
-              c(:refute_empty, :whatever))
-  end
-
-  def test_refute_equal__empty_array
+  def test_refute_equal__array
     assert_re(:RE_REF_EQ_EMPTY_LIT,
               "refute_empty obj",
               req(s(:array), :lhs),
@@ -699,12 +685,12 @@ class TestAssertScanner < Minitest::Test
               c(:refute_empty, :lhs))
   end
 
-  def test_refute_equal__empty_hash
-    assert_re(:RE_REF_EQ_EMPTY_LIT,
+  def test_refute_equal__count_0
+    assert_re(:RE_REF_EQ_EMPTY,
               "refute_empty obj",
-              req(s(:hash), :lhs),
+              req(lit(0), s(:call, :whatever, :count)),
               # =>
-              c(:refute_empty, :lhs))
+              c(:refute_empty, :whatever))
   end
 
   def test_refute_equal__float
@@ -713,6 +699,22 @@ class TestAssertScanner < Minitest::Test
               req(s(:lit, 6.28), :rhs),
               # =>
               c(:refute_in_epsilon, s(:lit, 6.28), :rhs))
+  end
+
+  def test_refute_equal__hash
+    assert_re(:RE_REF_EQ_EMPTY_LIT,
+              "refute_empty obj",
+              req(s(:hash), :lhs),
+              # =>
+              c(:refute_empty, :lhs))
+  end
+
+  def test_refute_equal__length_0
+    assert_re(:RE_REF_EQ_EMPTY,
+              "refute_empty obj",
+              req(lit(0), s(:call, :whatever, :length)),
+              # =>
+              c(:refute_empty, :whatever))
   end
 
   def test_refute_equal__lhs_str
@@ -822,6 +824,14 @@ class TestAssertScanner < Minitest::Test
               req(s(:str, "str"), :act))
   end
 
+  def test_refute_equal__size_0
+    assert_re(:RE_REF_EQ_EMPTY,
+              "refute_empty obj",
+              req(lit(0), s(:call, :whatever, :size)),
+              # =>
+              c(:refute_empty, :whatever))
+  end
+
   def test_refute_in_delta
     assert_re(:RE_REF_IN_DELTA,
               "refute_in_epsilon float_lit, act",
@@ -889,16 +899,25 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_equal_lhs_str
-  todo :wont_equal_rhs_lit
-  todo :wont_equal_rhs_str
-  todo :wont_equal_big_string
+  todo :wont_equal
+  todo :wont_equal__true
+  todo :wont_equal__false
+
+  todo :wont_equal__big_string
+  todo :wont_equal__lhs_str
+  todo :wont_equal__rhs_lit
+  todo :wont_equal__rhs_str
+
+  todo :wont_include__include
+  todo :wont_include__key
+
+  todo :wont_be__same_as
+  todo :wont_be__within_epsilon
 
   todo :wont_be__key
   todo :wont_be__match1
   todo :wont_be__match2
   todo :wont_be__match3
-  todo :wont_be__same_as
 
   todo :path_wont_exist
 
@@ -987,7 +1006,7 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_respond_to, :rhs))
   end
 
-  def test_wont_be_empty__array
+  def test_wont_equal__array
     assert_re(:RE_WONT_BE_EMPTY_LIT,
               "_(obj).wont_be_empty",
               weq(:lhs, s(:array)),
@@ -995,34 +1014,10 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :wont_be_empty))
   end
 
-  def test_wont_be_empty__count
+  def test_wont_equal__count_0
     assert_re(:RE_WONT_SIZE_ZERO,
               "_(obj).wont_be_empty",
               weq(s(:call, :lhs, :count), lit(0)),
-              # =>
-              e(:lhs, :wont_be_empty))
-  end
-
-  def test_wont_be_empty__hash
-    assert_re(:RE_WONT_BE_EMPTY_LIT,
-              "_(obj).wont_be_empty",
-              weq(:lhs, s(:hash)),
-              # =>
-              e(:lhs, :wont_be_empty))
-  end
-
-  def test_wont_be_empty__length
-    assert_re(:RE_WONT_SIZE_ZERO,
-              "_(obj).wont_be_empty",
-              weq(s(:call, :lhs, :length), lit(0)),
-              # =>
-              e(:lhs, :wont_be_empty))
-  end
-
-  def test_wont_be_empty__size
-    assert_re(:RE_WONT_SIZE_ZERO,
-              "_(obj).wont_be_empty",
-              weq(s(:call, :lhs, :size), lit(0)),
               # =>
               e(:lhs, :wont_be_empty))
   end
@@ -1033,6 +1028,22 @@ class TestAssertScanner < Minitest::Test
               weq(:lhs, s(:lit, 6.28)),
               # =>
               e(:lhs, :wont_be_close_to, s(:lit, 6.28)))
+  end
+
+  def test_wont_equal__hash
+    assert_re(:RE_WONT_BE_EMPTY_LIT,
+              "_(obj).wont_be_empty",
+              weq(:lhs, s(:hash)),
+              # =>
+              e(:lhs, :wont_be_empty))
+  end
+
+  def test_wont_equal__length_0
+    assert_re(:RE_WONT_SIZE_ZERO,
+              "_(obj).wont_be_empty",
+              weq(s(:call, :lhs, :length), lit(0)),
+              # =>
+              e(:lhs, :wont_be_empty))
   end
 
   def test_wont_equal__nil
@@ -1073,6 +1084,14 @@ class TestAssertScanner < Minitest::Test
               weq(s(:call, :lhs, :pred?), s(:false)),
               # =>
               e(:lhs, :must_be, lit(:pred?)))
+  end
+
+  def test_wont_equal__size_0
+    assert_re(:RE_WONT_SIZE_ZERO,
+              "_(obj).wont_be_empty",
+              weq(s(:call, :lhs, :size), lit(0)),
+              # =>
+              e(:lhs, :wont_be_empty))
   end
 
   # # TODO: make sure I'm picking up _ { ... }.must/wont...
