@@ -623,6 +623,9 @@ class AssertScanner
   # wont_include
   # wont_match
 
+  re_wont_other        = parse("(call (call nil [m expect value] _) [m /^wont/] ___)")
+  re_wont_plain        = parse("(call [- (call nil :_ ___)]         [m /^wont/] ___)")
+
   def self.declare_wont_be pred, msg = pred
     const = pred.to_s.delete("?").upcase
     msg   = msg.to_s.delete("?")
@@ -634,12 +637,23 @@ class AssertScanner
     end
   end
 
-  # TODO: expect(obj).wont_<something> val  => _(obj).wont_<something> val
-  # TODO: value(obj).wont_<something> val   => _(obj).wont_<something> val
-  # TODO: expect(obj).wont_<something>      => _(obj).wont_<something>
-  # TODO: value(obj).wont_<something>       => _(obj).wont_<something>
-  # TODO: obj.wont_<something> val          => _(obj).wont_<something> val
-  # TODO: obj.wont_<something>              => _(obj).wont_<something>
+  # This must be first to immediately rewrite them to normal form
+  doco("expect(obj).wont_<something> val" => "_(obj).wont_<something> val",
+       "value(obj).wont_<something> val"  => "_(obj).wont_<something> val",
+       "expect(obj).wont_<something>"     => "_(obj).wont_<something>",
+       "value(obj).wont_<something>"      => "_(obj).wont_<something>")
+  exp_rewrite(RE_WONT_OTHER: re_wont_other) do |lhs, msg, *rhs|
+    must lhs, msg, *rhs
+  end
+
+  # TODO: arg vs no arg?
+  # This must be second so it doesn't catch the above
+  doco("obj.wont_<something> val" => "_(obj).wont_<something> val",
+       "obj.wont_<something>"     => "_(obj).wont_<something>")
+  rewrite(RE_WONT_PLAIN: re_wont_plain) do |t, lhs, msg, *rhs|
+    must lhs, msg, *rhs
+  end
+
   # TODO: _(obj.pred?).wont_equal true      => _(obj).wont_be :pred?
   # TODO: _(obj.msg(val)).wont_equal true   => _(obj).wont_be :msg, val
   # TODO: _(obj.pred?).wont_equal false     => _(obj).must_be :pred?

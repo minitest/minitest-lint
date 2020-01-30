@@ -49,6 +49,7 @@ class TestAssertScanner < Minitest::Test
   def rop(l, m, r);  a_lit(:refute_operator,  l, m, r); end
   def rpr(l, m);     a_lit(:refute_predicate, l, m);    end
   def wbe(l, m, *r); e(l, :wont_be, lit(m), *r); end
+  def weq(l,r);      e(l, :wont_equal,    r);    end
 
   def assert_pattern scanner, from, msg = nil, to = nil
     pattern = AssertScanner.const_get scanner
@@ -911,6 +912,35 @@ class TestAssertScanner < Minitest::Test
   todo :wont_be__same_as
 
   todo :path_wont_exist
+
+  def test_wont__plain
+    assert_re(:RE_WONT_PLAIN,
+              "_(obj).wont_<something> val",
+              s(:call, :lhs, :wont_equal, :rhs),
+              # =>
+              weq(:lhs, :rhs))
+  end
+
+  def test_wont__plain_bad
+    refute_re(:RE_WONT_PLAIN,
+              e(:lhs, :wont_equal, lit(42)))
+  end
+
+  def test_wont__plain_expect
+    assert_re(:RE_WONT_OTHER,
+              "_(obj).wont_<something> val",
+              s(:call, c(:expect, :act), :wont_be, lit(:<), :arg),
+              # =>
+              wbe(:act, :<, :arg))
+  end
+
+  def test_wont__plain_value
+    assert_re(:RE_WONT_OTHER,
+              "_(obj).wont_<something> val",
+              s(:call, c(:value, :act), :wont_equal, :exp),
+              # =>
+              weq(:act, :exp))
+  end
 
   def test_wont_be__empty
     assert_re(:RE_WONT_BE_EMPTY,
