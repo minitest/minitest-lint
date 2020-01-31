@@ -163,12 +163,11 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_oper__match1
-  todo :assert_oper__match2
-  todo :assert_oper__match3
-
-  todo :assert_oper__nil
-  todo :assert_oper__eql_same_as
+  todo :assert_operator__eql_same_as
+  todo :assert_operator__match1
+  todo :assert_operator__match2
+  todo :assert_operator__match3
+  todo :assert_operator__nil
 
   def test_assert
     assert_re(:RE_PLAIN,
@@ -186,20 +185,20 @@ class TestAssertScanner < Minitest::Test
               a(:lhs))
   end
 
-  def test_assert__neq
-    assert_re(:RE_EQUAL_NOT,
-              "refute_equal exp, act",
-              a(s(:call, :lhs, :!=, :rhs)),
-              # =>
-              c(:refute_equal, :lhs, :rhs))
-  end
-
   def test_assert__not
     assert_re(:RE_NOT,
               "refute obj",
               a(s(:call, :lhs, :!)),
               # =>
               r(:lhs))
+  end
+
+  def test_assert__not_equal
+    assert_re(:RE_EQUAL_NOT,
+              "refute_equal exp, act",
+              a(s(:call, :lhs, :!=, :rhs)),
+              # =>
+              c(:refute_equal, :lhs, :rhs))
   end
 
   def test_assert__operator
@@ -226,7 +225,7 @@ class TestAssertScanner < Minitest::Test
               aeq(:lhs, :rhs))
   end
 
-  def test_assert_equal__empty
+  def test_assert_equal__length_0
     assert_re(:RE_EQ_EMPTY,
               "assert_empty obj",
               aeq(lit(0), s(:call, :whatever, :length)),
@@ -234,7 +233,23 @@ class TestAssertScanner < Minitest::Test
               c(:assert_empty, :whatever))
   end
 
-  def test_assert_equal__empty_array
+  def test_assert_equal__count_0
+    assert_re(:RE_EQ_EMPTY,
+              "assert_empty obj",
+              aeq(lit(0), s(:call, :whatever, :count)),
+              # =>
+              c(:assert_empty, :whatever))
+  end
+
+  def test_assert_equal__size_0
+    assert_re(:RE_EQ_EMPTY,
+              "assert_empty obj",
+              aeq(lit(0), s(:call, :whatever, :size)),
+              # =>
+              c(:assert_empty, :whatever))
+  end
+
+  def test_assert_equal__array
     assert_re(:RE_EQ_EMPTY_LIT,
               "assert_empty obj",
               aeq(s(:array), :lhs),
@@ -242,7 +257,7 @@ class TestAssertScanner < Minitest::Test
               c(:assert_empty, :lhs))
   end
 
-  def test_assert_equal__empty_hash
+  def test_assert_equal__hash
     assert_re(:RE_EQ_EMPTY_LIT,
               "assert_empty obj",
               aeq(s(:hash), :lhs),
@@ -440,25 +455,20 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Expectations
 
-  todo :must_equal
-  todo :must_equal__true
-  todo :must_equal__false
-
-  todo :must_equal__big_string
-  todo :must_equal__lhs_str
-  todo :must_equal__rhs_lit
-  todo :must_equal__rhs_str
-
   todo :must_be__match1
   todo :must_be__match2
   todo :must_be__match3
   todo :must_be__same_as
-
   todo :must_be__within_epsilon
+  todo :must_equal
+  todo :must_equal__big_string
+  todo :must_equal__false
+  todo :must_equal__lhs_str
+  todo :must_equal__rhs_lit
+  todo :must_equal__rhs_str
+  todo :must_equal__true
 
-  todo :path_must_exist
-
-  def test_must___plain
+  def test_must__plain
     assert_re(:RE_MUST_PLAIN,
               "_(obj).must_<something> val",
               s(:call, :lhs, :must_equal, :rhs),
@@ -466,7 +476,7 @@ class TestAssertScanner < Minitest::Test
               meq(:lhs, :rhs))
   end
 
-  def test_must___plain_bad
+  def test_must__plain_bad
     refute_re(:RE_MUST_PLAIN,
               e(:lhs, :must_equal, lit(42)))
   end
@@ -511,12 +521,36 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_include, :rhs))
   end
 
+  def test_must_be__instance_of
+    assert_re(:RE_MUST_BE_INSTANCE_OF,
+              "_(obj).must_be_instance_of cls",
+              mbe(:lhs, :instance_of?, :rhs),
+              # =>
+              e(:lhs, :must_be_instance_of, :rhs))
+  end
+
+  def test_must_be__is_a
+    assert_re(:RE_MUST_BE_IS_A,
+              "_(obj).must_be_kind_of mod",
+              mbe(:lhs, :is_a?, :rhs),
+              # =>
+              e(:lhs, :must_be_kind_of, :rhs))
+  end
+
   def test_must_be__key
     assert_re(:RE_MUST_BE_KEY,
               "_(obj).must_include val",
               mbe(:lhs, :key?, :rhs),
               # =>
               e(:lhs, :must_include, :rhs))
+  end
+
+  def test_must_be__kind_of
+    assert_re(:RE_MUST_BE_KIND_OF,
+              "_(obj).must_be_kind_of mod",
+              mbe(:lhs, :kind_of?, :rhs),
+              # =>
+              e(:lhs, :must_be_kind_of, :rhs))
   end
 
   def test_must_be__nil
@@ -527,31 +561,7 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_be_nil))
   end
 
-  def test_must_be_instance_of
-    assert_re(:RE_MUST_BE_INSTANCE_OF,
-              "_(obj).must_be_instance_of cls",
-              mbe(:lhs, :instance_of?, :rhs),
-              # =>
-              e(:lhs, :must_be_instance_of, :rhs))
-  end
-
-  def test_must_be_is_a
-    assert_re(:RE_MUST_BE_IS_A,
-              "_(obj).must_be_kind_of mod",
-              mbe(:lhs, :is_a?, :rhs),
-              # =>
-              e(:lhs, :must_be_kind_of, :rhs))
-  end
-
-  def test_must_be_kind_of
-    assert_re(:RE_MUST_BE_KIND_OF,
-              "_(obj).must_be_kind_of mod",
-              mbe(:lhs, :kind_of?, :rhs),
-              # =>
-              e(:lhs, :must_be_kind_of, :rhs))
-  end
-
-  def test_must_be_respond_to
+  def test_must_be__respond_to
     assert_re(:RE_MUST_BE_RESPOND_TO,
               "_(obj).must_respond_to val",
               mbe(:lhs, :respond_to?, :rhs),
@@ -650,9 +660,11 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Assertions
 
-  todo :refute_match
-  todo :refute_oper__nil
-  todo :refute_same
+  todo :refute_operator__eql_same_as
+  todo :refute_operator__match1
+  todo :refute_operator__match2
+  todo :refute_operator__match3
+  todo :refute_operator__nil
 
   def test_refute
     assert_re(:RE_REF_PLAIN,
@@ -692,6 +704,14 @@ class TestAssertScanner < Minitest::Test
               r(s(:call, :lhs, :msg, :rhs)),
               # =>
               rop(:lhs, :msg, :rhs))
+  end
+
+  def test_refute__predicate
+    assert_re(:RE_REF_PRED,
+              "refute_predicate obj, :pred?",
+              r(s(:call, :lhs, :msg?)),
+              # =>
+              rpr(:lhs, :msg?))
   end
 
   def test_refute_equal
@@ -921,14 +941,6 @@ class TestAssertScanner < Minitest::Test
               c(:refute_respond_to, :obj, :msg))
   end
 
-  def test_refute_predicate
-    assert_re(:RE_REF_PRED,
-              "refute_predicate obj, :pred?",
-              r(s(:call, :lhs, :msg)),
-              # =>
-              rpr(:lhs, :msg))
-  end
-
   def test_refute_predicate__empty
     assert_re(:RE_REF_PRED_EMPTY,
               "refute_empty val",
@@ -940,23 +952,18 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_equal
-  todo :wont_equal__true
-  todo :wont_equal__false
-
-  todo :wont_equal__big_string
-  todo :wont_equal__lhs_str
-  todo :wont_equal__rhs_lit
-  todo :wont_equal__rhs_str
-
-  todo :wont_be__same_as
-  todo :wont_be__within_epsilon
-
   todo :wont_be__match1
   todo :wont_be__match2
   todo :wont_be__match3
-
-  todo :path_wont_exist
+  todo :wont_be__same_as
+  todo :wont_be__within_epsilon
+  todo :wont_equal
+  todo :wont_equal__big_string
+  todo :wont_equal__false
+  todo :wont_equal__lhs_str
+  todo :wont_equal__rhs_lit
+  todo :wont_equal__rhs_str
+  todo :wont_equal__true
 
   def test_wont__plain
     assert_re(:RE_WONT_PLAIN,
