@@ -1154,11 +1154,67 @@ class TestAssertScanner < Minitest::Test
   # _(lhs.length).must_be(:>=, 4) # TODO: warn about magic numbers?
 end
 
-__END__
-# TODO: some sort of auditing:
+if __FILE__ == $0 then
+  class Symbol
+    def sub re, s=nil, &b
+      self.to_s.sub(re, s, &b).to_sym
+    end
+  end
 
-require "minitest/assertions"
-require "minitest/expectations"
+  def ss re, str
+    ->(ary) { ary.map { |s| s.sub(re, str) } }
+  end
 
-p Minitest::Assertions.public_instance_methods.grep(/assert|refute/)
-p Minitest::Expectations.public_instance_methods.grep(/must|wont/)
+  a2r = ss(/assert/, "refute")
+  r2a = ss(/refute/, "assert")
+  m2w = ss(/must/,   "wont")
+  w2m = ss(/wont/,   "must")
+
+  at, rt, mt, wt =
+    TestAssertScanner
+    .instance_methods(false)
+    .grep(/^test_/)
+    .grep_v(/sanity/)
+    .sort
+    .group_by { |s| s[/assert|refute|must|wont/] }
+    .values_at("assert", "refute", "must", "wont")
+
+  pp :MISSING_ASSERTS => r2a[rt - a2r[at]]
+  pp :MISSING_REFUTES => a2r[at - r2a[rt]]
+  pp :MISSING_MUST    => w2m[wt - m2w[mt]]
+  pp :MISSING_WONT    => m2w[mt - w2m[wt]]
+
+  a, r = Minitest::Assertions
+    .public_instance_methods
+    .grep(/assert|refute/)
+    .sort
+    .partition { |s| s =~ /assert/ }
+
+  m, w = Minitest::Expectations
+    .public_instance_methods
+    .grep(/must|wont/)
+    .sort
+    .partition { |s| s =~ /must/ }
+
+  whitelist =
+    %i{
+       assert_output assert_raises assert_send assert_silent assert_throws
+       must_be_silent must_output must_raise must_throw
+      }
+
+  used = AssertScanner
+    .__doco
+    .to_a
+    .flatten
+    .map { |s| s[/(path_)?#{AssertScanner::RE}\w*/] }
+    .compact
+    .map(&:to_sym)
+    .sort
+    .uniq
+
+  puts "Assertions / Expectations not covered yet:"
+  p a - used - whitelist
+  p r - used - whitelist
+  p m - used - whitelist
+  p w - used - whitelist
+end
