@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby -Ilib -w
+
 require "minitest/autorun"
 require "assert_scanner"
 
@@ -1384,4 +1386,6 @@ if __FILE__ == $0 then
   p r - used - whitelist
   p m - used - whitelist
   p w - used - whitelist
+
+  abort
 end

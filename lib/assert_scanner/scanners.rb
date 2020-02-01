@@ -136,14 +136,6 @@ class AssertScanner
     end
   end
 
-  # TODO: remove
-  meta "old_assert lhs.msg(rhs)" => "new_assert rhs, lhs"
-  def self.replace_and_swap new_msg, patterns, msg = latest_doco_to
-    rewrite patterns do |t, r, m, (_, lhs, _, rhs)|
-      s(t, r, new_msg, rhs, lhs)
-    end
-  end
-
   ############################################################
   # Pattern Declaration Helpers:
 
@@ -201,7 +193,6 @@ class AssertScanner
     exp
   end
 
-  # TODO: audit usage
   def handle_arity exp, arity
     exp, msg = exp[0..arity], exp[arity+1]
 
@@ -214,10 +205,7 @@ class AssertScanner
   # Positive Assertions
 
   # TODO:
-  # assert_raises Exception do ... end
   # assert_equal "str", klass.name
-  # assert_raises
-  # assert_respond_to
   # assert_same
 
   size_pat = "(call _ [m count length size])"
@@ -365,9 +353,9 @@ class AssertScanner
 
   # TODO:
   # refute_nil
-  # assert(obj.size > 0) => refute_empty
+  # assert(obj.size > 0)                     => refute_empty
   # lhs msg is count/length/size && rhs != 0 => refute_empty
-  # lhs == binary call => refute_operator && rhs == false
+  # lhs == binary call && rhs == false       => refute_operator
 
   doco "refute obj, msg" => "refute obj"
   pattern RE_REF_MSG: refute_pat("_ _")
@@ -384,8 +372,6 @@ class AssertScanner
   doco "refute ! obj" => "assert obj"
   replace_call(:assert,
                RE_REF_NOT: refute_pat("(call _ !)"))
-
-  # TODO: normalize doco terms val/obj/etc
 
   doco "refute exp == act" => "refute_equal exp, act"
   replace_call(:refute_equal,
@@ -509,8 +495,8 @@ class AssertScanner
   # Expectations Helpers
 
   def self.exp_rewrite patterns, &block
-    rewrite patterns do |sexp|
-      self.instance_exec(match(sexp), &block)
+    rewrite patterns do |_, (_, _, _, lhs), msg, *rhs|
+      self.instance_exec(lhs, msg, *rhs, &block)
     end
   end
 
@@ -536,11 +522,6 @@ class AssertScanner
 
   def self.weq_pat lhs, rhs
     must_pat(lhs, :wont_equal, rhs)
-  end
-
-  def match exp
-    _, (_, _, _, lhs), msg, *rhs = exp
-    return lhs, msg, *rhs
   end
 
   def must lhs, msg, *rhs
@@ -777,6 +758,7 @@ class AssertScanner
     must(lhs, :wont_be_empty)
   end
 
+  declare_wont_be :empty?, :be_empty
   declare_wont_be :nil?, :be_nil
 
   doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"
@@ -785,7 +767,6 @@ class AssertScanner
   end
 
   declare_wont_be :include?
-  declare_wont_be :empty?, :be_empty
   declare_wont_be :key?, :include
   declare_wont_be :instance_of?, :be_instance_of
   declare_wont_be :kind_of?, :be_kind_of

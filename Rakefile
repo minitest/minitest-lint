@@ -82,7 +82,7 @@ end
 
 task :sort => :isolate do
   shell "diff -u <(./bin/assert_scanner --raw) <(./bin/assert_scanner --list | grep .)"
-  sh "grepsort -u def.test_ test/test_assert_scanner.rb"
+  sh "grepsort -u '^ +def.test_' test/test_assert_scanner.rb"
 end
 
 # vim: syntax=ruby
