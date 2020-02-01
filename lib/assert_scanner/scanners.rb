@@ -737,12 +737,12 @@ class AssertScanner
     must(lhs, :wont_be, s(:lit, msg), rhs)
   end
 
-  doco "_(obj.pred?).wont_equal false" => "_(obj).wont_be :pred?"
+  doco "_(obj.pred?).wont_equal false" => "_(obj).must_be :pred?"
   exp_rewrite(RE_WONT_BE_PRED_F: re_wont_be_pred_f) do |(_, lhs, msg), _, _|
     must(lhs, :must_be, s(:lit, msg))
   end
 
-  doco "_(obj.msg(val)).wont_equal false" => "_(obj).wont_be :msg, val"
+  doco "_(obj.msg(val)).wont_equal false" => "_(obj).must_be :msg, val"
   exp_rewrite(RE_WONT_BE_OPER_F: re_wont_be_oper_f) do |(_, lhs, msg, rhs),|
     next if msg == :[]
 

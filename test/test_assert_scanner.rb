@@ -1320,10 +1320,10 @@ class TestAssertScanner < Minitest::Test
 
   def test_wont_equal__oper_f
     assert_re(:RE_WONT_BE_OPER_F,
-              "_(obj).wont_be :msg, val",
+              "_(obj).must_be :msg, val",
               weq(s(:call, :lhs, :msg, :rhs), s(:false)),
               # =>
-              e(:lhs, :must_be, lit(:msg), :rhs))
+              mbe(:lhs, :msg, :rhs))
   end
 
   def test_wont_equal__pred
@@ -1336,10 +1336,10 @@ class TestAssertScanner < Minitest::Test
 
   def test_wont_equal__pred_f
     assert_re(:RE_WONT_BE_PRED_F,
-              "_(obj).wont_be :pred?",
+              "_(obj).must_be :pred?",
               weq(s(:call, :lhs, :pred?), s(:false)),
               # =>
-              e(:lhs, :must_be, lit(:pred?)))
+              mbe(:lhs, :pred?))
   end
 
   def test_wont_equal__size_0
