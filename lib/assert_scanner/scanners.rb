@@ -216,7 +216,6 @@ class AssertScanner
   # TODO:
   # assert_raises Exception do ... end
   # assert_equal "str", klass.name
-  # assert_match
   # assert_raises
   # assert_respond_to
   # assert_same
@@ -316,6 +315,20 @@ class AssertScanner
     s(t, r, :assert_includes, rhs, s(:str, str[0, 20]))
   end
 
+  doco("assert_operator obj, :===, val"    => "assert_match obj, val",
+       "assert_operator obj, :=~, val"     => "assert_match obj, val",
+       "assert_operator obj, :match, val"  => "assert_match obj, val",
+       "assert_operator obj, :match?, val" => "assert_match obj, val")
+  promote_oper(:assert_match,
+               RE_OPER_MATCH_EQ3:       a_oper("_", :===, "_"),
+               RE_OPER_MATCH_EQTILDE:   a_oper("_", :=~, "_"),
+               RE_OPER_MATCH_MATCH:     a_oper("_", :match, "_"),
+               RE_OPER_MATCH_MATCH_EH:  a_oper("_", :match?, "_"))
+
+  doco "assert_operator obj, :!~, val"     => "refute_match obj, val"
+  promote_oper(:refute_match,
+               RE_OPER_MATCH_NOT_TILDE: a_oper("_", :!~, "_"))
+
   doco("assert_operator obj, :include?, val" => "assert_includes obj, val",
        "assert_operator obj, :key?, val"     => "assert_includes obj, val")
   promote_oper(:assert_includes,
@@ -351,7 +364,6 @@ class AssertScanner
   # Negative Assertions
 
   # TODO:
-  # refute_match
   # refute_nil
   # assert(obj.size > 0) => refute_empty
   # lhs msg is count/length/size && rhs != 0 => refute_empty
@@ -442,6 +454,20 @@ class AssertScanner
 
     s(t, r, :refute_includes, rhs, s(:str, str[0, 20]))
   end
+
+  doco("refute_operator obj, :===, val"    => "refute_match obj, val",
+       "refute_operator obj, :=~, val"     => "refute_match obj, val",
+       "refute_operator obj, :match, val"  => "refute_match obj, val",
+       "refute_operator obj, :match?, val" => "refute_match obj, val")
+  promote_oper(:refute_match,
+               RE_REF_OPER_MATCH_EQ3:       r_oper("_", :===, "_"),
+               RE_REF_OPER_MATCH_EQTILDE:   r_oper("_", :=~, "_"),
+               RE_REF_OPER_MATCH_MATCH:     r_oper("_", :match, "_"),
+               RE_REF_OPER_MATCH_MATCH_EH:  r_oper("_", :match?, "_"))
+
+  doco "refute_operator obj, :!~, val"     => "assert_match obj, val"
+  promote_oper(:assert_match,
+               RE_REF_OPER_MATCH_NOT_TILDE: r_oper("_", :!~, "_"))
 
   doco "refute_operator File, :exist?, val" => "refute_path_exists val"
   rewrite(RE_REF_OPER_FILE_EXIST: r_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
@@ -647,6 +673,22 @@ class AssertScanner
     must(lhs, :must_respond_to, rhs)
   end
 
+  doco("_(obj).must_be :===, val"    => "_(obj).must_match val",
+       "_(obj).must_be :=~, val"     => "_(obj).must_match val",
+       "_(obj).must_be :match, val"  => "_(obj).must_match val",
+       "_(obj).must_be :match?, val" => "_(obj).must_match val")
+  exp_rewrite(RE_MUST_MATCH_EQ3:      mbe_pat("_", "(lit :===)",    "_"),
+              RE_MUST_MATCH_EQTILDE:  mbe_pat("_", "(lit :=~)",     "_"),
+              RE_MUST_MATCH_MATCH:    mbe_pat("_", "(lit :match)",  "_"),
+              RE_MUST_MATCH_MATCH_EH: mbe_pat("_", "(lit :match?)", "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_match, rhs)
+  end
+
+  doco("_(obj).must_be :!~, val" => "_(obj).wont_match val")
+  exp_rewrite(RE_MUST_MATCH_NOT_TILDE: mbe_pat("_", "(lit :!~)", "_")) do |lhs, _, _, rhs|
+    must(lhs, :wont_match, rhs)
+  end
+
   ############################################################
   # Negative Expectations
 
@@ -749,7 +791,20 @@ class AssertScanner
   declare_wont_be :kind_of?, :be_kind_of
   declare_wont_be :is_a?, :be_kind_of
   declare_wont_be :respond_to?
-  # TODO: declare_wont_be :=~,     :match
-  # TODO: declare_wont_be :match,  :match
-  # TODO: declare_wont_be :match?, :match
+
+  doco("_(obj).wont_be :===, val"    => "_(obj).wont_match val",
+       "_(obj).wont_be :=~, val"     => "_(obj).wont_match val",
+       "_(obj).wont_be :match, val"  => "_(obj).wont_match val",
+       "_(obj).wont_be :match?, val" => "_(obj).wont_match val")
+  exp_rewrite(RE_WONT_MATCH_EQ3:      wbe_pat("_", "(lit :===)",    "_"),
+              RE_WONT_MATCH_EQTILDE:  wbe_pat("_", "(lit :=~)",     "_"),
+              RE_WONT_MATCH_MATCH:    wbe_pat("_", "(lit :match)",  "_"),
+              RE_WONT_MATCH_MATCH_EH: wbe_pat("_", "(lit :match?)", "_")) do |lhs, _, _, rhs|
+    must(lhs, :wont_match, rhs)
+  end
+
+  doco("_(obj).wont_be :!~, val" => "_(obj).must_match val")
+  exp_rewrite(RE_WONT_MATCH_NOT_TILDE: wbe_pat("_", "(lit :!~)", "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_match, rhs)
+  end
 end

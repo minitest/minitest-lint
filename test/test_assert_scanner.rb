@@ -164,9 +164,6 @@ class TestAssertScanner < Minitest::Test
   # Positive Assertions
 
   todo :assert_operator__eql_same_as
-  todo :assert_operator__match1
-  todo :assert_operator__match2
-  todo :assert_operator__match3
   todo :assert_operator__nil
 
   def test_assert
@@ -436,6 +433,46 @@ class TestAssertScanner < Minitest::Test
               c(:assert_kind_of, :mod, :obj))
   end
 
+  def test_assert_operator__match_eq3
+    assert_re(:RE_OPER_MATCH_EQ3,
+              "assert_match obj, val",
+              c(:assert_operator, :lhs, lit(:===), :rhs),
+              # =>
+              c(:assert_match, :lhs, :rhs))
+  end
+
+  def test_assert_operator__match_equalstilde
+    assert_re(:RE_OPER_MATCH_EQTILDE,
+              "assert_match obj, val",
+              c(:assert_operator, :lhs, lit(:=~), :rhs),
+              # =>
+              c(:assert_match, :lhs, :rhs))
+  end
+
+  def test_assert_operator__match_match
+    assert_re(:RE_OPER_MATCH_MATCH,
+              "assert_match obj, val",
+              c(:assert_operator, :lhs, lit(:match), :rhs),
+              # =>
+              c(:assert_match, :lhs, :rhs))
+  end
+
+  def test_assert_operator__match_match_eh
+    assert_re(:RE_OPER_MATCH_MATCH_EH,
+              "assert_match obj, val",
+              c(:assert_operator, :lhs, lit(:match?), :rhs),
+              # =>
+              c(:assert_match, :lhs, :rhs))
+  end
+
+  def test_assert_operator__match_not_tilde
+    assert_re(:RE_OPER_MATCH_NOT_TILDE,
+              "refute_match obj, val",
+              c(:assert_operator, :lhs, lit(:!~), :rhs),
+              # =>
+              c(:refute_match, :lhs, :rhs))
+  end
+
   def test_assert_operator__respond_to
     assert_re(:RE_OPER_RESPOND_TO,
               "assert_respond_to obj, val",
@@ -455,9 +492,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Expectations
 
-  todo :must_be__match1
-  todo :must_be__match2
-  todo :must_be__match3
   todo :must_be__same_as
   todo :must_be__within_epsilon
   todo :must_equal
@@ -557,6 +591,46 @@ class TestAssertScanner < Minitest::Test
               mbe(:lhs, :kind_of?, :rhs),
               # =>
               e(:lhs, :must_be_kind_of, :rhs))
+  end
+
+  def test_must_be__match_eq3
+    assert_re(:RE_MUST_MATCH_EQ3,
+              "_(obj).must_match val",
+              mbe(:lhs, :===, :rhs),
+              # =>
+              e(:lhs, :must_match, :rhs))
+  end
+
+  def test_must_be__match_equalstilde
+    assert_re(:RE_MUST_MATCH_EQTILDE,
+              "_(obj).must_match val",
+              mbe(:lhs, :=~, :rhs),
+              # =>
+              e(:lhs, :must_match, :rhs))
+  end
+
+  def test_must_be__match_match
+    assert_re(:RE_MUST_MATCH_MATCH,
+              "_(obj).must_match val",
+              mbe(:lhs, :match, :rhs),
+              # =>
+              e(:lhs, :must_match, :rhs))
+  end
+
+  def test_must_be__match_match_eh
+    assert_re(:RE_MUST_MATCH_MATCH_EH,
+              "_(obj).must_match val",
+              mbe(:lhs, :match?, :rhs),
+              # =>
+              e(:lhs, :must_match, :rhs))
+  end
+
+  def test_must_be__match_not_tilde
+    assert_re(:RE_MUST_MATCH_NOT_TILDE,
+              "_(obj).wont_match val",
+              mbe(:lhs, :!~, :rhs),
+              # =>
+              e(:lhs, :wont_match, :rhs))
   end
 
   def test_must_be__nil
@@ -667,9 +741,6 @@ class TestAssertScanner < Minitest::Test
   # Negative Assertions
 
   todo :refute_operator__eql_same_as
-  todo :refute_operator__match1
-  todo :refute_operator__match2
-  todo :refute_operator__match3
   todo :refute_operator__nil
 
   def test_refute
@@ -939,6 +1010,46 @@ class TestAssertScanner < Minitest::Test
               c(:refute_kind_of, :mod, :obj))
   end
 
+  def test_refute_operator__match_eq3
+    assert_re(:RE_REF_OPER_MATCH_EQ3,
+              "refute_match obj, val",
+              c(:refute_operator, :lhs, lit(:===), :rhs),
+              # =>
+              c(:refute_match, :lhs, :rhs))
+  end
+
+  def test_refute_operator__match_equalstilde
+    assert_re(:RE_REF_OPER_MATCH_EQTILDE,
+              "refute_match obj, val",
+              c(:refute_operator, :lhs, lit(:=~), :rhs),
+              # =>
+              c(:refute_match, :lhs, :rhs))
+  end
+
+  def test_refute_operator__match_match
+    assert_re(:RE_REF_OPER_MATCH_MATCH,
+              "refute_match obj, val",
+              c(:refute_operator, :lhs, lit(:match), :rhs),
+              # =>
+              c(:refute_match, :lhs, :rhs))
+  end
+
+  def test_refute_operator__match_match_eh
+    assert_re(:RE_REF_OPER_MATCH_MATCH_EH,
+              "refute_match obj, val",
+              c(:refute_operator, :lhs, lit(:match?), :rhs),
+              # =>
+              c(:refute_match, :lhs, :rhs))
+  end
+
+  def test_refute_operator__match_not_tilde
+    assert_re(:RE_REF_OPER_MATCH_NOT_TILDE,
+              "assert_match obj, val",
+              c(:refute_operator, :lhs, lit(:!~), :rhs),
+              # =>
+              c(:assert_match, :lhs, :rhs))
+  end
+
   def test_refute_operator__respond_to
     assert_re(:RE_REF_OPER_RESPOND_TO,
               "refute_respond_to obj, val",
@@ -958,9 +1069,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_be__match1
-  todo :wont_be__match2
-  todo :wont_be__match3
   todo :wont_be__same_as
   todo :wont_be__within_epsilon
   todo :wont_equal
@@ -1060,6 +1168,46 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :kind_of?, :rhs),
               # =>
               e(:lhs, :wont_be_kind_of, :rhs))
+  end
+
+  def test_wont_be__match_eq3
+    assert_re(:RE_WONT_MATCH_EQ3,
+              "_(obj).wont_match val",
+              wbe(:lhs, :===, :rhs),
+              # =>
+              e(:lhs, :wont_match, :rhs))
+  end
+
+  def test_wont_be__match_equalstilde
+    assert_re(:RE_WONT_MATCH_EQTILDE,
+              "_(obj).wont_match val",
+              wbe(:lhs, :=~, :rhs),
+              # =>
+              e(:lhs, :wont_match, :rhs))
+  end
+
+  def test_wont_be__match_match
+    assert_re(:RE_WONT_MATCH_MATCH,
+              "_(obj).wont_match val",
+              wbe(:lhs, :match, :rhs),
+              # =>
+              e(:lhs, :wont_match, :rhs))
+  end
+
+  def test_wont_be__match_match_eh
+    assert_re(:RE_WONT_MATCH_MATCH_EH,
+              "_(obj).wont_match val",
+              wbe(:lhs, :match?, :rhs),
+              # =>
+              e(:lhs, :wont_match, :rhs))
+  end
+
+  def test_wont_be__match_not_tilde
+    assert_re(:RE_WONT_MATCH_NOT_TILDE,
+              "_(obj).must_match val",
+              wbe(:lhs, :!~, :rhs),
+              # =>
+              e(:lhs, :must_match, :rhs))
   end
 
   def test_wont_be__nil
