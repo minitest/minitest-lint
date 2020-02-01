@@ -481,6 +481,12 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_equal, lit(42)))
   end
 
+  def test_must__plain_block
+    # _ { lhs }.must_xxx rhs
+    refute_re(:RE_MUST_PLAIN,
+              s(:call, blk(c(:lhs)), :must_xxx, :rhs))
+  end
+
   def test_must__plain_expect
     assert_re(:RE_MUST_OTHER,
               "_(obj).must_<something> val",
@@ -976,6 +982,12 @@ class TestAssertScanner < Minitest::Test
   def test_wont__plain_bad
     refute_re(:RE_WONT_PLAIN,
               e(:lhs, :wont_equal, lit(42)))
+  end
+
+  def test_wont__plain_block
+    # _ { lhs }.wont_xxx rhs
+    refute_re(:RE_WONT_PLAIN,
+              s(:call, blk(c(:lhs)), :wont_xxx, :rhs))
   end
 
   def test_wont__plain_expect

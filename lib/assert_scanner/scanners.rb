@@ -526,7 +526,10 @@ class AssertScanner
 
   # TODO: rename all these to name RHS
   re_must_other        = parse("(call (call nil [m expect value] _) [m /^must/] ___)")
-  re_must_plain        = parse("(call [- (call nil :_ ___)]         [m /^must/] ___)")
+  block_under          = "(iter (call nil :_) 0 ___)"
+  call_under           = "(call nil :_ ___)"
+  not_underscore       = "[- [any #{call_under} #{block_under}]]"
+  re_must_plain        = parse("(call #{not_underscore}             [m /^must/] ___)")
   re_must_size_zero    = meq_pat(size_pat, lit(0))
   re_must_be_oper      = meq_pat("(call _ _ _)", "(:true)")
   re_must_be_pred      = meq_pat("(call _ _)",   "(:true)")
@@ -648,7 +651,7 @@ class AssertScanner
   # Negative Expectations
 
   re_wont_other        = parse("(call (call nil [m expect value] _) [m /^wont/] ___)")
-  re_wont_plain        = parse("(call [- (call nil :_ ___)]         [m /^wont/] ___)")
+  re_wont_plain        = parse("(call #{not_underscore}             [m /^wont/] ___)")
   re_wont_be_oper      = weq_pat("(call _ _ _)", "(:true)")
   re_wont_be_oper_f    = weq_pat("(call _ _ _)", "(:false)")
   re_wont_be_pred      = weq_pat("(call _ _)",   "(:true)")
