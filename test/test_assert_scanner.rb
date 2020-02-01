@@ -165,8 +165,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_operator__nil
-
   def test_assert
     assert_re(:RE_PLAIN,
               "Try to not use plain assert",
@@ -496,6 +494,14 @@ class TestAssertScanner < Minitest::Test
               apr(:lhs, :empty?),
               # =>
               c(:assert_empty, :lhs))
+  end
+
+  def test_assert_predicate__nil
+    assert_re(:RE_PRED_NIL,
+              "assert_nil obj",
+              apr(:lhs, :nil?),
+              # =>
+              c(:assert_nil, :lhs))
   end
 
   ######################################################################

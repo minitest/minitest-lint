@@ -345,6 +345,10 @@ class AssertScanner
   promote_pred(:assert_empty,
                RE_PRED_EMPTY: pred("_", :empty?))
 
+  doco "assert_predicate obj, :nil?" => "assert_nil obj"
+  promote_pred(:assert_nil,
+               RE_PRED_NIL: pred("_", :nil?))
+
   doco "assert obj" => "WARNING"
   RE_PLAIN = assert_pat "_"
   register_assert RE_PLAIN do |exp|
@@ -491,6 +495,10 @@ class AssertScanner
   doco "refute_predicate val, :empty?" => "refute_empty val"
   promote_pred(:refute_empty,
                RE_REF_PRED_EMPTY: r_pred("_", :empty?))
+
+  doco "refute_predicate val, :nil?" => "refute_nil val"
+  promote_pred(:refute_nil,
+               RE_REF_PRED_NIL: r_pred("_", :nil?))
 
   doco "refute obj" => "WARNING"
   RE_REF_PLAIN = refute_pat "_"
