@@ -540,6 +540,35 @@ class AssertScanner
   ############################################################
   # Positive Expectations
 
+  def self.declare_must_wont_be verb, pred, msg = pred, is_pred = false
+    spec  = "be"
+    const = "RE_#{verb}_#{spec}__#{pred}".delete("?").upcase.to_sym
+
+    msg   = msg.to_s.delete("?")
+    pat   = must_pat("_", :"#{verb}_#{spec}", lit(pred))
+    lhs   = "_(obj).#{verb}_#{spec} :#{pred}"
+    rhs   = "_(obj).#{verb}_#{msg}"
+
+    unless is_pred then
+      pat << parse("_")
+      lhs << ", val"
+      rhs << " val"
+    end
+
+    doco lhs => rhs
+    exp_rewrite(const => pat) do |lhs, _, _, *rhs|
+      must(lhs, :"#{verb}_#{msg}", *rhs)
+    end
+  end
+
+  def self.declare_must_be pred, msg = pred, is_pred = false
+    declare_must_wont_be "must", pred, msg, is_pred
+  end
+
+  def self.declare_wont_be pred, msg = pred, is_pred = false
+    declare_must_wont_be "wont", pred, msg, is_pred
+  end
+
   # TODO: rename all these to name RHS
   re_must_other        = parse("(call (call nil [m expect value] _) [m /^must/] ___)")
   block_under          = "(iter (call nil :_) 0 ___)"
@@ -553,10 +582,6 @@ class AssertScanner
   re_must_be_oper_f    = meq_pat("(call _ _ _)", "(:false)")
   re_must_be_empty_lit = meq_pat("_" ,           "([m array hash])")
   re_must_eq_float     = meq_pat("_",            "(lit [k Float])")
-  re_must_be_include   = mbe_pat("_",            lit(:include?), "_")
-  re_must_be_key       = mbe_pat("_",            lit(:key?), "_")
-  re_must_be__empty    = mbe_pat("_",            lit(:empty?))
-  re_must_be__nil      = mbe_pat("_",            lit(:nil?))
 
   # This must be first to immediately rewrite them to normal form
   doco("expect(obj).must_<something> val" => "_(obj).must_<something> val",
@@ -624,49 +649,21 @@ class AssertScanner
 
   # TODO: long strings
 
-  doco "_(obj).must_be :equal?, val" => "_(obj).must_be_same_as val"
-  exp_rewrite(RE_MUST_BE_SAME: mbe_pat("_", "(lit :equal?)", "_"),) do |lhs, _, _, rhs|
-    must(lhs, :must_be_same_as, rhs)
-  end
-
-  doco "_(obj).must_be :empty?" => "_(obj).must_be_empty"
-  exp_rewrite(RE_MUST_BE__EMPTY: re_must_be__empty) do |lhs,|
-    must(lhs, :must_be_empty)
-  end
-
-  doco "_(obj).must_be :nil?" => "_(obj).must_be_nil"
-  exp_rewrite(RE_MUST_BE_NIL: re_must_be__nil) do |lhs,|
-    must(lhs, :must_be_nil)
-  end
+  declare_must_be :equal?, :be_same_as
+  declare_must_be :empty?, :be_empty, :pred!
+  declare_must_be :nil?,   :be_nil,   :pred!
 
   doco "_(File).must_be :exist?, val" => "_(val).path_must_exist"
   exp_rewrite(RE_MUST_BE_FILE_EXIST: mbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
     must(rhs, :path_must_exist)
   end
 
-  doco("_(obj).must_be :include?, val" => "_(obj).must_include val",
-       "_(obj).must_be :key?, val"     => "_(obj).must_include val")
-  exp_rewrite(RE_MUST_BE_INCLUDE: re_must_be_include,
-              RE_MUST_BE_KEY:     re_must_be_key) do |lhs, _, _, rhs|
-    must(lhs, :must_include, rhs)
-  end
-
-  doco "_(obj).must_be :instance_of?, cls" => "_(obj).must_be_instance_of cls"
-  exp_rewrite(RE_MUST_BE_INSTANCE_OF: mbe_pat("_", "(lit :instance_of?)", "_"),) do |lhs, _, _, rhs|
-    must(lhs, :must_be_instance_of, rhs)
-  end
-
-  doco("_(obj).must_be :kind_of?, mod" => "_(obj).must_be_kind_of mod",
-       "_(obj).must_be :is_a?, mod"    => "_(obj).must_be_kind_of mod")
-  exp_rewrite(RE_MUST_BE_IS_A:    mbe_pat("_", "(lit :is_a?)",        "_"),
-              RE_MUST_BE_KIND_OF: mbe_pat("_", "(lit kind_of?)", "_")) do |lhs, _, _, rhs|
-    must(lhs, :must_be_kind_of, rhs)
-  end
-
-  doco "_(obj).must_be :respond_to?, val" => "_(obj).must_respond_to val"
-  exp_rewrite(RE_MUST_BE_RESPOND_TO: mbe_pat("_", "(lit respond_to?)", "_")) do |lhs, _, _, rhs|
-    must(lhs, :must_respond_to, rhs)
-  end
+  declare_must_be :include?
+  declare_must_be :key?,         :include
+  declare_must_be :instance_of?, :be_instance_of
+  declare_must_be :kind_of?,     :be_kind_of
+  declare_must_be :is_a?,        :be_kind_of
+  declare_must_be :respond_to?
 
   doco("_(obj).must_be :===, val"    => "_(obj).must_match val",
        "_(obj).must_be :=~, val"     => "_(obj).must_match val",
@@ -696,17 +693,6 @@ class AssertScanner
   re_wont_eq_float     = weq_pat("_",            "(lit [k Float])")
   re_wont_size_zero    = weq_pat(size_pat, lit(0))
   re_wont_be_empty_lit = weq_pat("_" ,           "([m array hash])")
-
-  def self.declare_wont_be pred, msg = pred
-    const = pred.to_s.delete("?").upcase
-    msg   = msg.to_s.delete("?")
-    pat   = must_pat("_", :wont_be, lit(pred), "_")
-
-    doco "_(obj).wont_be :#{pred}, val" => "_(obj).wont_#{msg} val"
-    exp_rewrite(:"RE_WONT_BE_#{const}" => pat) do |lhs, _, _, rhs|
-      must(lhs, :"wont_#{msg}", rhs)
-    end
-  end
 
   # This must be first to immediately rewrite them to normal form
   doco("expect(obj).wont_<something> val" => "_(obj).wont_<something> val",
@@ -772,13 +758,9 @@ class AssertScanner
     must(lhs, :wont_be_empty)
   end
 
-  doco "_(obj).wont_be :equal?, val" => "_(obj).wont_be_same_as val"
-  exp_rewrite(RE_WONT_BE_SAME: wbe_pat("_", "(lit :equal?)", "_"),) do |lhs, _, _, rhs|
-    must(lhs, :wont_be_same_as, rhs)
-  end
-
-  declare_wont_be :empty?, :be_empty
-  declare_wont_be :nil?, :be_nil
+  declare_wont_be :equal?, :be_same_as
+  declare_wont_be :empty?, :be_empty, :pred!
+  declare_wont_be :nil?,   :be_nil,   :pred!
 
   doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"
   exp_rewrite(RE_WONT_BE_FILE_EXIST: wbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
@@ -786,20 +768,20 @@ class AssertScanner
   end
 
   declare_wont_be :include?
-  declare_wont_be :key?, :include
+  declare_wont_be :key?,         :include
   declare_wont_be :instance_of?, :be_instance_of
-  declare_wont_be :kind_of?, :be_kind_of
-  declare_wont_be :is_a?, :be_kind_of
+  declare_wont_be :kind_of?,     :be_kind_of
+  declare_wont_be :is_a?,        :be_kind_of
   declare_wont_be :respond_to?
 
   doco("_(obj).wont_be :===, val"    => "_(obj).wont_match val",
        "_(obj).wont_be :=~, val"     => "_(obj).wont_match val",
        "_(obj).wont_be :match, val"  => "_(obj).wont_match val",
        "_(obj).wont_be :match?, val" => "_(obj).wont_match val")
-  exp_rewrite(RE_WONT_MATCH_EQ3:      wbe_pat("_", "(lit :===)",    "_"),
-              RE_WONT_MATCH_EQTILDE:  wbe_pat("_", "(lit :=~)",     "_"),
-              RE_WONT_MATCH_MATCH:    wbe_pat("_", "(lit :match)",  "_"),
-              RE_WONT_MATCH_MATCH_EH: wbe_pat("_", "(lit :match?)", "_")) do |lhs, _, _, rhs|
+  exp_rewrite(RE_WONT_BE__EQ3:      wbe_pat("_", "(lit :===)",    "_"),
+              RE_WONT_BE__EQTILDE:  wbe_pat("_", "(lit :=~)",     "_"),
+              RE_WONT_BE__MATCH:    wbe_pat("_", "(lit :match)",  "_"),
+              RE_WONT_BE__MATCH_EH: wbe_pat("_", "(lit :match?)", "_")) do |lhs, _, _, rhs|
     must(lhs, :wont_match, rhs)
   end
 

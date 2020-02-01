@@ -146,7 +146,7 @@ class TestAssertScanner < Minitest::Test
 
     exp = {
       e(inc, :must_equal, s(:true))             => "_(obj).must_<something> val",
-      e(lhs, :must_be, s(:lit, :include?), rhs) => "_(obj).must_be :msg, val",
+      mbe(lhs, :include?, rhs)                  => "_(obj).must_be :msg, val",
       e(lhs, :must_include, rhs)                => "_(obj).must_include val"
     }
 
@@ -568,7 +568,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be__include
-    assert_re(:RE_MUST_BE_INCLUDE,
+    assert_re(:RE_MUST_BE__INCLUDE,
               "_(obj).must_include val",
               mbe(:lhs, :include?, :rhs),
               # =>
@@ -576,23 +576,23 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be__instance_of
-    assert_re(:RE_MUST_BE_INSTANCE_OF,
-              "_(obj).must_be_instance_of cls",
+    assert_re(:RE_MUST_BE__INSTANCE_OF,
+              "_(obj).must_be_instance_of val",
               mbe(:lhs, :instance_of?, :rhs),
               # =>
               e(:lhs, :must_be_instance_of, :rhs))
   end
 
   def test_must_be__is_a
-    assert_re(:RE_MUST_BE_IS_A,
-              "_(obj).must_be_kind_of mod",
+    assert_re(:RE_MUST_BE__IS_A,
+              "_(obj).must_be_kind_of val",
               mbe(:lhs, :is_a?, :rhs),
               # =>
               e(:lhs, :must_be_kind_of, :rhs))
   end
 
   def test_must_be__key
-    assert_re(:RE_MUST_BE_KEY,
+    assert_re(:RE_MUST_BE__KEY,
               "_(obj).must_include val",
               mbe(:lhs, :key?, :rhs),
               # =>
@@ -600,8 +600,8 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be__kind_of
-    assert_re(:RE_MUST_BE_KIND_OF,
-              "_(obj).must_be_kind_of mod",
+    assert_re(:RE_MUST_BE__KIND_OF,
+              "_(obj).must_be_kind_of val",
               mbe(:lhs, :kind_of?, :rhs),
               # =>
               e(:lhs, :must_be_kind_of, :rhs))
@@ -648,7 +648,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be__nil
-    assert_re(:RE_MUST_BE_NIL,
+    assert_re(:RE_MUST_BE__NIL,
               "_(obj).must_be_nil",
               mbe(:lhs, :nil?),
               # =>
@@ -656,7 +656,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be__respond_to
-    assert_re(:RE_MUST_BE_RESPOND_TO,
+    assert_re(:RE_MUST_BE__RESPOND_TO,
               "_(obj).must_respond_to val",
               mbe(:lhs, :respond_to?, :rhs),
               # =>
@@ -664,7 +664,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_must_be__same
-    assert_re(:RE_MUST_BE_SAME,
+    assert_re(:RE_MUST_BE__EQUAL,
               "_(obj).must_be_same_as val",
               mbe(:obj, :equal?, :val),
               # =>
@@ -732,7 +732,7 @@ class TestAssertScanner < Minitest::Test
               "_(obj).wont_be :msg, val",
               meq(s(:call, :lhs, :msg, :rhs), s(:false)),
               # =>
-              e(:lhs, :wont_be, lit(:msg), :rhs))
+              wbe(:lhs, :msg, :rhs))
   end
 
   def test_must_equal__pred
@@ -748,7 +748,7 @@ class TestAssertScanner < Minitest::Test
               "_(obj).wont_be :pred?",
               meq(s(:call, :lhs, :pred?), s(:false)),
               # =>
-              e(:lhs, :wont_be, lit(:pred?)))
+              wbe(:lhs, :pred?))
   end
 
   def test_must_equal__size_0
@@ -761,8 +761,6 @@ class TestAssertScanner < Minitest::Test
 
   ######################################################################
   # Negative Assertions
-
-  todo :refute_operator__nil
 
   def test_refute
     assert_re(:RE_REF_PLAIN,
@@ -1143,11 +1141,11 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__empty
-    assert_re(:RE_WONT_BE_EMPTY,
-              "_(obj).wont_be_empty val",
-              wbe(:lhs, :empty?, :rhs),
+    assert_re(:RE_WONT_BE__EMPTY,
+              "_(obj).wont_be_empty",
+              wbe(:lhs, :empty?),
               # =>
-              e(:lhs, :wont_be_empty, :rhs))
+              e(:lhs, :wont_be_empty))
   end
 
   def test_wont_be__file_exist
@@ -1159,7 +1157,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__include
-    assert_re(:RE_WONT_BE_INCLUDE,
+    assert_re(:RE_WONT_BE__INCLUDE,
               "_(obj).wont_include val",
               wbe(:lhs, :include?, :rhs),
               # =>
@@ -1167,7 +1165,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__instance_of
-    assert_re(:RE_WONT_BE_INSTANCE_OF,
+    assert_re(:RE_WONT_BE__INSTANCE_OF,
               "_(obj).wont_be_instance_of val",
               wbe(:lhs, :instance_of?, :rhs),
               # =>
@@ -1175,7 +1173,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__is_a
-    assert_re(:RE_WONT_BE_IS_A,
+    assert_re(:RE_WONT_BE__IS_A,
               "_(obj).wont_be_kind_of val",
               wbe(:lhs, :is_a?, :rhs),
               # =>
@@ -1183,7 +1181,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__key
-    assert_re(:RE_WONT_BE_KEY,
+    assert_re(:RE_WONT_BE__KEY,
               "_(obj).wont_include val",
               wbe(:lhs, :key?, :rhs),
               # =>
@@ -1191,7 +1189,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__kind_of
-    assert_re(:RE_WONT_BE_KIND_OF,
+    assert_re(:RE_WONT_BE__KIND_OF,
               "_(obj).wont_be_kind_of val",
               wbe(:lhs, :kind_of?, :rhs),
               # =>
@@ -1199,7 +1197,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__match_eq3
-    assert_re(:RE_WONT_MATCH_EQ3,
+    assert_re(:RE_WONT_BE__EQ3,
               "_(obj).wont_match val",
               wbe(:lhs, :===, :rhs),
               # =>
@@ -1207,7 +1205,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__match_equalstilde
-    assert_re(:RE_WONT_MATCH_EQTILDE,
+    assert_re(:RE_WONT_BE__EQTILDE,
               "_(obj).wont_match val",
               wbe(:lhs, :=~, :rhs),
               # =>
@@ -1215,7 +1213,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__match_match
-    assert_re(:RE_WONT_MATCH_MATCH,
+    assert_re(:RE_WONT_BE__MATCH,
               "_(obj).wont_match val",
               wbe(:lhs, :match, :rhs),
               # =>
@@ -1223,7 +1221,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__match_match_eh
-    assert_re(:RE_WONT_MATCH_MATCH_EH,
+    assert_re(:RE_WONT_BE__MATCH_EH,
               "_(obj).wont_match val",
               wbe(:lhs, :match?, :rhs),
               # =>
@@ -1239,15 +1237,15 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__nil
-    assert_re(:RE_WONT_BE_NIL,
-              "_(obj).wont_be_nil val",
-              wbe(:lhs, :nil?, :rhs),
+    assert_re(:RE_WONT_BE__NIL,
+              "_(obj).wont_be_nil",
+              wbe(:lhs, :nil?),
               # =>
-              e(:lhs, :wont_be_nil, :rhs))
+              e(:lhs, :wont_be_nil))
   end
 
   def test_wont_be__respond_to
-    assert_re(:RE_WONT_BE_RESPOND_TO,
+    assert_re(:RE_WONT_BE__RESPOND_TO,
               "_(obj).wont_respond_to val",
               wbe(:lhs, :respond_to?, :rhs),
               # =>
@@ -1255,7 +1253,7 @@ class TestAssertScanner < Minitest::Test
   end
 
   def test_wont_be__same
-    assert_re(:RE_WONT_BE_SAME,
+    assert_re(:RE_WONT_BE__EQUAL,
               "_(obj).wont_be_same_as val",
               wbe(:obj, :equal?, :val),
               # =>
