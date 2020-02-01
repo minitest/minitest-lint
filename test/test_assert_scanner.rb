@@ -438,7 +438,7 @@ class TestAssertScanner < Minitest::Test
   def test_assert_operator__match_eq3
     assert_re(:RE_OPER_MATCH_EQ3,
               "assert_match obj, val",
-              c(:assert_operator, :lhs, lit(:===), :rhs),
+              aop(:lhs, :===, :rhs),
               # =>
               c(:assert_match, :lhs, :rhs))
   end
@@ -446,7 +446,7 @@ class TestAssertScanner < Minitest::Test
   def test_assert_operator__match_equalstilde
     assert_re(:RE_OPER_MATCH_EQTILDE,
               "assert_match obj, val",
-              c(:assert_operator, :lhs, lit(:=~), :rhs),
+              aop(:lhs, :=~, :rhs),
               # =>
               c(:assert_match, :lhs, :rhs))
   end
@@ -454,7 +454,7 @@ class TestAssertScanner < Minitest::Test
   def test_assert_operator__match_match
     assert_re(:RE_OPER_MATCH_MATCH,
               "assert_match obj, val",
-              c(:assert_operator, :lhs, lit(:match), :rhs),
+              aop(:lhs, :match, :rhs),
               # =>
               c(:assert_match, :lhs, :rhs))
   end
@@ -462,7 +462,7 @@ class TestAssertScanner < Minitest::Test
   def test_assert_operator__match_match_eh
     assert_re(:RE_OPER_MATCH_MATCH_EH,
               "assert_match obj, val",
-              c(:assert_operator, :lhs, lit(:match?), :rhs),
+              aop(:lhs, :match?, :rhs),
               # =>
               c(:assert_match, :lhs, :rhs))
   end
@@ -470,7 +470,7 @@ class TestAssertScanner < Minitest::Test
   def test_assert_operator__match_not_tilde
     assert_re(:RE_OPER_MATCH_NOT_TILDE,
               "refute_match obj, val",
-              c(:assert_operator, :lhs, lit(:!~), :rhs),
+              aop(:lhs, :!~, :rhs),
               # =>
               c(:refute_match, :lhs, :rhs))
   end
@@ -1015,7 +1015,7 @@ class TestAssertScanner < Minitest::Test
   def test_refute_operator__match_eq3
     assert_re(:RE_REF_OPER_MATCH_EQ3,
               "refute_match obj, val",
-              c(:refute_operator, :lhs, lit(:===), :rhs),
+              rop(:lhs, :===, :rhs),
               # =>
               c(:refute_match, :lhs, :rhs))
   end
@@ -1023,7 +1023,7 @@ class TestAssertScanner < Minitest::Test
   def test_refute_operator__match_equalstilde
     assert_re(:RE_REF_OPER_MATCH_EQTILDE,
               "refute_match obj, val",
-              c(:refute_operator, :lhs, lit(:=~), :rhs),
+              rop(:lhs, :=~, :rhs),
               # =>
               c(:refute_match, :lhs, :rhs))
   end
@@ -1031,7 +1031,7 @@ class TestAssertScanner < Minitest::Test
   def test_refute_operator__match_match
     assert_re(:RE_REF_OPER_MATCH_MATCH,
               "refute_match obj, val",
-              c(:refute_operator, :lhs, lit(:match), :rhs),
+              rop(:lhs, :match, :rhs),
               # =>
               c(:refute_match, :lhs, :rhs))
   end
@@ -1039,7 +1039,7 @@ class TestAssertScanner < Minitest::Test
   def test_refute_operator__match_match_eh
     assert_re(:RE_REF_OPER_MATCH_MATCH_EH,
               "refute_match obj, val",
-              c(:refute_operator, :lhs, lit(:match?), :rhs),
+              rop(:lhs, :match?, :rhs),
               # =>
               c(:refute_match, :lhs, :rhs))
   end
@@ -1047,7 +1047,7 @@ class TestAssertScanner < Minitest::Test
   def test_refute_operator__match_not_tilde
     assert_re(:RE_REF_OPER_MATCH_NOT_TILDE,
               "assert_match obj, val",
-              c(:refute_operator, :lhs, lit(:!~), :rhs),
+              rop(:lhs, :!~, :rhs),
               # =>
               c(:assert_match, :lhs, :rhs))
   end
