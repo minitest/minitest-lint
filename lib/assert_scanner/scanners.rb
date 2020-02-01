@@ -87,16 +87,9 @@ class AssertScanner
     end
   end
 
-  meta "old_assert obj.msg(*args)" => "new_assert obj, :msg, *args"
-  def self.unpack_call new_msg, patterns, msg = latest_doco_to
-    rewrite patterns do |t, r, _m, (_, recv, m, *rest)|
-      s(t, r, new_msg, recv, s(:lit, m), *rest)
-    end
-  end
-
-  meta "old_assert _expected, obj.msg(*args)" => "new_assert obj, :msg, *args"
-  def self.unpack_and_drop new_msg, patterns, msg = latest_doco_to
-    rewrite patterns do |t, r, _m, _lhs, (_, recv, m, *rest)|
+  meta "old_assert [exp,] obj.msg(*args)" => "new_assert obj, :msg, *args"
+  def self.unpack new_msg, patterns, msg = latest_doco_to
+    rewrite patterns do |t, r, *_, (_, recv, m, *rest)|
       s(t, r, new_msg, recv, s(:lit, m), *rest)
     end
   end
@@ -237,28 +230,28 @@ class AssertScanner
                RE_EQUAL_NOT: assert_pat("(call _ != _)"))
 
   doco "assert obj.pred?" => "assert_predicate obj, :pred?"
-  unpack_call(:assert_predicate,
-              RE_PRED: assert_pat("(call _ _)"))
+  unpack(:assert_predicate,
+         RE_PRED: assert_pat("(call _ _)"))
 
   doco "assert obj.msg(val)" => "assert_operator obj, :msg, val"
-  unpack_call(:assert_operator,
-              RE_OPER: assert_pat("(call _ _ _)"))
+  unpack(:assert_operator,
+         RE_OPER: assert_pat("(call _ _ _)"))
 
   doco "assert_equal true, obj.pred?" => "assert_predicate obj, :pred?"
-  unpack_and_drop(:assert_predicate,
-                  RE_EQ_PRED: eq_pat("(true)",  "(call _ _)"))
+  unpack(:assert_predicate,
+         RE_EQ_PRED: eq_pat("(true)",  "(call _ _)"))
 
   doco "assert_equal true, obj.msg(val)" => "assert_operator obj, :msg, val"
-  unpack_and_drop(:assert_operator,
-                  RE_EQ_OPER: eq_pat("(true)",  "(call _ _ _)"))
+  unpack(:assert_operator,
+         RE_EQ_OPER: eq_pat("(true)",  "(call _ _ _)"))
 
   doco "assert_equal false, obj.pred?" => "refute_predicate obj, :pred?"
-  unpack_and_drop(:refute_predicate,
-                  RE_NEQ_PRED: eq_pat("(false)",  "(call _ _)"))
+  unpack(:refute_predicate,
+         RE_NEQ_PRED: eq_pat("(false)",  "(call _ _)"))
 
   doco "assert_equal false, obj.msg(val)" => "refute_operator obj, :msg, val"
-  unpack_and_drop(:refute_operator,
-                  RE_NEQ_OPER: eq_pat("(false)",  "(call _ _ _)"))
+  unpack(:refute_operator,
+         RE_NEQ_OPER: eq_pat("(false)",  "(call _ _ _)"))
 
   NOT_LAS = "[- [any (lit _) (str _) ([atom])]]" # LAS = lit, atom, str
 
@@ -390,28 +383,28 @@ class AssertScanner
                RE_REF_EQUAL_NOT: refute_pat("(call _ != _)"))
 
   doco "refute obj.pred?" => "refute_predicate obj, :pred?"
-  unpack_call(:refute_predicate,
-              RE_REF_PRED: refute_pat("(call _ _)"))
+  unpack(:refute_predicate,
+         RE_REF_PRED: refute_pat("(call _ _)"))
 
   doco "refute obj.msg(val)" => "refute_operator obj, :msg, val"
-  unpack_call(:refute_operator,
-              RE_REF_OPER: refute_pat("(call _ _ _)"))
+  unpack(:refute_operator,
+         RE_REF_OPER: refute_pat("(call _ _ _)"))
 
   doco "refute_equal true, obj.pred?" => "refute_predicate obj, :pred?"
-  unpack_and_drop(:refute_predicate,
-                  RE_REF_EQ_PRED: r_eq_pat("(true)",  "(call _ _)"))
+  unpack(:refute_predicate,
+         RE_REF_EQ_PRED: r_eq_pat("(true)",  "(call _ _)"))
 
   doco "refute_equal true, obj.msg(val)" => "refute_operator obj, :msg, val"
-  unpack_and_drop(:refute_operator,
-                  RE_REF_EQ_OPER: r_eq_pat("(true)",  "(call _ _ _)"))
+  unpack(:refute_operator,
+         RE_REF_EQ_OPER: r_eq_pat("(true)",  "(call _ _ _)"))
 
   doco "refute_equal false, obj.pred?" => "assert_predicate obj, :pred?"
-  unpack_and_drop(:assert_predicate,
-                  RE_REF_NEQ_PRED: r_eq_pat("(false)",  "(call _ _)"))
+  unpack(:assert_predicate,
+         RE_REF_NEQ_PRED: r_eq_pat("(false)",  "(call _ _)"))
 
   doco "refute_equal false, obj.msg(val)" => "assert_operator obj, :msg, val"
-  unpack_and_drop(:assert_operator,
-                  RE_REF_NEQ_OPER: r_eq_pat("(false)",  "(call _ _ _)"))
+  unpack(:assert_operator,
+         RE_REF_NEQ_OPER: r_eq_pat("(false)",  "(call _ _ _)"))
 
   doco("refute_equal act, lit"  => "refute_equal lit, act",
        "refute_equal act, str"  => "refute_equal str, act",
