@@ -337,6 +337,10 @@ class AssertScanner
   promote_oper(:assert_respond_to,
                RE_OPER_RESPOND_TO: a_oper("_", :respond_to?, "_"))
 
+  doco "assert_operator obj, :equal?, val" => "assert_same obj, val"
+  promote_oper(:assert_same,
+               RE_OPER_SAME: a_oper("_", :equal?, "_"))
+
   doco "assert_predicate obj, :empty?" => "assert_empty obj"
   promote_pred(:assert_empty,
                RE_PRED_EMPTY: pred("_", :empty?))
@@ -480,6 +484,10 @@ class AssertScanner
   promote_oper(:refute_respond_to,
                RE_REF_OPER_RESPOND_TO: r_oper("_", :respond_to?, "_"))
 
+  doco "refute_operator obj, :equal?, val" => "refute_same obj, val"
+  promote_oper(:refute_same,
+               RE_REF_OPER_SAME: r_oper("_", :equal?, "_"))
+
   doco "refute_predicate val, :empty?" => "refute_empty val"
   promote_pred(:refute_empty,
                RE_REF_PRED_EMPTY: r_pred("_", :empty?))
@@ -614,6 +622,11 @@ class AssertScanner
   end
 
   # TODO: long strings
+
+  doco "_(obj).must_be :equal?, val" => "_(obj).must_be_same_as val"
+  exp_rewrite(RE_MUST_BE_SAME: mbe_pat("_", "(lit :equal?)", "_"),) do |lhs, _, _, rhs|
+    must(lhs, :must_be_same_as, rhs)
+  end
 
   doco "_(obj).must_be :empty?" => "_(obj).must_be_empty"
   exp_rewrite(RE_MUST_BE__EMPTY: re_must_be__empty) do |lhs,|
@@ -756,6 +769,11 @@ class AssertScanner
        "_(obj).wont_equal({})" => "_(obj).wont_be_empty")
   exp_rewrite(RE_WONT_BE_EMPTY_LIT: re_wont_be_empty_lit) do |lhs,|
     must(lhs, :wont_be_empty)
+  end
+
+  doco "_(obj).wont_be :equal?, val" => "_(obj).wont_be_same_as val"
+  exp_rewrite(RE_WONT_BE_SAME: wbe_pat("_", "(lit :equal?)", "_"),) do |lhs, _, _, rhs|
+    must(lhs, :wont_be_same_as, rhs)
   end
 
   declare_wont_be :empty?, :be_empty

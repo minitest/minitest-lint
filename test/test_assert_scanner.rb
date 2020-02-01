@@ -165,7 +165,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Assertions
 
-  todo :assert_operator__eql_same_as
   todo :assert_operator__nil
 
   def test_assert
@@ -483,6 +482,14 @@ class TestAssertScanner < Minitest::Test
               c(:assert_respond_to, :obj, :msg))
   end
 
+  def test_assert_operator__same
+    assert_re(:RE_OPER_SAME,
+              "assert_same obj, val",
+              aop(:obj, :equal?, :val),
+              # =>
+              c(:assert_same, :obj, :val))
+  end
+
   def test_assert_predicate__empty
     assert_re(:RE_PRED_EMPTY,
               "assert_empty obj",
@@ -494,7 +501,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Expectations
 
-  todo :must_be__same_as
   todo :must_be__within_epsilon
   todo :must_equal
   todo :must_equal__big_string
@@ -651,6 +657,14 @@ class TestAssertScanner < Minitest::Test
               e(:lhs, :must_respond_to, :rhs))
   end
 
+  def test_must_be__same
+    assert_re(:RE_MUST_BE_SAME,
+              "_(obj).must_be_same_as val",
+              mbe(:obj, :equal?, :val),
+              # =>
+              e(:obj, :must_be_same_as, :val))
+  end
+
   def test_must_equal__array
     assert_re(:RE_MUST_BE_EMPTY_LIT,
               "_(obj).must_be_empty",
@@ -742,7 +756,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Assertions
 
-  todo :refute_operator__eql_same_as
   todo :refute_operator__nil
 
   def test_refute
@@ -1060,6 +1073,14 @@ class TestAssertScanner < Minitest::Test
               c(:refute_respond_to, :obj, :msg))
   end
 
+  def test_refute_operator__same
+    assert_re(:RE_REF_OPER_SAME,
+              "refute_same obj, val",
+              rop(:obj, :equal?, :val),
+              # =>
+              c(:refute_same, :obj, :val))
+  end
+
   def test_refute_predicate__empty
     assert_re(:RE_REF_PRED_EMPTY,
               "refute_empty val",
@@ -1071,7 +1092,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
-  todo :wont_be__same_as
   todo :wont_be__within_epsilon
   todo :wont_equal
   todo :wont_equal__big_string
@@ -1226,6 +1246,14 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :respond_to?, :rhs),
               # =>
               e(:lhs, :wont_respond_to, :rhs))
+  end
+
+  def test_wont_be__same
+    assert_re(:RE_WONT_BE_SAME,
+              "_(obj).wont_be_same_as val",
+              wbe(:obj, :equal?, :val),
+              # =>
+              e(:obj, :wont_be_same_as, :val))
   end
 
   def test_wont_equal__array
