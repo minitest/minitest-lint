@@ -42,6 +42,8 @@ class AssertScanner
   def self.register_assert *matchers, &handler
     raise "NO! %p" % [matchers] unless latest
 
+    puts "BAD: %p" % [latest] if latest.size < matchers.size
+
     # TODO: register doco against the matcher so they can be looked up
     matchers.each do |matcher|
       if SCANNERS.key? matcher then
@@ -273,7 +275,9 @@ class AssertScanner
 
   NOT_LAS = "[- [any (lit _) (str _) ([atom])]]" # LAS = lit, atom, str
 
-  doco "assert_equal act, lit" => "assert_equal lit, act"
+  doco("assert_equal act, lit"  => "assert_equal lit, act",
+       "assert_equal act, str"  => "assert_equal str, act",
+       "assert_equal act, atom" => "assert_equal atom, act")
   swap(RE_EQ_RHS_LIT: eq_pat(NOT_LAS, "(lit _)"),
        RE_EQ_RHS_STR: eq_pat(NOT_LAS, "(str _)"),
        RE_EQ_RHS_NTF: eq_pat(NOT_LAS, "([atom])"))
@@ -312,7 +316,8 @@ class AssertScanner
     s(t, r, :assert_includes, rhs, s(:str, str[0, 20]))
   end
 
-  doco "assert_operator obj, :include?, val" => "assert_includes obj, val"
+  doco("assert_operator obj, :include?, val" => "assert_includes obj, val",
+       "assert_operator obj, :key?, val"     => "assert_includes obj, val")
   promote_oper(:assert_includes,
                RE_OPER_INCLUDE: a_oper("_", :include?, "_"),
                RE_OPER_KEY:     a_oper("_", :key?, "_"))
@@ -402,7 +407,9 @@ class AssertScanner
   unpack_and_drop(:assert_operator,
                   RE_REF_NEQ_OPER: r_eq_pat("(false)",  "(call _ _ _)"))
 
-  doco "refute_equal act, lit" => "refute_equal lit, act"
+  doco("refute_equal act, lit"  => "refute_equal lit, act",
+       "refute_equal act, str"  => "refute_equal str, act",
+       "refute_equal act, atom" => "refute_equal atom, act")
   swap(RE_REF_EQ_RHS_LIT: r_eq_pat(NOT_LAS, "(lit _)"),
        RE_REF_EQ_RHS_STR: r_eq_pat(NOT_LAS, "(str _)"),
        RE_REF_EQ_RHS_NTF: r_eq_pat(NOT_LAS, "([atom])"))
@@ -441,7 +448,8 @@ class AssertScanner
     s(t, r, :refute_path_exists, rhs)
   end
 
-  doco "refute_operator obj, :include?, val" => "refute_includes obj, val"
+  doco("refute_operator obj, :include?, val" => "refute_includes obj, val",
+       "refute_operator obj, :key?, val"     => "refute_includes obj, val")
   promote_oper(:refute_includes,
                RE_REF_OPER_INCLUDE: r_oper("_", :include?, "_"),
                RE_REF_OPER_KEY:     r_oper("_", :key?, "_"))
@@ -612,7 +620,8 @@ class AssertScanner
     must(rhs, :path_must_exist)
   end
 
-  doco "_(obj).must_be :include?, val" => "_(obj).must_include val"
+  doco("_(obj).must_be :include?, val" => "_(obj).must_include val",
+       "_(obj).must_be :key?, val"     => "_(obj).must_include val")
   exp_rewrite(RE_MUST_BE_INCLUDE: re_must_be_include,
               RE_MUST_BE_KEY:     re_must_be_key) do |lhs, _, _, rhs|
     must(lhs, :must_include, rhs)
@@ -723,14 +732,15 @@ class AssertScanner
     must(lhs, :wont_be_empty)
   end
 
+  declare_wont_be :nil?, :be_nil
+
   doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"
   exp_rewrite(RE_WONT_BE_FILE_EXIST: wbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
     must(rhs, :path_wont_exist)
   end
 
-  declare_wont_be :nil?, :be_nil
-  declare_wont_be :empty?, :be_empty
   declare_wont_be :include?
+  declare_wont_be :empty?, :be_empty
   declare_wont_be :key?, :include
   declare_wont_be :instance_of?, :be_instance_of
   declare_wont_be :kind_of?, :be_kind_of

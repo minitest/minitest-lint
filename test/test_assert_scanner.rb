@@ -225,12 +225,12 @@ class TestAssertScanner < Minitest::Test
               aeq(:lhs, :rhs))
   end
 
-  def test_assert_equal__length_0
-    assert_re(:RE_EQ_EMPTY,
+  def test_assert_equal__array
+    assert_re(:RE_EQ_EMPTY_LIT,
               "assert_empty obj",
-              aeq(lit(0), s(:call, :whatever, :length)),
+              aeq(s(:array), :lhs),
               # =>
-              c(:assert_empty, :whatever))
+              c(:assert_empty, :lhs))
   end
 
   def test_assert_equal__count_0
@@ -241,20 +241,12 @@ class TestAssertScanner < Minitest::Test
               c(:assert_empty, :whatever))
   end
 
-  def test_assert_equal__size_0
-    assert_re(:RE_EQ_EMPTY,
-              "assert_empty obj",
-              aeq(lit(0), s(:call, :whatever, :size)),
+  def test_assert_equal__float
+    assert_re(:RE_EQ_FLOAT,
+              "assert_in_epsilon float_lit, act",
+              aeq(s(:lit, 6.28), :rhs),
               # =>
-              c(:assert_empty, :whatever))
-  end
-
-  def test_assert_equal__array
-    assert_re(:RE_EQ_EMPTY_LIT,
-              "assert_empty obj",
-              aeq(s(:array), :lhs),
-              # =>
-              c(:assert_empty, :lhs))
+              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
   end
 
   def test_assert_equal__hash
@@ -265,12 +257,12 @@ class TestAssertScanner < Minitest::Test
               c(:assert_empty, :lhs))
   end
 
-  def test_assert_equal__float
-    assert_re(:RE_EQ_FLOAT,
-              "assert_in_epsilon float_lit, act",
-              aeq(s(:lit, 6.28), :rhs),
+  def test_assert_equal__length_0
+    assert_re(:RE_EQ_EMPTY,
+              "assert_empty obj",
+              aeq(lit(0), s(:call, :whatever, :length)),
               # =>
-              c(:assert_in_epsilon, s(:lit, 6.28), :rhs))
+              c(:assert_empty, :whatever))
   end
 
   def test_assert_equal__lhs_str
@@ -378,6 +370,14 @@ class TestAssertScanner < Minitest::Test
               aeq(:act, s(:str, "str")),
               # =>
               aeq(s(:str, "str"), :act))
+  end
+
+  def test_assert_equal__size_0
+    assert_re(:RE_EQ_EMPTY,
+              "assert_empty obj",
+              aeq(lit(0), s(:call, :whatever, :size)),
+              # =>
+              c(:assert_empty, :whatever))
   end
 
   def test_assert_in_delta
