@@ -1,5 +1,5 @@
 class AssertScanner
-  # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think RHS
+  # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think LHS
 
   ORDER = %w{assert refute must wont}
   RE = Regexp.union(*ORDER) # TODO: rename?
@@ -221,14 +221,6 @@ class AssertScanner
   replace_call(:refute,
                RE_NOT: assert_pat("(call _ !)"))
 
-  doco "assert exp == act" => "assert_equal exp, act"
-  replace_call(:assert_equal,
-               RE_EQUAL: assert_pat("(call _ == _)"))
-
-  doco "assert exp != act" => "refute_equal exp, act"
-  replace_call(:refute_equal,
-               RE_EQUAL_NOT: assert_pat("(call _ != _)"))
-
   doco "assert obj.pred?" => "assert_predicate obj, :pred?"
   unpack(:assert_predicate,
          RE_PRED: assert_pat("(call _ _)"))
@@ -266,12 +258,6 @@ class AssertScanner
   rename_and_drop(:assert_nil,
                  RE_EQ_NIL: eq_pat("(:nil)", "_"))
 
-  doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
-       "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
-  rename(:assert_in_epsilon,
-         RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
-         RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
-
   doco("assert_equal 0, obj.count"  => "assert_empty obj",
        "assert_equal 0, obj.length" => "assert_empty obj",
        "assert_equal 0, obj.size"   => "assert_empty obj")
@@ -290,6 +276,20 @@ class AssertScanner
 
     s(t, r, :assert_includes, rhs, s(:str, str[0, 20]))
   end
+
+  doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
+       "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
+  rename(:assert_in_epsilon,
+         RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
+         RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
+
+  doco "assert_operator obj, :==, val" => "assert_equal exp, act"
+  promote_oper(:assert_equal,
+               RE_OPER_MATCH_EQ: a_oper("_", :==, "_"))
+
+  doco "assert_operator obj, :!=, val" => "refute_equal exp, act"
+  promote_oper(:refute_equal,
+               RE_OPER_MATCH_NEQ: a_oper("_", :!=, "_"))
 
   doco("assert_operator obj, :===, val"    => "assert_match obj, val",
        "assert_operator obj, :=~, val"     => "assert_match obj, val",
@@ -374,14 +374,6 @@ class AssertScanner
   replace_call(:assert,
                RE_REF_NOT: refute_pat("(call _ !)"))
 
-  doco "refute exp == act" => "refute_equal exp, act"
-  replace_call(:refute_equal,
-               RE_REF_EQUAL: refute_pat("(call _ == _)"))
-
-  doco "refute exp != act" => "assert_equal exp, act"
-  replace_call(:assert_equal,
-               RE_REF_EQUAL_NOT: refute_pat("(call _ != _)"))
-
   doco "refute obj.pred?" => "refute_predicate obj, :pred?"
   unpack(:refute_predicate,
          RE_REF_PRED: refute_pat("(call _ _)"))
@@ -417,12 +409,6 @@ class AssertScanner
   rename_and_drop(:refute_nil,
                  RE_REF_EQ_NIL: r_eq_pat("(:nil)", "_"))
 
-  doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
-       "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
-  rename(:refute_in_epsilon,
-         RE_REF_EQ_FLOAT: pat(:refute_equal,    "(lit, [k Float])", "_"),
-         RE_REF_IN_DELTA: pat(:refute_in_delta, "_",                "_"))
-
   doco("refute_equal 0, obj.count"  => "refute_empty obj",
        "refute_equal 0, obj.length" => "refute_empty obj",
        "refute_equal 0, obj.size"   => "refute_empty obj")
@@ -441,6 +427,20 @@ class AssertScanner
 
     s(t, r, :refute_includes, rhs, s(:str, str[0, 20]))
   end
+
+  doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
+       "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
+  rename(:refute_in_epsilon,
+         RE_REF_EQ_FLOAT: pat(:refute_equal,    "(lit, [k Float])", "_"),
+         RE_REF_IN_DELTA: pat(:refute_in_delta, "_",                "_"))
+
+  doco "refute_operator obj, :==, val" => "refute_equal exp, act"
+  promote_oper(:refute_equal,
+               RE_REF_OPER_MATCH_EQ: r_oper("_", :==, "_"))
+
+  doco "refute_operator obj, :!=, val" => "assert_equal exp, act"
+  promote_oper(:assert_equal,
+               RE_REF_OPER_MATCH_NEQ: r_oper("_", :!=, "_"))
 
   doco("refute_operator obj, :===, val"    => "refute_match obj, val",
        "refute_operator obj, :=~, val"     => "refute_match obj, val",
@@ -592,7 +592,6 @@ class AssertScanner
     must lhs, msg, *rhs
   end
 
-  # TODO: arg vs no arg?
   # This must be second so it doesn't catch the above
   doco("obj.must_<something> val" => "_(obj).must_<something> val",
        "obj.must_<something>"     => "_(obj).must_<something>")
@@ -670,8 +669,18 @@ class AssertScanner
     must(lhs, :must_match, rhs)
   end
 
+  doco("_(obj).must_be :==, val" => "_(obj).must_equal val")
+  exp_rewrite(RE_MUST_BE__EQ: mbe_pat("_", lit(:==), "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_equal, rhs)
+  end
+
+  doco("_(obj).must_be :!=, val" => "_(obj).wont_equal val")
+  exp_rewrite(RE_MUST_BE__NEQ: mbe_pat("_", lit(:!=), "_")) do |lhs, _, _, rhs|
+    must(lhs, :wont_equal, rhs)
+  end
+
   doco("_(obj).must_be :!~, val" => "_(obj).wont_match val")
-  exp_rewrite(RE_MUST_MATCH_NOT_TILDE: mbe_pat("_", "(lit :!~)", "_")) do |lhs, _, _, rhs|
+  exp_rewrite(RE_MUST_MATCH_NOT_TILDE: mbe_pat("_", lit(:!~), "_")) do |lhs, _, _, rhs|
     must(lhs, :wont_match, rhs)
   end
 
@@ -702,7 +711,6 @@ class AssertScanner
     must lhs, msg, *rhs
   end
 
-  # TODO: arg vs no arg?
   # This must be second so it doesn't catch the above
   doco("obj.wont_<something> val" => "_(obj).wont_<something> val",
        "obj.wont_<something>"     => "_(obj).wont_<something>")
@@ -776,6 +784,16 @@ class AssertScanner
               RE_WONT_BE__MATCH:    wbe_pat("_", "(lit :match)",  "_"),
               RE_WONT_BE__MATCH_EH: wbe_pat("_", "(lit :match?)", "_")) do |lhs, _, _, rhs|
     must(lhs, :wont_match, rhs)
+  end
+
+  doco("_(obj).wont_be :==, val" => "_(obj).wont_equal val")
+  exp_rewrite(RE_WONT_BE__EQ: wbe_pat("_", lit(:==), "_")) do |lhs, _, _, rhs|
+    must(lhs, :wont_equal, rhs)
+  end
+
+  doco("_(obj).wont_be :!=, val" => "_(obj).must_equal val")
+  exp_rewrite(RE_WONT_BE__NEQ: wbe_pat("_", lit(:!=), "_")) do |lhs, _, _, rhs|
+    must(lhs, :must_equal, rhs)
   end
 
   doco("_(obj).wont_be :!~, val" => "_(obj).must_match val")
