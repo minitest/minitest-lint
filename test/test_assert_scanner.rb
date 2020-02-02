@@ -1356,15 +1356,25 @@ class TestAssertScanner < Minitest::Test
 end
 
 if __FILE__ == $0 then
+  module Minitest
+    $-w = nil
+    def self.run(*); true; end
+    $-w = true
+  end
+
   class Symbol
     def sub re, s=nil, &b
       self.to_s.sub(re, s, &b).to_sym
     end
   end
 
+  RE = AssertScanner::RE
+
   def ss re, str
     ->(ary) { ary.map { |s| s.sub(re, str) } }
   end
+
+  out = ->(lbl, arr) { pp lbl => arr; arr.empty? }
 
   a2r = ss(/assert/, "refute")
   r2a = ss(/refute/, "assert")
@@ -1377,13 +1387,14 @@ if __FILE__ == $0 then
     .grep(/^test_/)
     .grep_v(/sanity/)
     .sort
-    .group_by { |s| s[/assert|refute|must|wont/] }
+    .group_by { |s| s[RE] }
     .values_at("assert", "refute", "must", "wont")
 
-  pp :MISSING_ASSERTS => r2a[rt - a2r[at]]
-  pp :MISSING_REFUTES => a2r[at - r2a[rt]]
-  pp :MISSING_MUST    => w2m[wt - m2w[mt]]
-  pp :MISSING_WONT    => m2w[mt - w2m[wt]]
+  clean =
+    out[:MISSING_ASSERTS, r2a[rt - a2r[at]]] &&
+    out[:MISSING_REFUTES, a2r[at - r2a[rt]]] &&
+    out[:MISSING_MUST,    w2m[wt - m2w[mt]]] &&
+    out[:MISSING_WONT,    m2w[mt - w2m[wt]]]
 
   a, r = Minitest::Assertions
     .public_instance_methods
@@ -1399,8 +1410,11 @@ if __FILE__ == $0 then
 
   whitelist =
     %i{
+       assert_mock
        assert_output assert_raises assert_send assert_silent assert_throws
        must_be_silent must_output must_raise must_throw
+       must_be_within_delta must_be_within_epsilon
+       wont_be_within_delta wont_be_within_epsilon
       }
 
   used = AssertScanner
@@ -1413,11 +1427,11 @@ if __FILE__ == $0 then
     .sort
     .uniq
 
-  puts "Assertions / Expectations not covered yet:"
-  p a - used - whitelist
-  p r - used - whitelist
-  p m - used - whitelist
-  p w - used - whitelist
+  clean &&=
+    out[:IMPL_ASSERT, a - used - whitelist] &&
+    out[:IMPL_REFUTE, r - used - whitelist] &&
+    out[:IMPL_MUST,   m - used - whitelist] &&
+    out[:IMPL_WONT,   w - used - whitelist]
 
-  abort
+  exit clean
 end
