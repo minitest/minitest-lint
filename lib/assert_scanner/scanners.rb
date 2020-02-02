@@ -284,11 +284,6 @@ class AssertScanner
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
 
-  doco "assert_operator File, :exist?, val" => "assert_path_exists val"
-  rewrite(RE_OPER_FILE_EXIST: a_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
-    s(t, r, :assert_path_exists, rhs)
-  end
-
   doco "assert_equal 'long str', str" => "assert_includes str, 'substr'"
   rewrite(RE_EQ_LHS_STR: eq_pat("(str _)", "_")) do |t, r, _, (_, str), rhs, *|
     next unless str && str.length > 20
@@ -333,6 +328,11 @@ class AssertScanner
   doco "assert_operator obj, :equal?, val" => "assert_same obj, val"
   promote_oper(:assert_same,
                RE_OPER_SAME: a_oper("_", :equal?, "_"))
+
+  doco "assert_operator File, :exist?, val" => "assert_path_exists val"
+  rewrite(RE_OPER_FILE_EXIST: a_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
+    s(t, r, :assert_path_exists, rhs)
+  end
 
   doco "assert_predicate obj, :empty?" => "assert_empty obj"
   promote_pred(:assert_empty,
@@ -456,11 +456,6 @@ class AssertScanner
   promote_oper(:assert_match,
                RE_REF_OPER_MATCH_NOT_TILDE: r_oper("_", :!~, "_"))
 
-  doco "refute_operator File, :exist?, val" => "refute_path_exists val"
-  rewrite(RE_REF_OPER_FILE_EXIST: r_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
-    s(t, r, :refute_path_exists, rhs)
-  end
-
   doco("refute_operator obj, :include?, val" => "refute_includes obj, val",
        "refute_operator obj, :key?, val"     => "refute_includes obj, val")
   promote_oper(:refute_includes,
@@ -484,6 +479,11 @@ class AssertScanner
   doco "refute_operator obj, :equal?, val" => "refute_same obj, val"
   promote_oper(:refute_same,
                RE_REF_OPER_SAME: r_oper("_", :equal?, "_"))
+
+  doco "refute_operator File, :exist?, val" => "refute_path_exists val"
+  rewrite(RE_REF_OPER_FILE_EXIST: r_oper("(const :File)", :exist?, "_")) do |t, r, _, _, _, rhs|
+    s(t, r, :refute_path_exists, rhs)
+  end
 
   doco "refute_predicate val, :empty?" => "refute_empty val"
   promote_pred(:refute_empty,
@@ -652,12 +652,6 @@ class AssertScanner
   declare_must_be :equal?, :be_same_as
   declare_must_be :empty?, :be_empty, :pred!
   declare_must_be :nil?,   :be_nil,   :pred!
-
-  doco "_(File).must_be :exist?, val" => "_(val).path_must_exist"
-  exp_rewrite(RE_MUST_BE_FILE_EXIST: mbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
-    must(rhs, :path_must_exist)
-  end
-
   declare_must_be :include?
   declare_must_be :key?,         :include
   declare_must_be :instance_of?, :be_instance_of
@@ -679,6 +673,11 @@ class AssertScanner
   doco("_(obj).must_be :!~, val" => "_(obj).wont_match val")
   exp_rewrite(RE_MUST_MATCH_NOT_TILDE: mbe_pat("_", "(lit :!~)", "_")) do |lhs, _, _, rhs|
     must(lhs, :wont_match, rhs)
+  end
+
+  doco "_(File).must_be :exist?, val" => "_(val).path_must_exist"
+  exp_rewrite(RE_MUST_BE_FILE_EXIST: mbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
+    must(rhs, :path_must_exist)
   end
 
   ############################################################
@@ -761,12 +760,6 @@ class AssertScanner
   declare_wont_be :equal?, :be_same_as
   declare_wont_be :empty?, :be_empty, :pred!
   declare_wont_be :nil?,   :be_nil,   :pred!
-
-  doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"
-  exp_rewrite(RE_WONT_BE_FILE_EXIST: wbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
-    must(rhs, :path_wont_exist)
-  end
-
   declare_wont_be :include?
   declare_wont_be :key?,         :include
   declare_wont_be :instance_of?, :be_instance_of
@@ -788,5 +781,10 @@ class AssertScanner
   doco("_(obj).wont_be :!~, val" => "_(obj).must_match val")
   exp_rewrite(RE_WONT_MATCH_NOT_TILDE: wbe_pat("_", "(lit :!~)", "_")) do |lhs, _, _, rhs|
     must(lhs, :must_match, rhs)
+  end
+
+  doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"
+  exp_rewrite(RE_WONT_BE_FILE_EXIST: wbe_pat("(const :File)", lit(:exist?), "_")) do |lhs, _, _, rhs|
+    must(rhs, :path_wont_exist)
   end
 end
