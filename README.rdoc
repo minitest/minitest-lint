@@ -1,7 +1,7 @@
-= assert_scanner
+= minitest-lint
 
-home :: https://github.com/zenspider/assert_scanner
-rdoc :: http://docs.seattlerb.org/assert_scanner
+home :: https://github.com/zenspider/minitest-lint
+rdoc :: http://docs.seattlerb.org/minitest-lint
 
 == DESCRIPTION:
 
@@ -16,7 +16,7 @@ Lint your minitest assertions.
 
 == SYNOPSIS:
 
-  % assert_scanner my_stupid_test.rb
+  % mt_lint my_stupid_test.rb
 
   my_stupid_test.rb:10:
     assert(([1, 2, 3].include?(b) == true), "is b in 1..3?") # original
@@ -39,11 +39,11 @@ Lint your minitest assertions.
 * path_expander
 * sexp_processor
 * graph
-* minitest
+* minitest (duh)
 
 == INSTALL:
 
-* sudo gem install assert_scanner
+* [sudo] gem install minitest-lint
 
 == LICENSE:
 
