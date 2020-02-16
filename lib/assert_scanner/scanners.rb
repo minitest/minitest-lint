@@ -546,6 +546,10 @@ class AssertScanner
     s(:call, s(:call, nil, :_, lhs), msg, *rhs)
   end
 
+  def must_blk *lhs, msg, rhs
+    s(:call, s(:iter, s(:call, nil, :_), 0, *lhs), msg, rhs)
+  end
+
   ############################################################
   # Positive Expectations
 
@@ -606,6 +610,27 @@ class AssertScanner
        "obj.must_<something>"     => "_(obj).must_<something>")
   rewrite(RE_MUST_PLAIN: re_must_plain) do |t, lhs, msg, *rhs|
     must lhs, msg, *rhs
+  end
+
+  doco("_(-> { ... }).must_<something> val" => "_{ ... }.must_<something> val")
+  # TODO: rename const
+  # TODO: more doco
+  iter_re         = "[any (lambda) (call _ [m proc lambda]) (call (const :Proc) new)]"
+  bad_under_block = parse "(call (call _ :_ (iter #{iter_re} _ ___)) [m /^must_/] _)"
+  rewrite(RE_MUST_LAMBDA_RHS: bad_under_block) do |exp|
+    (_, (_, _, _, (_, _, _, *lhs)), msg, rhs) = exp
+
+    must_blk(*lhs, msg, rhs)
+  end
+
+  doco("_(-> { ... }).must_<something>" => "_{ ... }.must_<something>")
+  # TODO: rename const
+  # TODO: more doco
+  bad_under_block = parse "(call (call _ :_ (iter #{iter_re} _ ___)) [m /^must_/])"
+  rewrite(RE_MUST_LAMBDA: bad_under_block) do |exp|
+    (_, (_, _, _, (_, _, _, *lhs)), msg) = exp
+
+    must_blk(*lhs, msg)
   end
 
   doco "_(obj.pred?).must_equal true" => "_(obj).must_be :pred?"

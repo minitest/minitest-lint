@@ -53,6 +53,16 @@ class TestAssertScanner < Minitest::Test
   def wbe(l, m, *r); e(l, :wont_be, lit(m), *r); end
   def weq(l,r);      e(l, :wont_equal,    r);    end
 
+  def bad_blk blk_msg, lhs, msg, rhs
+    blk = Symbol === blk_msg ? s(:call, nil, blk_msg) : blk_msg
+
+    e(s(:iter, blk, 0, lhs), msg, rhs)
+  end
+
+  def bad_lam lhs, msg, *rhs
+    e(s(:iter, s(:lambda), s(:args), lhs), msg, *rhs)
+  end
+
   def assert_pattern scanner, from, msg = nil, to = nil
     pattern = AssertScanner.const_get scanner
     scan = AssertScanner.new
@@ -707,6 +717,15 @@ class TestAssertScanner < Minitest::Test
               e(:obj, :must_be_same_as, :val))
   end
 
+  def test_must_be_silent__lambda_stabby
+    # _(->() { 42 }).must_be_silent
+    assert_re(:RE_MUST_LAMBDA,
+              "_{ ... }.must_<something>",
+              bad_lam(:lhs, :must_be_silent),
+              # =>
+              bm(:lhs, :must_be_silent))
+  end
+
   def test_must_equal__array
     assert_re(:RE_MUST_BE_EMPTY_LIT,
               "_(obj).must_be_empty",
@@ -793,6 +812,42 @@ class TestAssertScanner < Minitest::Test
               meq(s(:call, :lhs, :size), lit(0)),
               # =>
               e(:lhs, :must_be_empty))
+  end
+
+  def test_must_raise__lambda_lambda
+    # _(proc { 42 }).must_raise Blah
+    assert_re(:RE_MUST_LAMBDA_RHS,
+              "_{ ... }.must_<something> val",
+              bad_blk(:lambda, :lhs, :must_raise, :rhs),
+              # =>
+              bm(:lhs, :must_raise, :rhs))
+  end
+
+  def test_must_raise__lambda_proc
+    # _(lambda { 42 }).must_raise Blah
+    assert_re(:RE_MUST_LAMBDA_RHS,
+              "_{ ... }.must_<something> val",
+              bad_blk(:proc, :lhs, :must_raise, :rhs),
+              # =>
+              bm(:lhs, :must_raise, :rhs))
+  end
+
+  def test_must_raise__lambda_proc_new
+    # _(Proc.new { 42 }).must_raise Blah
+    assert_re(:RE_MUST_LAMBDA_RHS,
+              "_{ ... }.must_<something> val",
+              bad_blk(s(:call, s(:const, :Proc), :new), :lhs, :must_raise, :rhs),
+              # =>
+              bm(:lhs, :must_raise, :rhs))
+  end
+
+  def test_must_raise__lambda_stabby
+    # _(->() { 42 }).must_raise Blah
+    assert_re(:RE_MUST_LAMBDA_RHS,
+              "_{ ... }.must_<something> val",
+              bad_lam(:lhs, :must_raise, :rhs),
+              # =>
+              bm(:lhs, :must_raise, :rhs))
   end
 
   ######################################################################
