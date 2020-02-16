@@ -1,5 +1,3 @@
-# -*- ruby -*-
-
 require "rubygems"
 require "hoe"
 
@@ -36,7 +34,7 @@ end
 
 task :print => :isolate do
   cmds = ["rake list PAGES=1",
-          "cupsfilter -i text/plain -o landscape -o lpi=4 -o cpi=8",
+          "cupsfilter -i text/plain -o landscape -o lpi=5 -o cpi=8",
           "/usr/libexec/cups/filter/cgpdftopdf 1 1 1 1 number-up=4 > text.pdf"]
 
   sh cmds.join " | "
@@ -83,6 +81,7 @@ end
 task :sort => :isolate do
   shell "diff -u <(./bin/assert_scanner --raw) <(./bin/assert_scanner --list | grep .)"
   sh "grepsort -u '^ +def.test_' test/test_assert_scanner.rb"
+  sh "./test/test_assert_scanner.rb"
 end
 
 # vim: syntax=ruby
