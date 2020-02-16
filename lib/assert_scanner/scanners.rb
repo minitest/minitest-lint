@@ -199,7 +199,6 @@ class AssertScanner
 
   # TODO:
   # assert_equal "str", klass.name
-  # assert_same
 
   size_pat = "(call _ [m count length size])"
 
@@ -269,6 +268,16 @@ class AssertScanner
        "assert_equal {}, obj" => "assert_empty obj")
   rename_and_drop(:assert_empty,
                   RE_EQ_EMPTY_LIT: eq_pat("([m array hash])", "_"))
+
+  doco("assert_equal str, obj.class.name"  => "assert_instance_of cls, obj")
+  rewrite(RE_EQ_CLASS_NAME: eq_pat("(str _)", "(call (call _ class) name)")) do |t, r, _, (_, lhs_str), (_, (_, rhs, _), _)|
+    lhs = lhs_str.split(/::/).reduce(nil) { |m, n|
+      n = n.to_sym
+      m ? s(:colon2, m, n) : s(:const, n)
+    }
+
+    s(t, r, :assert_instance_of, lhs, rhs)
+  end
 
   doco "assert_equal 'long str', str" => "assert_includes str, 'substr'"
   rewrite(RE_EQ_LHS_STR: eq_pat("(str _)", "_")) do |t, r, _, (_, str), rhs, *|

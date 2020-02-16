@@ -215,6 +215,24 @@ class TestAssertScanner < Minitest::Test
               c(:assert_empty, :lhs))
   end
 
+  def test_assert_equal__class_name
+    assert_re(:RE_EQ_CLASS_NAME,
+              "assert_instance_of cls, obj",
+              aeq(s(:str, "Woot"),
+                  s(:call, s(:call, :rhs, :class), :name)),
+              # =>
+              c(:assert_instance_of, s(:const, :Woot), :rhs))
+  end
+
+  def test_assert_equal__class_name_namespaced
+    assert_re(:RE_EQ_CLASS_NAME,
+              "assert_instance_of cls, obj",
+              aeq(s(:str, "X::Y::Z"),
+                  s(:call, s(:call, :rhs, :class), :name)),
+              # =>
+              c(:assert_instance_of, s(:colon2, s(:colon2, s(:const, :X), :Y), :Z), :rhs))
+  end
+
   def test_assert_equal__count_0
     assert_re(:RE_EQ_EMPTY,
               "assert_empty obj",
