@@ -1,8 +1,11 @@
 .autotest
+.gitignore
 History.rdoc
 Manifest.txt
 README.rdoc
 Rakefile
-bin/assert_scanner
-lib/assert_scanner.rb
+bin/mt_lint
+lib/minitest_lint.rb
+lib/minitest_lint/assert_scanner.rb
+lib/minitest_lint/assert_scanner/scanners.rb
 test/test_assert_scanner.rb

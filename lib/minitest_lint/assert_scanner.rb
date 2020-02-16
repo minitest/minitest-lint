@@ -9,7 +9,7 @@ require "ruby2ruby"
 $v ||= false
 $d ||= false
 
-class AssertScanner < SexpProcessor
+class MinitestLint::AssertScanner < SexpProcessor
   VERSION = "1.0.0"
 
   ######################################################################
@@ -239,7 +239,7 @@ class AssertScanner < SexpProcessor
   end
 end
 
-require "assert_scanner/scanners.rb"
+require_relative "assert_scanner/scanners.rb"
 
 # x.must_equal true
 # x.must_y z

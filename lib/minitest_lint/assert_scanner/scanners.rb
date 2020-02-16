@@ -1,4 +1,4 @@
-class AssertScanner
+class MinitestLint::AssertScanner
   # TODO: DECIDE! do the pattern names match the RHS or LHS?? I think LHS
 
   ORDER = %w{assert refute must wont}

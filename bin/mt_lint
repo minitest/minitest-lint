@@ -2,6 +2,6 @@
 
 $: << "lib"
 
-require "assert_scanner"
+require "minitest_lint"
 
-AssertScanner.run ARGV
+MinitestLint.run ARGV
