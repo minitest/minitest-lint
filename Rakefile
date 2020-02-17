@@ -5,9 +5,7 @@ Hoe.plugin :seattlerb
 Hoe.plugin :isolate
 Hoe.plugin :rdoc
 
-Hoe.add_include_dirs File.expand_path "~/Work/p4/zss/src/sexp_processor/dev/lib"
-
-Hoe.spec "assert_scanner" do
+Hoe.spec "minitest-lint" do
   developer "Ryan Davis", "ryand-ruby@zenspider.com"
 
   dependency "ruby_parser",    "~> 3.13"
@@ -27,9 +25,9 @@ end
 
 task :list => :isolate do
   $: << "lib"
-  require "assert_scanner"
+  require "minitest_lint/assert_scanner"
 
-  AssertScanner.list
+  MinitestLint::AssertScanner.list
 end
 
 task :print => :isolate do
@@ -43,10 +41,10 @@ end
 
 task :graph => :isolate do
   $: << "lib"
-  require "assert_scanner"
+  require "minitest_lint/assert_scanner"
 
   File.open "assert.dot", "w" do |f|
-    AssertScanner.graph f
+    MinitestLint::AssertScanner.graph f
   end
   sh "open assert.dot"
 end
@@ -63,12 +61,12 @@ end
 
 task :debug => :isolate do
   $: << "lib"
-  require "assert_scanner"
+  require "minitest_lint/assert_scanner"
 
   path = ENV["F"] || "stdin"
   ruby = ENV["R"] || File.read(ENV["F"])
 
-  scanner = AssertScanner.new
+  scanner = MinitestLint::AssertScanner.new
   scanner.process RubyParser.new.process(ruby, path)
 
   puts scanner.count
@@ -79,7 +77,7 @@ def shell cmd
 end
 
 task :sort => :isolate do
-  shell "diff -u <(./bin/assert_scanner --raw) <(./bin/assert_scanner --list | grep .)"
+  shell "diff -u <(./bin/mt_lint --raw) <(./bin/mt_lint --list | grep .)"
   sh "grepsort -u '^ +def.test_' test/test_assert_scanner.rb"
   sh "./test/test_assert_scanner.rb"
 end

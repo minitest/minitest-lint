@@ -6,6 +6,8 @@ require "minitest_lint"
 $v = true # enables "redundant message" phase
 
 class TestAssertScanner < Minitest::Test
+  AssertScanner = MinitestLint::AssertScanner
+
   make_my_diffs_pretty!
 
   def self.todo msg
