@@ -16,9 +16,9 @@ Lint your minitest assertions.
 
 == SYNOPSIS:
 
-  % mt_lint my_stupid_test.rb
+  % mt_lint my_test.rb
 
-  my_stupid_test.rb:10:
+  my_test.rb:10:
     assert(([1, 2, 3].include?(b) == true), "is b in 1..3?") # original
     assert(([1, 2, 3].include?(b) == true))   # redundant message?
     assert_equal([1, 2, 3].include?(b), true) # assert_equal exp, act
@@ -26,7 +26,7 @@ Lint your minitest assertions.
     assert_operator([1, 2, 3], :include?, b)  # assert_operator obj, :msg, val
     assert_includes([1, 2, 3], b)             # assert_includes obj, val
 
-  my_stupid_test.rb:20:
+  my_test.rb:20:
     [1, 2, 3].include?(b).must_equal(true) # original
     _([1, 2, 3].include?(b)).must_equal(true) # _(obj).must_<something> val
     _([1, 2, 3]).must_be(:include?, b)        # _(obj).must_be :msg, val
