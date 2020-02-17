@@ -8,8 +8,7 @@ class MinitestLint
   # Runners
 
   def self.run args = ARGV
+    require_relative "minitest_lint/assert_scanner"
     MinitestLint::AssertScanner.run args
   end
 end
-
-require_relative "minitest_lint/assert_scanner"

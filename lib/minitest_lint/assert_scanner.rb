@@ -1,10 +1,8 @@
-$:.unshift File.expand_path "~/Links/SP/lib"
-$:.unshift File.expand_path "~/Links/G/lib"
-
 require "ruby_parser"
 require "sexp_processor"
 require "path_expander"
 require "ruby2ruby"
+require "minitest_lint"
 
 $v ||= false
 $d ||= false
