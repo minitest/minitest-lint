@@ -1500,7 +1500,11 @@ if __FILE__ == $0 then
     ->(ary) { ary.map { |s| s.sub(re, str) } }
   end
 
-  out = ->(lbl, arr) { pp lbl => arr; arr.empty? }
+  out = ->(lbl, arr) {
+    puts "# #{lbl}"
+    puts arr.map { |s| "todo :#{s.to_s.delete_prefix "test_"}" }
+    arr.empty?
+  }
 
   a2r = ss(/assert/, "refute")
   r2a = ss(/refute/, "assert")
