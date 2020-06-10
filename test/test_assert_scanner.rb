@@ -855,6 +855,9 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Assertions
 
+  todo :refute_equal__class_name
+  todo :refute_equal__class_name_namespaced
+
   def test_refute
     assert_re(:RE_REF_PLAIN,
               "Try to not use plain refute",
@@ -1197,6 +1200,7 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Expectations
 
+  todo :wont_be_silent__lambda_stabby
   todo :wont_be_within_epsilon
   todo :wont_equal
   todo :wont_equal__big_string
@@ -1205,6 +1209,10 @@ class TestAssertScanner < Minitest::Test
   todo :wont_equal__rhs_lit
   todo :wont_equal__rhs_str
   todo :wont_equal__true
+  todo :wont_raise__lambda_lambda
+  todo :wont_raise__lambda_proc
+  todo :wont_raise__lambda_proc_new
+  todo :wont_raise__lambda_stabby
 
   def test_wont__plain
     assert_re(:RE_WONT_PLAIN,
@@ -1485,6 +1493,7 @@ if __FILE__ == $0 then
     end
   end
 
+  AssertScanner = MinitestLint::AssertScanner
   RE = AssertScanner::RE
 
   def ss re, str
