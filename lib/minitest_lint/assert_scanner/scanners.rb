@@ -703,6 +703,11 @@ class MinitestLint::AssertScanner
     must(lhs, :must_match, rhs)
   end
 
+  doco "_(obj).must_be :==, float_lit" => "_(obj).must_be_within_epsilon float_lit"
+  exp_rewrite RE_MUST_BE__EQ__FLOAT: mbe_pat("_", lit(:==), "(lit, [k Float])") do |lhs, _, _, rhs|
+    must(lhs, :must_be_within_epsilon, rhs)
+  end
+
   doco("_(obj).must_be :==, val" => "_(obj).must_equal val")
   exp_rewrite(RE_MUST_BE__EQ: mbe_pat("_", lit(:==), "_")) do |lhs, _, _, rhs|
     must(lhs, :must_equal, rhs)
@@ -716,6 +721,11 @@ class MinitestLint::AssertScanner
   doco("_(obj).must_be :!~, val" => "_(obj).wont_match val")
   exp_rewrite(RE_MUST_MATCH_NOT_TILDE: mbe_pat("_", lit(:!~), "_")) do |lhs, _, _, rhs|
     must(lhs, :wont_match, rhs)
+  end
+
+  doco "_(obj).must_be_close_to :==, float_lit" => "_(obj).must_be_within_epsilon float_lit"
+  exp_rewrite RE_MUST_BE_CLOSE_TO: must_pat("_", :must_be_close_to, "_") do |lhs, _, rhs|
+    must(lhs, :must_be_within_epsilon, rhs)
   end
 
   doco "_(File).must_be :exist?, val" => "_(val).path_must_exist"
@@ -820,6 +830,11 @@ class MinitestLint::AssertScanner
     must(lhs, :wont_match, rhs)
   end
 
+  doco("_(obj).wont_be :==, float_lit" => "_(obj).wont_be_within_epsilon float_lit")
+  exp_rewrite(RE_WONT_BE__EQ__FLOAT: wbe_pat("_", lit(:==), "(lit, [k Float])")) do |lhs, _, _, rhs|
+    must(lhs, :wont_be_within_epsilon, rhs)
+  end
+
   doco("_(obj).wont_be :==, val" => "_(obj).wont_equal val")
   exp_rewrite(RE_WONT_BE__EQ: wbe_pat("_", lit(:==), "_")) do |lhs, _, _, rhs|
     must(lhs, :wont_equal, rhs)
@@ -833,6 +848,11 @@ class MinitestLint::AssertScanner
   doco("_(obj).wont_be :!~, val" => "_(obj).must_match val")
   exp_rewrite(RE_WONT_MATCH_NOT_TILDE: wbe_pat("_", "(lit :!~)", "_")) do |lhs, _, _, rhs|
     must(lhs, :must_match, rhs)
+  end
+
+  doco "_(obj).wont_be_close_to float_lit" => "_(obj).wont_be_within_epsilon float_lit"
+  exp_rewrite RE_WONT_BE_CLOSE_TO: must_pat("_", :wont_be_close_to, "_") do |lhs, _, rhs|
+    must(lhs, :wont_be_within_epsilon, rhs)
   end
 
   doco "_(File).wont_be :exist?, val" => "_(val).path_wont_exist"

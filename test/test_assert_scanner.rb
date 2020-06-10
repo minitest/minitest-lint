@@ -539,7 +539,6 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Positive Expectations
 
-  todo :must_be_within_epsilon
   todo :must_equal
   todo :must_equal__big_string
   todo :must_equal__false
@@ -597,6 +596,14 @@ class TestAssertScanner < Minitest::Test
               mbe(:lhs, :==, :rhs),
               # =>
               e(:lhs, :must_equal, :rhs))
+  end
+
+  def test_must_be__eq__float
+    assert_re(:RE_MUST_BE__EQ__FLOAT,
+              "_(obj).must_be_within_epsilon float_lit",
+              mbe(:lhs, :==, s(:lit, 6.28)),
+              # =>
+              e(:lhs, :must_be_within_epsilon, s(:lit, 6.28)))
   end
 
   def test_must_be__eq_not
@@ -717,6 +724,14 @@ class TestAssertScanner < Minitest::Test
               mbe(:obj, :equal?, :val),
               # =>
               e(:obj, :must_be_same_as, :val))
+  end
+
+  def test_must_be_close_to
+    assert_re(:RE_MUST_BE_CLOSE_TO,
+              "_(obj).must_be_within_epsilon float_lit",
+              e(:lhs, :must_be_close_to, :rhs),
+              # =>
+              e(:lhs, :must_be_within_epsilon, :rhs))
   end
 
   def test_must_be_silent__lambda_stabby
@@ -1201,7 +1216,6 @@ class TestAssertScanner < Minitest::Test
   # Negative Expectations
 
   todo :wont_be_silent__lambda_stabby
-  todo :wont_be_within_epsilon
   todo :wont_equal
   todo :wont_equal__big_string
   todo :wont_equal__false
@@ -1263,6 +1277,14 @@ class TestAssertScanner < Minitest::Test
               wbe(:lhs, :==, :rhs),
               # =>
               e(:lhs, :wont_equal, :rhs))
+  end
+
+  def test_wont_be__eq__float
+    assert_re(:RE_WONT_BE__EQ__FLOAT,
+              "_(obj).wont_be_within_epsilon float_lit",
+              wbe(:lhs, :==, s(:lit, 6.28)),
+              # =>
+              e(:lhs, :wont_be_within_epsilon, s(:lit, 6.28)))
   end
 
   def test_wont_be__eq_not
@@ -1383,6 +1405,14 @@ class TestAssertScanner < Minitest::Test
               wbe(:obj, :equal?, :val),
               # =>
               e(:obj, :wont_be_same_as, :val))
+  end
+
+  def test_wont_be_close_to
+    assert_re(:RE_WONT_BE_CLOSE_TO,
+              "_(obj).wont_be_within_epsilon float_lit",
+              e(:lhs, :wont_be_close_to, :rhs),
+              # =>
+              e(:lhs, :wont_be_within_epsilon, :rhs))
   end
 
   def test_wont_equal__array
