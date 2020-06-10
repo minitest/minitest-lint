@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby -Ilib -w
 
 require "minitest/autorun"
-require "minitest_lint"
+require "minitest_lint/assert_scanner"
 
 $v = true # enables "redundant message" phase
 
