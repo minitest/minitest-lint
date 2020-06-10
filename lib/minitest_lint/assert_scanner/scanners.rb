@@ -176,6 +176,10 @@ class MinitestLint::AssertScanner
     "(lit #{x})"
   end
 
+  def self.lit_k(cls)
+    "(lit [k #{cls}])"
+  end
+
   ############################################################
   # Pattern Helpers:
 
@@ -289,7 +293,7 @@ class MinitestLint::AssertScanner
   doco("assert_equal float_lit, act"    => "assert_in_epsilon float_lit, act",
        "assert_in_delta float_lit, act" => "assert_in_epsilon float_lit, act")
   rename(:assert_in_epsilon,
-         RE_EQ_FLOAT: pat(:assert_equal,    "(lit, [k Float])", "_"),
+         RE_EQ_FLOAT: pat(:assert_equal,    lit_k(:Float), "_"),
          RE_IN_DELTA: pat(:assert_in_delta, "_",                "_"))
 
   doco "assert_operator obj, :==, val" => "assert_equal exp, act"
@@ -440,7 +444,7 @@ class MinitestLint::AssertScanner
   doco("refute_equal float_lit, act"    => "refute_in_epsilon float_lit, act",
        "refute_in_delta float_lit, act" => "refute_in_epsilon float_lit, act")
   rename(:refute_in_epsilon,
-         RE_REF_EQ_FLOAT: pat(:refute_equal,    "(lit, [k Float])", "_"),
+         RE_REF_EQ_FLOAT: pat(:refute_equal,    lit_k(:Float), "_"),
          RE_REF_IN_DELTA: pat(:refute_in_delta, "_",                "_"))
 
   doco "refute_operator obj, :==, val" => "refute_equal exp, act"
@@ -594,7 +598,7 @@ class MinitestLint::AssertScanner
   re_must_be_pred_f    = meq_pat("(call _ _)",   "(:false)")
   re_must_be_oper_f    = meq_pat("(call _ _ _)", "(:false)")
   re_must_be_empty_lit = meq_pat("_" ,           "([m array hash])")
-  re_must_eq_float     = meq_pat("_",            "(lit [k Float])")
+  re_must_eq_float     = meq_pat("_",            lit_k(:Float))
 
   # This must be first to immediately rewrite them to normal form
   doco("expect(obj).must_<something> val" => "_(obj).must_<something> val",
@@ -704,7 +708,7 @@ class MinitestLint::AssertScanner
   end
 
   doco "_(obj).must_be :==, float_lit" => "_(obj).must_be_within_epsilon float_lit"
-  exp_rewrite RE_MUST_BE__EQ__FLOAT: mbe_pat("_", lit(:==), "(lit, [k Float])") do |lhs, _, _, rhs|
+  exp_rewrite RE_MUST_BE__EQ__FLOAT: mbe_pat("_", lit(:==), lit_k(:Float)) do |lhs, _, _, rhs|
     must(lhs, :must_be_within_epsilon, rhs)
   end
 
@@ -742,7 +746,7 @@ class MinitestLint::AssertScanner
   re_wont_be_oper_f    = weq_pat("(call _ _ _)", "(:false)")
   re_wont_be_pred      = weq_pat("(call _ _)",   "(:true)")
   re_wont_be_pred_f    = weq_pat("(call _ _)",   "(:false)")
-  re_wont_eq_float     = weq_pat("_",            "(lit [k Float])")
+  re_wont_eq_float     = weq_pat("_",            lit_k(:Float))
   re_wont_size_zero    = weq_pat(size_pat, lit(0))
   re_wont_be_empty_lit = weq_pat("_" ,           "([m array hash])")
 
@@ -831,7 +835,7 @@ class MinitestLint::AssertScanner
   end
 
   doco("_(obj).wont_be :==, float_lit" => "_(obj).wont_be_within_epsilon float_lit")
-  exp_rewrite(RE_WONT_BE__EQ__FLOAT: wbe_pat("_", lit(:==), "(lit, [k Float])")) do |lhs, _, _, rhs|
+  exp_rewrite(RE_WONT_BE__EQ__FLOAT: wbe_pat("_", lit(:==), lit_k(:Float))) do |lhs, _, _, rhs|
     must(lhs, :wont_be_within_epsilon, rhs)
   end
 
