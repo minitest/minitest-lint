@@ -1516,11 +1516,12 @@ if __FILE__ == $0 then
     .group_by { |s| s[RE] }
     .values_at("assert", "refute", "must", "wont")
 
-  clean =
-    out[:MISSING_ASSERTS, r2a[rt - a2r[at]]] &&
-    out[:MISSING_REFUTES, a2r[at - r2a[rt]]] &&
-    out[:MISSING_MUST,    w2m[wt - m2w[mt]]] &&
-    out[:MISSING_WONT,    m2w[mt - w2m[wt]]]
+  m_rt = out[:MISSING_ASSERTS, r2a[rt - a2r[at]]]
+  m_at = out[:MISSING_REFUTES, a2r[at - r2a[rt]]]
+  m_wt = out[:MISSING_MUST,    w2m[wt - m2w[mt]]]
+  m_mt = out[:MISSING_WONT,    m2w[mt - w2m[wt]]]
+
+  clean = m_rt && m_at && m_wt && m_mt
 
   a, r = Minitest::Assertions
     .public_instance_methods
@@ -1553,11 +1554,12 @@ if __FILE__ == $0 then
     .sort
     .uniq
 
-  clean &&=
-    out[:IMPL_ASSERT, a - used - whitelist] &&
-    out[:IMPL_REFUTE, r - used - whitelist] &&
-    out[:IMPL_MUST,   m - used - whitelist] &&
-    out[:IMPL_WONT,   w - used - whitelist]
+  mi_a = out[:IMPL_ASSERT, a - used - whitelist]
+  mi_r = out[:IMPL_REFUTE, r - used - whitelist]
+  mi_m = out[:IMPL_MUST,   m - used - whitelist]
+  mi_w = out[:IMPL_WONT,   w - used - whitelist]
+
+  clean &&= mi_m && mi_r && mi_a && mi_w
 
   exit clean
 end
