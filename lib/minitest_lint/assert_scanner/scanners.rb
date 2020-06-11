@@ -551,7 +551,11 @@ class MinitestLint::AssertScanner
   end
 
   def must_blk *lhs, msg, rhs
-    s(:call, s(:iter, s(:call, nil, :_), 0, *lhs), msg, rhs)
+    if rhs then
+      s(:call, s(:iter, s(:call, nil, :_), 0, *lhs), msg, rhs)
+    else
+      s(:call, s(:iter, s(:call, nil, :_), 0, *lhs), msg)
+    end
   end
 
   ############################################################
@@ -634,7 +638,7 @@ class MinitestLint::AssertScanner
   rewrite(RE_MUST_LAMBDA: bad_under_block) do |exp|
     (_, (_, _, _, (_, _, _, *lhs)), msg) = exp
 
-    must_blk(*lhs, msg)
+    must_blk(*lhs, msg, nil)
   end
 
   doco "_(obj.pred?).must_equal true" => "_(obj).must_be :pred?"

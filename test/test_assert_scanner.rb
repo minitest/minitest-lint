@@ -45,6 +45,7 @@ class TestAssertScanner < Minitest::Test
   def apr(l, m);     a_lit(:assert_predicate, l, m);    end
   def blk(*a);       s(:iter, c(:_), 0, *a);     end
   def bm(*a, m, r);  s(:call, blk(*a), m, r);    end
+  def bmx(*a, m);    s(:call, blk(*a), m);    end
   def lit(x);        s(:lit, x);                 end
   def mbe(l, m, *r); e(l, :must_be, lit(m), *r); end
   def meq(l,r);      e(l, :must_equal,    r);    end
@@ -740,7 +741,7 @@ class TestAssertScanner < Minitest::Test
               "_{ ... }.must_<something>",
               bad_lam(:lhs, :must_be_silent),
               # =>
-              bm(:lhs, :must_be_silent))
+              bmx(:lhs, :must_be_silent))
   end
 
   def test_must_equal__array
