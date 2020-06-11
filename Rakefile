@@ -66,10 +66,20 @@ task :debug => :isolate do
   path = ENV["F"] || "stdin"
   ruby = ENV["R"] || File.read(ENV["F"])
 
-  scanner = MinitestLint::AssertScanner.new
-  scanner.process RubyParser.new.process(ruby, path)
+  sexp = RubyParser.new.process(ruby, path)
 
-  puts scanner.count
+  pp sexp if ENV["SEXP"]
+
+  begin
+    scanner = MinitestLint::AssertScanner.new
+    scanner.process sexp
+    puts scanner.count
+  rescue => e
+    puts e.message
+    puts
+    puts e.backtrace.grep_v(/rake/)
+  end
+
 end
 
 def shell cmd
