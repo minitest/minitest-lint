@@ -595,7 +595,8 @@ class MinitestLint::AssertScanner
   block_under          = "(iter (call nil :_) 0 ___)"
   call_under           = "(call nil :_ ___)"
   not_underscore       = "[- [any #{call_under} #{block_under}]]"
-  re_must_plain        = parse("(call #{not_underscore}             [m /^must/] ___)")
+  re_must_plain_rhs    = parse("(call #{not_underscore}             [m /^must/] ___)")
+  re_must_plain        = parse("(call #{not_underscore}             [m /^must/])")
   re_must_size_zero    = meq_pat(size_pat, lit(0))
   re_must_be_oper      = meq_pat("(call _ _ _)", "(:true)")
   re_must_be_pred      = meq_pat("(call _ _)",   "(:true)")
@@ -614,9 +615,14 @@ class MinitestLint::AssertScanner
   end
 
   # This must be second so it doesn't catch the above
-  doco("obj.must_<something> val" => "_(obj).must_<something> val",
-       "obj.must_<something>"     => "_(obj).must_<something>")
-  rewrite(RE_MUST_PLAIN: re_must_plain) do |t, lhs, msg, *rhs|
+  doco("obj.must_<something>"     => "_(obj).must_<something>")
+  rewrite(RE_MUST_PLAIN: re_must_plain) do |t, lhs, msg|
+    must lhs, msg
+  end
+
+  # This must be third so it doesn't catch the above + above
+  doco("obj.must_<something> val" => "_(obj).must_<something> val")
+  rewrite(RE_MUST_PLAIN_RHS: re_must_plain_rhs) do |t, lhs, msg, *rhs|
     must lhs, msg, *rhs
   end
 

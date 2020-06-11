@@ -550,6 +550,14 @@ class TestAssertScanner < Minitest::Test
 
   def test_must__plain
     assert_re(:RE_MUST_PLAIN,
+              "_(obj).must_<something>",
+              s(:call, :lhs, :must_whatevs),
+              # =>
+              e(:lhs, :must_whatevs))
+  end
+
+  def test_must__plain_rhs
+    assert_re(:RE_MUST_PLAIN_RHS,
               "_(obj).must_<something> val",
               s(:call, :lhs, :must_equal, :rhs),
               # =>
