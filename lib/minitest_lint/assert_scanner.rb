@@ -195,7 +195,17 @@ class MinitestLint::AssertScanner < SexpProcessor
     out = io.map { |(sexp, msg)|
       case sexp
       when Sexp then
-        ruby = rr.process(sexp)
+        ruby = begin
+                 rr.process(sexp)
+               rescue => e
+                 puts e.message
+                 puts io.keys.first
+                 pp sexp
+                 puts
+                 pp io
+                 puts
+                 raise
+               end
         [ruby.length, ruby, msg]
       else
         [0, sexp, nil]
