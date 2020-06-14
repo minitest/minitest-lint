@@ -547,6 +547,7 @@ class TestAssertScanner < Minitest::Test
   todo :must_equal__rhs_lit
   todo :must_equal__rhs_str
   todo :must_equal__true
+  todo :must_equal__class_name
 
   def test_must__plain
     assert_re(:RE_MUST_PLAIN,
@@ -879,8 +880,12 @@ class TestAssertScanner < Minitest::Test
   ######################################################################
   # Negative Assertions
 
+  todo :refute_empty__obj_size_gt_zero__refute_empty
+  todo :refute_empty__refute_equal_obj_size_ne_zero
   todo :refute_equal__class_name
   todo :refute_equal__class_name_namespaced
+  todo :refute_nil
+  todo :refute_operator__a_msg_b_eq_false
 
   def test_refute
     assert_re(:RE_REF_PLAIN,

@@ -201,9 +201,6 @@ class MinitestLint::AssertScanner
   ############################################################
   # Positive Assertions
 
-  # TODO:
-  # assert_equal "str", klass.name
-
   size_pat = "(call _ [m count length size])"
 
   # This must be first, to remove the redundancies right off
@@ -364,12 +361,6 @@ class MinitestLint::AssertScanner
 
   ############################################################
   # Negative Assertions
-
-  # TODO:
-  # refute_nil
-  # assert(obj.size > 0)                     => refute_empty
-  # lhs msg is count/length/size && rhs != 0 => refute_empty
-  # lhs == binary call && rhs == false       => refute_operator
 
   doco "refute obj, msg" => "refute obj"
   pattern RE_REF_MSG: refute_pat("_ _")
@@ -693,8 +684,6 @@ class MinitestLint::AssertScanner
   exp_rewrite(RE_MUST_BE_EMPTY_LIT: re_must_be_empty_lit) do |lhs,|
     must(lhs, :must_be_empty)
   end
-
-  # TODO: long strings
 
   declare_must_be :equal?, :be_same_as
   declare_must_be :empty?, :be_empty, :pred!
